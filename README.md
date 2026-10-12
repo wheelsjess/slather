@@ -13,6 +13,10 @@ Open `index.html` in any modern browser. On a computer, use the keyboard and mou
 | Roll (dodge, with a moment of invincibility) | Space | ROLL |
 | Pause | Esc / P | PAUSE |
 
+## The intro
+
+Starting from the title screen plays a short cutscene. The bogan wanders onto a busy beach and stretches. Then the Sun rises out of the sea on the horizon, laughing, with its eyes glowing red. It stomps up to the shore and fires a warning ray across the sand, and the beachgoers scream and run. Press Enter (or tap) to skip it. Retrying after a death goes straight back into the fight.
+
 ## The fight
 
 - **Fire:** every hit sets the bogan on fire. His eyes pop out, his mullet singes and his skin reddens. Slams, sweeps, grabs, fireballs and laser beams all leave patches of burning sand behind them.

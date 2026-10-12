@@ -477,6 +477,7 @@ const SFX = {
   roll: () => noise(0.14, 800, 0.6, 0.06),
   charge: () => tone(150, 600, 0.7, 0.05, 'triangle'),
   laser: d => tone(220, 180, d, 0.04, 'sawtooth'),
+  laugh: () => { for (let i = 0; i < 7; i++) tone(340 - i * 12, 210, 0.13, 0.12, 'sawtooth', i * 0.2); },
   roar: () => { tone(140, 60, 1.2, 0.15, 'sawtooth'); noise(1.0, 260, 0.5, 0.18, 'lowpass'); },
   flare: () => { noise(1.3, 1200, 0.3, 0.3, 'lowpass'); tone(90, 30, 1.1, 0.3, 'triangle'); },
   whoosh: () => noise(0.25, 900, 0.5, 0.06),
@@ -534,7 +535,10 @@ function band(y, half, dur) {
     draw() { ctx.fillStyle = `rgba(226,54,31,${(Math.floor(t * 10) % 2 ? 0.18 : 0.32)})`; ctx.fillRect(0, y - half, W, half * 2);
       ctx.fillStyle = '#e2361f'; ctx.fillRect(0, y - half, W, 1); ctx.fillRect(0, y + half, W, 1); } });
 }
-const ALIVE = { walk: 1, towel: 1, lie: 1 };
+const ALIVE = { walk: 1, towel: 1, lie: 1, flee: 1 };
+function fleeAll() { // everyone runs for it
+  for (const n of npcs) if (ALIVE[n.state]) { n.state = 'flee'; n.lying = false; n.towel = null; n.dir = n.x < 240 ? -1 : 1; n.shout = { t: pick(SCREAMS), life: 1.4 }; if (n.dog) { n.dog.flee = true; n.dog.dir = n.dir; } }
+}
 function scorchNPCs(test) { for (const n of npcs) if (ALIVE[n.state] && test(n.x, n.y)) ignite(n); }
 function firePatch(x, y, dur = 1.3, rx = 14, ry = 6) { // burning sand: hurts while you stand in it
   let t = 0;
@@ -772,13 +776,17 @@ addEventListener('keydown', e => {
   if (S.mode === 'play' && (e.code === 'Space' || e.code === 'ShiftLeft' || e.code === 'ShiftRight')) input.roll = true;
   if (e.code === 'KeyJ' || e.code === 'KeyK') input.keys.shoot = true;
   if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
-  if ((e.code === 'Enter' || e.code === 'Space') && ['title', 'dead', 'won'].includes(S.mode)) start();
+  if ((e.code === 'Enter' || e.code === 'Space') && S.mode === 'intro') finishIntro();
+  else if ((e.code === 'Enter' || e.code === 'Space') && S.mode === 'title') startIntro();
+  else if ((e.code === 'Enter' || e.code === 'Space') && ['dead', 'won'].includes(S.mode)) start();
 });
 addEventListener('keyup', e => { if (KEYMAP[e.code]) input.keys[KEYMAP[e.code]] = false; if (e.code === 'KeyJ' || e.code === 'KeyK') input.keys.shoot = false; });
 addEventListener('blur', () => { input.keys = {}; input.mouse = false; if (S.mode === 'play') togglePause(); });
 cv.addEventListener('pointerdown', e => {
   audioOn();
-  if (['title', 'dead', 'won'].includes(S.mode)) { start(); return; }
+  if (S.mode === 'title') { startIntro(); return; }
+  if (S.mode === 'intro') { finishIntro(); return; }
+  if (['dead', 'won'].includes(S.mode)) { start(); return; }
   if (S.mode === 'paused') { togglePause(); return; }
   if (e.pointerType === 'mouse' && e.button === 0) input.mouse = true;
 });
@@ -806,7 +814,7 @@ cv.addEventListener('contextmenu', e => e.preventDefault());
   hold($('#tShoot'), () => input.touchShoot = true, () => input.touchShoot = false);
   hold($('#tRoll'), () => input.roll = true);
 }
-function start() { audioOn(); reset(); S.mode = 'play'; $('#touch').hidden = !isTouch; banner('THE SUN', 'SCORCHER OF BACKS', 2.4); }
+function start() { audioOn(); reset(); player.introFrame = null; S.mode = 'play'; $('#touch').hidden = !isTouch; banner('THE SUN', 'SCORCHER OF BACKS', 2.4); }
 function togglePause() {
   if (S.mode === 'play') { S.mode = 'paused'; input.keys = {}; input.mouse = false; input.touchShoot = false; $('#touch').hidden = true; }
   else if (S.mode === 'paused') { S.mode = 'play'; $('#touch').hidden = !isTouch; }
@@ -814,6 +822,70 @@ function togglePause() {
 $('#pauseBtn').addEventListener('click', togglePause);
 $('#muteBtn').addEventListener('click', () => { muted = !muted; $('#muteBtn').textContent = muted ? 'SOUND OFF' : 'SOUND ON'; audioOn(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && S.mode === 'play') togglePause(); });
+
+
+/* ================= Intro cutscene ================= */
+const INTRO_LINES = [[3.2, 5.2, 'EEEERRRGGHHHHH....'], [5.4, 7.6, 'FUCK ME, WHAT A DAY.'], [7.8, 10.2, "AT LEAST THE SUN'S OUT THOUGH...."],
+  [18.2, 20.2, 'THIS CUNT AGAIN...'], [20.4, 22.4, 'TIME TO SLATHER UP!']];
+const STOMPS = [14.4, 14.9, 15.4, 15.9], FAR_K = 0.32, FAR_Y = HORIZON + 6, RAY_Y = 186;
+function startIntro() {
+  audioOn(); reset(); S.mode = 'intro';
+  S.intro = { t: 0, k: FAR_K, baseY: FAR_Y, show: false, fired: {}, laugh: false, stepT: null };
+  boss.sinkY = 130;
+  Object.assign(player, { x: -20, y: 226, face: 1, introFrame: 2 });
+  for (let i = 0; i < 4; i++) { spawnNPC(); const n = npcs[npcs.length - 1]; n.x = rand(40, 440); n.bake = false; }
+  spawnNPC(); const sb = npcs[npcs.length - 1];
+  Object.assign(sb, { kind: 'bikini', dog: null, bake: true, x: 370, spot: 370, y: 198, state: 'lie', lying: true, towel: TOWELS[0], t: 0, lieFor: 99 });
+  S.npcT = 3; S.seaT = 0.5;
+}
+function drawBossIntro(I) { // the Sun far away on the horizon, scaled down and cut off at its own waterline
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, Math.round(I.baseY) + 1); ctx.clip();
+  ctx.translate(240, I.baseY); ctx.scale(I.k, I.k); ctx.translate(-240, -SHORE);
+  drawBoss(); boss.hands.forEach(h => { drawArm(h); drawHand(h); });
+  ctx.restore();
+}
+function updateIntro(dt) {
+  const I = S.intro, P = player, t = (I.t += dt);
+  const once = (k, f) => { if (!I.fired[k]) { I.fired[k] = 1; f(); } };
+  P.eyesT -= dt;
+  if (t < 3) { P.x = -20 + 260 * (t / 3); P.introFrame = 2 + Math.floor(t * 10) % 6; }
+  else { P.x = 240; P.introFrame = t >= 3.2 && t < 5.2 ? 21 : t >= 16.6 && t < 18 ? 19 : t >= 20.4 ? 13 : Math.floor(t * 2) % 2; }
+  const line = INTRO_LINES.find(([a, b]) => t >= a && t < b);
+  P.shout = line ? { t: line[2], life: 1 } : null;
+  // the Sun rises out of the sea on the horizon
+  if (t >= 10.4) { I.show = true; once('rise', () => SFX.roar()); }
+  if (t >= 10.4 && t < 12.6) { boss.sinkY = 130 * (1 - (t - 10.4) / 2.2); shake(1.5); if (Math.random() < 0.5) puff(240 + rand(-40, 40) * I.k * 3, I.baseY, 2, C.white, 30, 40, 0.5); }
+  else if (t >= 12.6) boss.sinkY = 0;
+  // maniacal laugh, eyes light up
+  I.laugh = t >= 12.6 && t < 14.4;
+  if (I.laugh) { once('laugh', () => SFX.laugh()); boss.face = t < 13.5 ? 'grin' : 'rage'; boss.eyeGlow = clamp((t - 13.2) / 0.8, 0, 1); }
+  // stomps up to the beach
+  STOMPS.forEach((st, i) => { if (t >= st) once('st' + i, () => { shake(6); SFX.boom(); I.from = { k: I.k, b: I.baseY }; I.stepT = st; I.stepI = i; }); });
+  if (I.stepT != null) {
+    const e = clamp((t - I.stepT) / 0.25, 0, 1), n = (I.stepI + 1) / STOMPS.length;
+    I.k = I.from.k + (FAR_K + (1 - FAR_K) * n - I.from.k) * e; I.baseY = I.from.b + (FAR_Y + (SHORE - FAR_Y) * n - I.from.b) * e;
+    if (e < 1 && Math.random() < 0.6) puff(240 + rand(-60, 60) * I.k, I.baseY, 3, C.white, 50, 80, 0.6);
+  }
+  // a warning ray across the sand: everyone runs
+  if (t >= 16.6 && t < 17.8) {
+    const bx = 20 + 440 * ((t - 16.6) / 1.2); boss.eyeGlow = 1; boss.beams = [{ x: bx, y: RAY_Y, eye: 0 }];
+    once('ray', () => { SFX.laser(1.2); P.eyesT = 0.6; fleeAll(); S.npcT = 99; });
+    if ((I.ft = (I.ft || 0) - dt) <= 0) { I.ft = 0.06; firePatch(bx, RAY_Y, 1.0, 12, 5); }
+    scorchNPCs((px, py) => inEll(px, py, bx, RAY_Y, 14, 8));
+  } else if (t >= 17.8) { boss.beams = []; boss.eyeGlow = Math.max(0, boss.eyeGlow - dt); }
+  if (t >= 22.6) finishIntro();
+}
+function finishIntro() {
+  hazards.length = 0;
+  Object.assign(boss, { sinkY: 0, beams: [], eyeGlow: 0, face: null, cooldown: 1.6 });
+  Object.assign(player, { x: 240, y: 226, shout: null, introFrame: null, eyesT: 0 });
+  S.intro = null; S.mode = 'play'; S.npcT = 4; S.shake = 0;
+  $('#touch').hidden = !isTouch; banner('THE SUN', 'SCORCHER OF BACKS', 2.4);
+}
+function drawIntroOverlay() {
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, 18); ctx.fillRect(0, H - 18, W, 18);
+  if (Math.floor(S.time * 2) % 2) txt(isTouch ? 'TAP TO SKIP' : 'ENTER TO SKIP', W - 8, H - 13, '#bba98a', 8, 'right');
+}
 
 /* ================= Updates ================= */
 function updatePlayer(dt) {
@@ -964,7 +1036,7 @@ function spawnNPC() {
 function ignite(n) {
   n.state = 'burn'; n.t = 0; n.shout = { t: pick(SCREAMS), life: 1.2 }; S.torched++;
   if (n.dog) n.dog.flee = true;
-  if (S.mode === 'play') SFX.scream();
+  if (S.mode === 'play' || S.mode === 'intro') SFX.scream();
 }
 function updateNPCs(dt) {
   S.npcT -= dt;
@@ -975,6 +1047,9 @@ function updateNPCs(dt) {
     if (n.shout && (n.shout.life -= dt) <= 0) n.shout = null;
     if (n.state === 'walk' && n.bake && !n.towel && (n.dir > 0 ? n.x >= n.spot : n.x <= n.spot)) {
       n.state = 'towel'; n.t = 0; n.towel = pick(TOWELS);
+    } else if (n.state === 'flee') {
+      n.x += n.dir * 120 * dt; n.anim += dt * 14;
+      if (n.x < -40 || n.x > W + 40) { npcs.splice(i, 1); continue; }
     } else if (n.state === 'towel') {
       if (n.t > 0.8) { n.state = 'lie'; n.t = 0; n.lying = true; if (Math.random() < 0.6) n.shout = { t: pick(LINES), life: 2 }; }
     } else if (n.state === 'lie') {
@@ -1031,14 +1106,15 @@ function bar(x, y, w, h, k, col, back = '#3a2a22') {
   ctx.fillStyle = col; ctx.fillRect(x, y, Math.round(w * clamp(k, 0, 1)), h);
 }
 function shadow(x, y, rx, ry, a = 0.25) { ctx.fillStyle = `rgba(40,25,10,${a})`; ELL(ctx, Math.round(x), Math.round(y), rx, ry); ctx.fill(); }
+const handSink = () => (boss.state === 'dead' || S.mode === 'intro') ? boss.sinkY : 0;
 function drawArm(h) {
-  const sx = 240 + h.s * 50, sy = 70 + boss.sinkY, ex = h.x, ey = h.fy - h.z - 30;
+  const sx = 240 + h.s * 50, sy = 70 + boss.sinkY, ex = h.x, ey = h.fy - h.z - 30 + handSink();
   ctx.lineCap = 'round';
   ctx.strokeStyle = C.ink; ctx.lineWidth = 13; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
   ctx.strokeStyle = C.sun; ctx.lineWidth = 9; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
 }
 function drawHand(h) {
-  const f = HAND_POSES.indexOf(h.pose), y = h.fy - h.z + (boss.state === 'dead' ? boss.sinkY : 0);
+  const f = HAND_POSES.indexOf(h.pose), y = h.fy - h.z + handSink();
   spr('sun_hand', f, h.x, y, { flip: h.s > 0 });
   if (h.fire) spr(TINT.handR, f, h.x, y, { flip: h.s > 0, alpha: 0.3 + 0.15 * Math.sin(S.time * 20) });
 }
@@ -1124,14 +1200,15 @@ function drawWorld() {
   ctx.drawImage(S.bg, 0, 0);
   drawSea(false);
   drawSea(true);
-  drawBoss();
+  if (S.mode === 'intro') { if (S.intro.show) drawBossIntro(S.intro); } else drawBoss();
   // surf line over the Sun's waist
   for (let x = 0; x < W; x += 2) { const y = SHORE - 1 + Math.round(Math.sin(x * 0.06 + S.time * 2.4) * 1.5); ctx.fillStyle = C.white; ctx.fillRect(x, y, 2, 2); ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(x, y + 3 + Math.round(Math.sin(x * 0.11 - S.time * 1.7)), 2, 1); }
-  if (B.state !== 'dead') B.hands.forEach(drawArm);
+  const handsOut = B.state !== 'dead' && S.mode !== 'intro';
+  if (handsOut) B.hands.forEach(drawArm);
   // floor: umbrella shade, shadows, telegraphs
   for (const u of UMBRELLAS) { shadow(u.x, u.y + 2, 26, 9, 0.22); if (S.shadeGlow) { ctx.strokeStyle = Math.floor(S.time * 8) % 2 ? '#5fe08a' : '#fff'; ctx.lineWidth = 1; ELL(ctx, u.x, u.y + 2, 26, 9); ctx.stroke(); } }
   for (const h of hazards) if (h.layer === 'floor') h.draw();
-  if (B.state !== 'dead') for (const h of B.hands) { const k = clamp(1 - h.z / 140, 0.35, 1); shadow(h.x, h.fy, 24 * k, 9 * k, 0.3); }
+  if (handsOut) for (const h of B.hands) { const k = clamp(1 - h.z / 140, 0.35, 1); shadow(h.x, h.fy, 24 * k, 9 * k, 0.3); }
   for (const p of pickups) if (p.z > 0) shadow(p.x, p.y, 6, 2);
   for (const b of B.beams) {
     if (b.warn) { ctx.strokeStyle = Math.floor(S.time * 14) % 2 ? '#ff3a1a' : '#fff3b0'; ctx.lineWidth = 1; ELL(ctx, b.x, b.y, 12, 6); ctx.stroke(); }
@@ -1140,13 +1217,14 @@ function drawWorld() {
   // sorted sprites
   const list = [];
   list.push({ y: P.y, draw: drawPlayer });
-  if (B.state !== 'dead') for (const h of B.hands) list.push({ y: h.fy + 0.5, draw: () => drawHand(h) });
+  if (handsOut) for (const h of B.hands) list.push({ y: h.fy + 0.5, draw: () => drawHand(h) });
   for (const u of UMBRELLAS) list.push({ y: u.y, draw: () => spr('umbrella', 0, u.x, u.y + 2) });
   for (const p of pickups) list.push({ y: p.y, draw: () => { if (p.life < 3 && Math.floor(p.life * 8) % 2) return; spr(p.kind, 0, p.x, p.y - p.z + (p.kind.startsWith('slather') ? Math.round(Math.sin(S.time * 4) * 1) : 0)); } });
   for (const n of npcs) list.push({ y: n.y, draw: () => drawNPC(n) });
   const G = S.guard;
   if (G && S.mode !== 'title') list.push({ y: G.y, draw: () => { shadow(G.x, G.y, 8, 2); spr('npc_lifesaver', G.state === 'drop' ? 0 : G.anim, G.x, G.y + 1, { flip: G.dir < 0 }); } });
   list.sort((a, b) => a.y - b.y).forEach(o => o.draw());
+  if (S.intro && S.intro.laugh) bubble('HA HA HA HA HA!', 240, S.intro.baseY - (SHORE - B.headY + 52) * S.intro.k);
   for (const n of npcs) if (n.shout) bubble(n.shout.t, n.x, n.y - (n.lying ? 22 : 44));
   if (G && G.shout && S.mode !== 'title') bubble(G.shout.t, G.x, G.y - 44);
   if (P.shout && S.mode !== 'title') bubble(P.shout.t, P.x, P.y - 54);
@@ -1198,7 +1276,7 @@ function drawPlayer() {
   }
   shadow(px, py, 10, 3);
   if (P.hurtT > 0 && P.hurtT < HIT_INVULN - 0.3 && Math.floor(P.hurtT * 14) % 2) return;
-  const f = playerFrame(), flip = P.face < 0 && f >= 19 && f <= 21;
+  const f = P.introFrame ?? playerFrame(), flip = P.face < 0 && f >= 19 && f <= 21;
   spr('bogan', f, px, py + 1, { flip });
   const burn = clamp(Math.max(P.burn / 100 * 0.9, P.scorch), 0, 1);
   if (burn > 0.02) spr('bogan_burnt', f, px, py + 1, { flip, alpha: burn });
@@ -1286,6 +1364,9 @@ function frame(now) {
       if (S.toast && (S.toast.life -= dt) <= 0) S.toast = null;
       if (S.call && (S.call.t -= dt) <= 0) S.call = null;
       S.blueA = Math.max(0, S.blueA - dt * 1.6);
+    } else if (S.mode === 'intro') {
+      updateIntro(dt); updateBoss(dt);
+      for (let i = hazards.length - 1; i >= 0; i--) if (hazards[i] && !hazards[i].update(dt)) hazards.splice(i, 1);
     } else updateBoss(dt);
     input.roll = false;
     updateNPCs(dt); updateSea(dt);
@@ -1302,6 +1383,7 @@ function frame(now) {
   if (S.blueA > 0) { ctx.fillStyle = `rgba(191,234,255,${S.blueA * (Math.floor(S.time * 16) % 2 ? 1 : 0.5)})`; ctx.fillRect(0, 0, W, H); }
   if (S.whiteA > 0) { ctx.fillStyle = `rgba(255,251,224,${S.whiteA})`; ctx.fillRect(0, 0, W, H); }
   if (S.mode === 'title') drawTitle();
+  else if (S.mode === 'intro') drawIntroOverlay();
   else {
     drawHUD();
     const blink = Math.floor(S.time * 2) % 2, again = isTouch ? 'TAP TO TRY AGAIN' : 'PRESS ENTER TO TRY AGAIN';
@@ -1320,7 +1402,7 @@ function fit() {
 addEventListener('resize', fit); fit();
 // debugging handle for playtesting from the console
 if (isTouch) document.body.classList.add('touch');
-window.__slather = { S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
+window.__slather = { finishIntro, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
 reset();
 if (document.fonts) document.fonts.load(`8px ${PIX}`).catch(() => {});
 if (document.fonts) document.fonts.load('44px Anton').catch(() => {});
