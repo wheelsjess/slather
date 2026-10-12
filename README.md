@@ -28,6 +28,17 @@ Starting from the title screen plays a short cutscene. The bogan wanders onto a 
 - **Phase 2, High Noon** (at 60% health): double slams and sweeps, more fireballs, and the Grab.
 - **Phase 3, Heat Dome** (at 25% health): triple slams with shockwaves, two laser beams at once, faster attacks, and the Solar Flare. Get under an umbrella before it goes off.
 
+## The Sun's personality
+
+- **It talks.** It gloats, taunts before attacks, and complains when hit, in yellow speech bubbles. It also speaks the lines aloud in a slow, low, creepy voice, using the device's Australian voice when there is one.
+- **It heals by killing.** Every beachgoer it torches gives it back 80 health (`KILL_HEAL`), and it laughs and boasts about it ("MMMM... LOBSTER!!!").
+- **It reacts to getting hit.** Every 110 damage, it pulls a face (hurt, shocked or grossed out), reels back, gets angry for a moment and says something like "STOP MOISTURISING ME!"
+
+## Sound
+
+- **Music:** SNES-style chiptune. There's a sunny beach tune for the intro, then the boss theme, which gets faster and busier in each phase.
+- **Sound effects:** heavy slams for the fists, electric buzzing for the lasers, zaps for the sun rays, crackling fire, waves in the background, screams, and jingles for winning and losing.
+
 ## Art
 
 All art is currently stand-in pixel art drawn by code. See [ASSETS.md](ASSETS.md) for the sprite sizes, frame orders and file names the real art should use.

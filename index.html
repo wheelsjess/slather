@@ -72,6 +72,7 @@ const UV_RATE = [0, 2.4, 3.6, 5.2];   // sunburn build-up per second with no SPF
 const GAP = [0, 1.3, 0.95, 0.7];      // rest between boss attacks per phase
 const SPF_TIME = 8;          // UV shield: hits bounce off and hurt the Sun
 const DUAL_TIME = 10;
+const KILL_HEAL = 80;         // the Sun heals for every beachgoer it torches
 const DMG = { slam: 22, sweep: 18, laser: 15, orb: 14, ray: 16, grab: 24, wave: 13, flare: 36, burn: 14, fire: 8 };
 const HIT_INVULN = 0.8;
 const HEAL = { potato: 25, dimsim: 18 };
@@ -164,8 +165,8 @@ function eye(g, cx, cy, w, h, px, lidY, fill = '#fffbe8') {
   g.restore(); sh(); g.lineWidth = 2; g.strokeStyle = C.ink; g.stroke();
   if (lidY != null) line(g, [cx - w + 2, lidY, cx + w - 2, lidY]);
 }
-const FACE_KINDS = ['smug', 'grin', 'rage', 'hurt', 'dead'];
-sheet('sun_face', 96, 72, 5, (g, i) => {
+const FACE_KINDS = ['smug', 'grin', 'rage', 'hurt', 'dead', 'shock', 'gross'];
+sheet('sun_face', 96, 72, 7, (g, i) => {
   const k = FACE_KINDS[i];
   if (k === 'smug') {
     eye(g, 30, 30, 13, 5, 6, 29); eye(g, 66, 30, 13, 5, 6, 29);
@@ -192,6 +193,17 @@ sheet('sun_face', 96, 72, 5, (g, i) => {
     line(g, [48, 28, 46, 42, 51, 43]);
     line(g, [34, 56, 39, 53, 44, 57, 49, 53, 54, 57, 59, 53, 62, 56]);
     g.fillStyle = '#9fdcff'; ELL(g, 82, 22, 3, 4); g.fill();
+  } else if (k === 'shock') {
+    for (const x of [30, 66]) { g.fillStyle = '#fffbe8'; ELL(g, x, 30, 11, 10); g.fill(); g.lineWidth = 2; g.strokeStyle = C.ink; g.stroke(); g.fillStyle = C.ink; g.fillRect(x - 1, 29, 3, 3); }
+    curve(g, 16, 12, 30, 6, 42, 14); curve(g, 54, 14, 66, 6, 80, 12);
+    line(g, [48, 28, 46, 42, 51, 43]);
+    g.fillStyle = C.ink; ELL(g, 48, 56, 7, 9); g.fill();
+  } else if (k === 'gross') {
+    line(g, [20, 28, 40, 30], 3); eye(g, 66, 30, 12, 7, -3, null);
+    line(g, [14, 20, 40, 24], 3); line(g, [56, 18, 80, 22], 2);
+    line(g, [48, 28, 46, 42, 51, 43]);
+    line(g, [32, 52, 38, 50, 44, 53, 50, 50, 56, 53, 62, 51]);
+    g.fillStyle = C.red; g.fillRect(44, 52, 9, 12); g.fillStyle = '#fffdf2'; ELL(g, 48, 58, 4, 3); g.fill(); ELL(g, 40, 50, 3, 2); g.fill();
   } else {
     for (const x of [30, 66]) { line(g, [x - 7, 24, x + 7, 36], 3); line(g, [x + 7, 24, x - 7, 36], 3); }
     line(g, [48, 28, 46, 42, 51, 43]);
@@ -452,22 +464,41 @@ function makeBg(p) {
 const BG = { 1: makeBg(1), 2: makeBg(2), 3: makeBg(3), 4: makeBg(4) };
 
 /* ================= Audio ================= */
-let actx = null, muted = false, noiseBuf = null;
-function audioOn() { try { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch (e) { actx = null; } }
-function noise(dur, freq, q, vol, type = 'bandpass') {
+let actx = null, muted = false, noiseBuf = null, master = null, ambience = null;
+function audioOn() {
+  try { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch (e) { actx = null; }
+  if (actx && !ambience) startAmbience();
+}
+const OUT = () => { if (!master) { master = actx.createGain(); master.gain.value = muted ? 0 : 1; master.connect(actx.destination); } return master; };
+function getNoise() { if (!noiseBuf) { noiseBuf = actx.createBuffer(1, actx.sampleRate, actx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } return noiseBuf; }
+function noise(dur, freq, q, vol, type = 'bandpass', delay = 0) {
   if (!actx || muted) return;
-  if (!noiseBuf) { noiseBuf = actx.createBuffer(1, actx.sampleRate, actx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
-  const s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(), t = actx.currentTime;
-  s.buffer = noiseBuf; s.loop = true; f.type = type; f.frequency.value = freq; f.Q.value = q;
+  const s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(), t = actx.currentTime + delay;
+  s.buffer = getNoise(); s.loop = true; f.type = type; f.frequency.value = freq; f.Q.value = q;
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  s.connect(f).connect(g).connect(actx.destination); s.start(t); s.stop(t + dur);
+  s.connect(f).connect(g).connect(OUT()); s.start(t); s.stop(t + dur);
+}
+function voice(f0, f1, dur, vol = 0.16, delay = 0) { // a croaky, nasal old-man vowel: sawtooth through two formants, with a wobble
+  if (!actx || muted) return;
+  const t = actx.currentTime + delay, o = actx.createOscillator(), vib = actx.createOscillator(), vg = actx.createGain(), g = actx.createGain();
+  o.type = 'sawtooth'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  vib.frequency.value = 6.5; vg.gain.value = f0 * 0.05; vib.connect(vg).connect(o.frequency);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  for (const [fr, q] of [[700, 3], [1150, 5], [2400, 6]]) { const b = actx.createBiquadFilter(); b.type = 'bandpass'; b.frequency.value = fr; b.Q.value = q; o.connect(b).connect(g); }
+  g.connect(OUT()); o.start(t); vib.start(t); o.stop(t + dur); vib.stop(t + dur);
+}
+function startAmbience() { // waves rolling in and out
+  const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(), lfo = actx.createOscillator(), lg = actx.createGain();
+  src.buffer = getNoise(); src.loop = true; f.type = 'lowpass'; f.frequency.value = 450; g.gain.value = 0.035;
+  lfo.frequency.value = 0.12; lg.gain.value = 0.028; lfo.connect(lg).connect(g.gain);
+  src.connect(f).connect(g).connect(OUT()); src.start(); lfo.start(); ambience = g;
 }
 function tone(f0, f1, dur, vol, type = 'square', delay = 0) {
   if (!actx || muted) return;
   const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + delay;
   o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  o.connect(g).connect(actx.destination); o.start(t); o.stop(t + dur);
+  o.connect(g).connect(OUT()); o.start(t); o.stop(t + dur);
 }
 const SFX = {
   squirt: () => noise(0.06, 2800, 1.4, 0.05),
@@ -476,8 +507,23 @@ const SFX = {
   hurt: () => tone(400, 110, 0.22, 0.1),
   roll: () => noise(0.14, 800, 0.6, 0.06),
   charge: () => tone(150, 600, 0.7, 0.05, 'triangle'),
-  laser: d => tone(220, 180, d, 0.04, 'sawtooth'),
-  laugh: () => { for (let i = 0; i < 7; i++) tone(340 - i * 12, 210, 0.13, 0.12, 'sawtooth', i * 0.2); },
+  laser: d => { // electric burning buzz with crackles
+    if (!actx || muted) return;
+    const t = actx.currentTime, o = actx.createOscillator(), lfo = actx.createOscillator(), lg = actx.createGain(), g = actx.createGain(), f = actx.createBiquadFilter();
+    o.type = 'sawtooth'; o.frequency.value = 92; lfo.type = 'square'; lfo.frequency.value = 47; lg.gain.value = 55; lfo.connect(lg).connect(o.frequency);
+    f.type = 'bandpass'; f.frequency.value = 1100; f.Q.value = 0.8;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.1, t + 0.06); g.gain.setValueAtTime(0.1, t + Math.max(0.1, d - 0.12)); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(f).connect(g).connect(OUT()); o.start(t); lfo.start(t); o.stop(t + d); lfo.stop(t + d);
+    for (let k = 0; k < d * 16; k++) noise(0.03, rand(2500, 6000), 2, rand(0.03, 0.08), 'bandpass', rand(0, d));
+  },
+  zap: () => { tone(1900, 140, 0.25, 0.06, 'sawtooth'); noise(0.28, 4200, 0.7, 0.1, 'highpass'); },
+  slam: () => { tone(72, 26, 0.6, 0.5, 'sine'); tone(150, 40, 0.22, 0.22, 'square'); noise(0.5, 220, 0.6, 0.4, 'lowpass'); noise(0.3, 1300, 0.8, 0.14, 'bandpass', 0.02); noise(0.7, 600, 0.4, 0.1, 'bandpass', 0.08); },
+  fwoosh: () => noise(0.4, 520, 0.5, 0.07, 'bandpass'),
+  ouch: () => { const f = rand(170, 230); voice(f * 1.3, f * 0.7, 0.32, 0.2); voice(f, f * 0.6, 0.25, 0.12, 0.3); },
+  grumble: () => { voice(120, 95, 0.4, 0.14); voice(110, 80, 0.5, 0.12, 0.35); },
+  win: () => [523, 659, 784, 1047, 784, 1047].forEach((f, i) => tone(f, f, i > 3 ? 0.5 : 0.14, 0.07, 'square', i * 0.14)),
+  lose: () => [330, 311, 294, 277, 131].forEach((f, i) => tone(f, f * 0.98, i === 4 ? 1.0 : 0.3, 0.07, 'square', i * 0.32)),
+  laugh: () => { for (let i = 0; i < 8; i++) voice(190 - i * 5 + (i % 2) * 18, 120, 0.15, 0.18, i * 0.17); },
   roar: () => { tone(140, 60, 1.2, 0.15, 'sawtooth'); noise(1.0, 260, 0.5, 0.18, 'lowpass'); },
   flare: () => { noise(1.3, 1200, 0.3, 0.3, 'lowpass'); tone(90, 30, 1.1, 0.3, 'triangle'); },
   whoosh: () => noise(0.25, 900, 0.5, 0.06),
@@ -488,6 +534,87 @@ const SFX = {
   scream: () => tone(900, 300, 0.4, 0.05, 'sawtooth'),
   squawk: () => { tone(1300, 700, 0.12, 0.06); tone(1200, 650, 0.14, 0.06, 'square', 0.16); },
 };
+
+/* ================= Music: a little SNES-style sequencer ================= */
+const NOTE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+const nm = s => { const m = /^([A-G])(#?)(\d)$/.exec(s); return m ? 12 * (+m[3] + 1) + NOTE[m[1]] + (m[2] ? 1 : 0) : null; };
+const seq = str => str.trim().split(/\s+/).map(t => t === '.' ? null : nm(t));
+const LEAD_A = seq(`A4 . . E5 . . A5 . G5 . E5 . C5 . D5 E5   F5 . . C5 . . A4 . C5 . F5 . E5 . C5 .
+                    D5 . . G4 . . B4 . D5 . G5 . F5 . D5 .   E5 . G#5 . B5 . G#5 . E5 . D5 . C5 . B4 .`);
+const LEAD_B = seq(`A5 . E5 A5 . C6 . B5 A5 . G5 . E5 . G5 A5   F5 . C5 F5 . A5 . G5 F5 . E5 . C5 . E5 F5
+                    G5 . D5 G5 . B5 . A5 G5 . F5 . D5 . F5 G5   G#5 . E5 G#5 . B5 . D6 E6 . D6 . B5 . G#5 .`);
+const LEAD_BEACH = seq(`E5 . . G5 . . C6 . B5 . G5 . E5 . . .   F5 . . A5 . . C6 . A5 . F5 . D5 . . .
+                        D5 . . G5 . . B5 . A5 . G5 . F5 . D5 .   E5 . C5 . G4 . C5 . E5 . . . . . . .`);
+const MINOR = { roots: ['A2', 'F2', 'G2', 'E2'].map(nm), chords: [[57, 60, 64], [53, 57, 60], [55, 59, 62], [52, 56, 59]] };
+const TRACKS = {
+  beach: { bpm: 104, lead: LEAD_BEACH, roots: ['C3', 'F2', 'G2', 'C3'].map(nm), bassPat: [0, null, 7, null, 12, null, 7, null], drums: 'k...h...s...h...', leadVol: 0.045 },
+  fight1: { bpm: 126, lead: LEAD_A, ...MINOR, bassPat: [0, null, 12, null], drums: 'k.h.s.h.k.k.s.h.', leadVol: 0.05 },
+  fight2: { bpm: 146, lead: LEAD_B, ...MINOR, bassPat: [0, 0, 12, 0], drums: 'k.hhs.hhk.khs.hh', leadVol: 0.05, arp: true },
+  fight3: { bpm: 170, lead: LEAD_B, ...MINOR, bassPat: [0, 12, 0, 12], drums: 'khkhskhkkhkhskss', leadVol: 0.05, arp: true, transpose: 1 },
+};
+const MUS = { name: null, step: 0, next: 0, bus: null, echo: null, pulse: null };
+function musicNodes() {
+  if (MUS.bus) return;
+  MUS.bus = actx.createGain(); MUS.bus.gain.value = 0.9; MUS.bus.connect(OUT());
+  const d = actx.createDelay(), fb = actx.createGain(), wet = actx.createGain(); // SNES-style echo on the lead
+  d.delayTime.value = 0.19; fb.gain.value = 0.32; wet.gain.value = 0.35; d.connect(fb).connect(d); d.connect(wet).connect(MUS.bus); MUS.echo = d;
+  const n = 32, re = new Float32Array(n), im = new Float32Array(n);
+  for (let k = 1; k < n; k++) im[k] = 2 / (k * Math.PI) * Math.sin(k * Math.PI * 0.25); // 25% pulse wave
+  MUS.pulse = actx.createPeriodicWave(re, im);
+}
+function mnote(m, t, dur, vol, type, echo) {
+  const o = actx.createOscillator(), g = actx.createGain();
+  if (type === 'pulse') o.setPeriodicWave(MUS.pulse); else o.type = type;
+  o.frequency.value = 440 * Math.pow(2, (m - 69) / 12);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.008); g.gain.exponentialRampToValueAtTime(vol * 0.55, t + dur * 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(MUS.bus); if (echo) g.connect(MUS.echo); o.start(t); o.stop(t + dur + 0.02);
+}
+function playStep(T, i, t, sp) {
+  const tr = T.transpose || 0, bar = Math.floor(i / 16), st = i % 16, dl = Math.max(0, t - actx.currentTime);
+  if (T.lead[i] != null) mnote(T.lead[i] + tr, t, sp * 1.9, T.leadVol, 'pulse', true);
+  const bp = T.bassPat[st % T.bassPat.length]; if (bp != null) mnote(T.roots[bar] + tr + bp, t, sp * 0.9, 0.11, 'triangle');
+  if (T.arp) { const ch = T.chords[bar]; mnote(ch[st % 3] + tr + 12, t, sp * 0.55, 0.022, 'square'); }
+  const dr = T.drums[st];
+  if (dr === 'k') tone(150, 42, 0.13, 0.32, 'sine', dl);
+  else if (dr === 's') { noise(0.12, 1800, 0.8, 0.12, 'bandpass', dl); tone(230, 120, 0.07, 0.06, 'triangle', dl); }
+  else if (dr === 'h') noise(0.03, 8000, 1, 0.035, 'highpass', dl);
+}
+function setMusic(name) { if (MUS.name === name) return; MUS.name = name; MUS.step = 0; if (actx) MUS.next = actx.currentTime + 0.06; }
+setInterval(() => {
+  if (!actx || !MUS.name || muted || S.mode === 'paused' || document.hidden) { if (actx) MUS.next = actx.currentTime + 0.06; return; }
+  musicNodes();
+  const T = TRACKS[MUS.name], sp = 60 / T.bpm / 4;
+  while (MUS.next < actx.currentTime + 0.15) { playStep(T, MUS.step % 64, MUS.next, sp); MUS.next += sp; MUS.step++; }
+}, 25);
+function wantedMusic() {
+  if (S.mode === 'intro') { const t = S.intro.t; return t < 10.2 ? 'beach' : t < 16.6 ? null : 'fight1'; }
+  if (S.mode === 'play' || S.mode === 'paused') return boss.state === 'dead' || player.dead ? null : 'fight' + S.phase;
+  return null;
+}
+
+/* ================= The Sun's voice and one-liners ================= */
+const KILL_LINES = ['ANOTHER SACRIFICE TO THE SUN GOD! HAHAHAH!', 'MMMM... LOBSTER!!!', 'MEDIUM RARE. JUST HOW I LIKE EM.', 'SHOULDA WORN A HAT, MATE!',
+  'CRISPY! LIKE A SNAG ON THE BARBIE!', 'ONE LESS TAN LINE TO WORRY ABOUT!', 'NO SUNSCREEN? NO WORRIES! HAHAHA!', 'UV INDEX: EXTREME! HAHAHA!',
+  'SMELLS LIKE A SUNDAY ROAST!', 'DELICIOUS! ANYONE GOT TOMATO SAUCE?', 'SUNBAKING? MORE LIKE SUN-BAKED!', 'YOUR SKIN CANCER CHECK IS... OVERDUE!',
+  'ASHES TO ASHES, BEACH TO BEACH!', 'AH, THE SMELL OF THE AUSSIE SUMMER!'];
+const HIT_LINES = ['OI! THAT STINGS!', 'ME EYES! ME BEAUTIFUL EYES!', 'IS THAT... COCONUT SCENTED?!', 'STOP THAT, YA DROPKICK!', "ARGH! IT'S IN ME MOUTH!",
+  "I'VE GOT SPF IN ME NOSTRILS!", 'MY COMPLEXION!', 'STOP MOISTURISING ME!', "THAT'S NOT FAIR DINKUM!", "I'M NOT CRYING, IT'S THE ZINC!",
+  'YOU WILL PAY FOR THAT, SUNSCREEN BOY!', "IT'S GREASY! WHY IS IT SO GREASY?!", 'NOT THE FACE! NOT THE FACE!', 'I WAS HERE FIRST! 4.6 BILLION YEARS!',
+  "I'M TELLING ME MUM! THE MILKY WAY!", 'I CAN FEEL MY PORES CLOSING!', 'BLEURGH! TASTES LIKE A CHEMIST!'];
+const REFLECT_LINES = ['HEY! NO FAIR! NO REFLECTING!', 'OW! WHO TAUGHT YOU THAT?!', "SPF FIFTY PLUS?! THAT'S CHEATING!", 'MY OWN RAYS! THE BETRAYAL!'];
+const TAUNTS = { slam: ['SUNNY SLAP!', 'HAVE A HIGH FIVE! IN THE FACE!'], laser: ['SAY CHEESE!', 'LOOK INTO MY EYES...', 'EXCELLENT...'], sweep: ['OUTTA THE WAY, SANDGROPER!'],
+  rain: ['HAVE SOME UV, ON THE HOUSE!', 'IT IS RAINING. FIRE.'], rays: ['TANNING TIME!', 'SLIP, SLOP, SLAP THIS!'], grab: ['COME TO DADDY...', 'GIMME A CUDDLE!'] };
+let sunVoice = null;
+const hasTTS = 'speechSynthesis' in window;
+function pickVoice() { try { const v = speechSynthesis.getVoices(); sunVoice = v.find(x => /en[-_]AU/i.test(x.lang)) || v.find(x => /en[-_]GB/i.test(x.lang)) || v.find(x => /^en/i.test(x.lang)) || null; } catch (e) { sunVoice = null; } }
+if (hasTTS) { pickVoice(); try { speechSynthesis.addEventListener('voiceschanged', pickVoice); } catch (e) {} }
+function speak(text) { // a slow, low, creepy delivery; the accent comes from the device's Australian voice when it has one
+  if (muted) return;
+  if (!hasTTS || !sunVoice) { text.split(/\s+/).slice(0, 8).forEach((w, i) => voice(rand(140, 200), rand(90, 130), 0.13, 0.13, i * 0.16)); return; }
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text.toLowerCase().replace(/!+/g, '!')); u.voice = sunVoice; u.lang = sunVoice.lang; u.pitch = 0.45; u.rate = 0.8; speechSynthesis.speak(u); } catch (e) {}
+}
+function hush() { if (hasTTS) try { speechSynthesis.cancel(); } catch (e) {} }
+function sunSay(text, out = true) { S.sunSay = { t: text, life: clamp(text.length * 0.08, 1.8, 3.4) }; if (out) speak(text); }
 
 /* ================= State ================= */
 const S = { mode: 'title', phase: 1, time: 0, shake: 0, flareCD: 0, shadeGlow: false, bg: BG[1], whiteA: 0, hurtA: 0,
@@ -505,10 +632,10 @@ function reset() {
     iframe: false, hurtT: 0, slowT: 0, shotT: 0, shotN: 0, face: 1, anim: 0, moving: false, dead: false,
     fireT: 0, eyesT: 0, scorch: 0, hairBurn: 0, shout: null, dual: 0, deathT: 0, deflectCD: 0, deflectT: 0 });
   Object.assign(boss, { hp: BOSS_MAX, trail: BOSS_MAX, state: 'fight', attack: null, cooldown: 2.4, last: '', next: null, invuln: 0, transition: 0,
-    face: null, hurtFaceT: 0, eyeGlow: 0, headGlow: 0, whiteHot: 0, flash: 0, beams: [], laughT: 0, sinkY: 0, headY: 42, shakeHead: false,
+    face: null, hurtFaceT: 0, reactFace: null, reelT: 0, angerT: 0, eyeGlow: 0, headGlow: 0, whiteHot: 0, flash: 0, beams: [], laughT: 0, sinkY: 0, headY: 42, shakeHead: false,
     hands: [-1, 1].map(s => ({ s, x: 240 + s * 118, fy: 160, z: 46, tx: 0, tfy: 0, tz: 0, rate: 5, pose: 'open', busy: false, direct: false, fire: false })) });
   Object.assign(S, { phase: 1, time: 0, shake: 0, flareCD: 0, shadeGlow: false, bg: BG[1], whiteA: 0, hurtA: 0, dmgAcc: 0, dmgT: 0, hurtAcc: 0,
-    endT: 0, hits: 0, snacks: 0, gullT: 9, call: null, blueA: 0, banner: null, toast: null, torched: 0, npcT: 1, seaT: 2, lifeT: 4, guard: null });
+    endT: 0, hits: 0, snacks: 0, gullT: 9, sunSay: null, sayCD: 0, killCD: 0, healPop: null, call: null, blueA: 0, banner: null, toast: null, torched: 0, npcT: 1, seaT: 2, lifeT: 4, guard: null });
 }
 
 /* ================= Effects ================= */
@@ -541,7 +668,7 @@ function fleeAll() { // everyone runs for it
 }
 function scorchNPCs(test) { for (const n of npcs) if (ALIVE[n.state] && test(n.x, n.y)) ignite(n); }
 function firePatch(x, y, dur = 1.3, rx = 14, ry = 6) { // burning sand: hurts while you stand in it
-  let t = 0;
+  let t = 0; if (S.time - (S.fwooshT || 0) > 0.3) { S.fwooshT = S.time; SFX.fwoosh(); }
   return addHz({ layer: 'floor', update(dt) {
       t += dt;
       if (Math.random() < 0.7) flames(x + rand(-rx, rx) * 0.8, y + rand(-ry, ry) * 0.5, 2, 4, 1);
@@ -553,7 +680,7 @@ function firePatch(x, y, dur = 1.3, rx = 14, ry = 6) { // burning sand: hurts wh
     } });
 }
 function impact(x, y, rx, ry, dmg, col = '#e6cd90') {
-  shake(4); SFX.boom(); puff(x, y, 12, col, 90, 80, 0.5); flames(x, y, rx * 2, 10, 22);
+  shake(4); SFX.slam(); puff(x, y, 12, col, 90, 80, 0.5); flames(x, y, rx * 2, 10, 22);
   firePatch(x, y, 1.4, rx * 0.7, ry * 0.7);
   scorchNPCs((px, py) => inEll(px, py, x, y, rx, ry));
   if (inEll(player.x, player.y, x, y, rx, ry)) hurt(dmg, { from: { x, y }, burn: 18, reflect: 60 });
@@ -576,7 +703,7 @@ function orb(x0, y0, tx, ty, dur) {
 function ray(x, warn) {
   let t = 0, hit = false;
   return addHz({ layer: 'air', update(dt) { t += dt;
-      if (t >= warn && !hit) { hit = true; shake(2); if (Math.abs(player.x - x) < 13) hurt(DMG.ray, { from: { x, y: player.y - 10 }, burn: 15, reflect: 25 }); puff(x, rand(FLOOR.y0, FLOOR.y1), 6, '#fff3b0', 40, 50, 0.4); flames(x, FLOOR.y1, 18, FLOOR.y1 - FLOOR.y0, 12); scorchNPCs(px => Math.abs(px - x) < 13); }
+      if (t >= warn && !hit) { hit = true; shake(2); if (S.time - (S.zapT || 0) > 0.05) { S.zapT = S.time; SFX.zap(); } if (Math.abs(player.x - x) < 13) hurt(DMG.ray, { from: { x, y: player.y - 10 }, burn: 15, reflect: 25 }); puff(x, rand(FLOOR.y0, FLOOR.y1), 6, '#fff3b0', 40, 50, 0.4); flames(x, FLOOR.y1, 18, FLOOR.y1 - FLOOR.y0, 12); scorchNPCs(px => Math.abs(px - x) < 13); }
       return t < warn + 0.32; },
     draw() {
       if (t < warn) { ctx.fillStyle = Math.floor(t * 14) % 2 ? '#fff3b0' : '#ff8a2a'; ctx.fillRect(x, HORIZON, 1, FLOOR.y1 + 8 - HORIZON); ctx.fillRect(x - 6, FLOOR.y1 + 6, 13, 2); }
@@ -679,7 +806,7 @@ const ATTACKS = {
       const h = a.h;
       if (a.t < 1.5) { h.tx = player.x; h.tfy = player.y; h.tz = 56; h.rate = 4.5; a.warn = a.t > 1.05; }
       else if (a.t < 1.68) { h.tz = 0; h.rate = 30; }
-      a.once(1.68, 'g', () => { h.z = 0; shake(3); SFX.boom(); puff(h.x, h.fy, 10, '#e6cd90', 70, 60, 0.4); flames(h.x, h.fy, 40, 10, 16); firePatch(h.x, h.fy, 1.2, 16, 6); scorchNPCs((px, py) => inEll(px, py, h.x, h.fy, 24, 11));
+      a.once(1.68, 'g', () => { h.z = 0; shake(3); SFX.slam(); puff(h.x, h.fy, 10, '#e6cd90', 70, 60, 0.4); flames(h.x, h.fy, 40, 10, 16); firePatch(h.x, h.fy, 1.2, 16, 6); scorchNPCs((px, py) => inEll(px, py, h.x, h.fy, 24, 11));
         if (inEll(player.x, player.y, h.x, h.fy, 24, 11) && hurt(DMG.grab, { from: { x: h.x, y: h.fy - 30 }, reflect: 70 })) toast('GRABBED!'); });
       if (a.t > 2.7) { freeHands(); return true; }
       return false;
@@ -687,7 +814,7 @@ const ATTACKS = {
   },
   flare() { // Solar Flare: get under an umbrella
     return script(a => {
-      a.once(0, 's', () => { banner('SEEK SHADE', 'GET UNDER AN UMBRELLA', 3.6); S.shadeGlow = true; boss.hands.forEach(h => { h.busy = true; h.pose = 'open'; h.tx = 240 + h.s * 150; h.tfy = 158; h.tz = 120; h.rate = 3; }); SFX.roar(); });
+      a.once(0, 's', () => { banner('SEEK SHADE', 'GET UNDER AN UMBRELLA', 3.6); sunSay('SOLAR FLARE! GET UNDER YA BROLLY!'); tone(90, 1400, 4.2, 0.05, 'sawtooth'); S.shadeGlow = true; boss.hands.forEach(h => { h.busy = true; h.pose = 'open'; h.tx = 240 + h.s * 150; h.tfy = 158; h.tz = 120; h.rate = 3; }); SFX.roar(); });
       boss.whiteHot = a.t < 4.2 ? clamp((a.t - 0.4) / 3.6, 0, 1) : Math.max(0, 1 - (a.t - 4.2) * 1.5);
       a.once(4.2, 'boom', () => { S.whiteA = 1; shake(8); SFX.flare(); S.shadeGlow = false;
         if (!inShade()) hurt(DMG.flare, { unblockable: true, burn: 40 }); else toast('SHADE. NICE.');
@@ -728,7 +855,7 @@ function deflect(dmg, quiet) { // UV shield: the attack bounces back at the Sun
   const P = player; if (P.deflectCD > 0) return; P.deflectCD = 0.3;
   for (const c of ['#bfeaff', '#ffffff', '#7fd0ff']) puff(P.x, P.y - 24, 6, c, 90, 90, 0.4);
   if (quiet) return;
-  P.deflectT = 0.25; hurtBoss(dmg); boss.hurtFaceT = 0.45; SFX.ding(); toast('BOUNCED OFF! -' + dmg, 0.9);
+  P.deflectT = 0.25; hurtBoss(dmg); sunReact(REFLECT_LINES); SFX.ding(); toast('BOUNCED OFF! -' + dmg, 0.9);
 }
 function hurt(dmg, o = {}) {
   const P = player;
@@ -741,14 +868,19 @@ function hurt(dmg, o = {}) {
   P.fireT = 1.4; P.eyesT = 0.6; P.scorch = Math.min(1, P.scorch + 0.4); P.hairBurn = Math.min(1, P.hairBurn + 0.3);
   P.shout = { t: pick(SHOUTS), life: 1.1 }; boss.laughT = 0.8;
   if (o.from) { const dx = P.x - o.from.x, dy = P.y - o.from.y, l = Math.hypot(dx, dy) || 1; P.kbx = dx / l * 180; P.kby = dy / l * 120; }
-  if (P.hp <= 0) { P.hp = 0; P.dead = true; P.deathT = 0; S.endT = 3.6; clearAttack(); boss.laughT = 99; P.shout = { t: 'NOT ME MULLET!', life: 1.4 }; SFX.scream(); }
+  if (P.hp <= 0) { P.hp = 0; P.dead = true; P.deathT = 0; S.endT = 3.6; clearAttack(); boss.laughT = 99; P.shout = { t: 'NOT ME MULLET!', life: 1.4 }; SFX.scream(); SFX.laugh(); sunSay('ANOTHER BOGAN BITES THE SAND! HAHAHA!'); }
   return true;
+}
+function sunReact(lines) { // pulls a face, reels back, then gets cranky
+  const B = boss; if (B.state !== 'fight') return;
+  B.hurtFaceT = 0.7; B.reactFace = pick(['hurt', 'shock', 'gross']); B.reelT = 0.35; B.angerT = 1.9; SFX.ouch();
+  if (S.sayCD <= 0) { S.sayCD = 3.5; sunSay(pick(lines)); }
 }
 function hurtBoss(d) {
   const B = boss;
   if (B.state !== 'fight' || B.invuln > 0) return;
   B.hp -= d; B.flash = 1; S.dmgAcc += d; S.dmgT = 1.6; S.hurtAcc += d;
-  if (S.hurtAcc >= 150 && !B.attack) { B.hurtFaceT = 0.4; S.hurtAcc = 0; }
+  if (S.hurtAcc >= 110) { S.hurtAcc = 0; sunReact(HIT_LINES); }
   if (B.hp <= 0) { B.hp = 0; bossDie(); return; }
   if (S.phase === 1 && B.hp <= BOSS_MAX * 0.6) phaseShift(2);
   else if (S.phase === 2 && B.hp <= BOSS_MAX * 0.25) phaseShift(3);
@@ -761,11 +893,12 @@ function clearAttack() {
 function phaseShift(n) {
   S.phase = n; clearAttack(); S.bg = BG[n]; S.whiteA = 0.7;
   boss.transition = 2.4; boss.invuln = 2.4; boss.cooldown = 0.5;
+  sunSay(n === 2 ? "NOW I'M CRANKY!" : 'TURNING UP THE HEAT, MATE!'); SFX.grumble();
   if (n === 2) banner('HIGH NOON', 'THE SUN IS GETTING ANGRY', 3);
   else { banner('HEAT DOME', 'NOWHERE IS SAFE BUT THE SHADE', 3); boss.next = 'flare'; }
   SFX.roar(); shake(6);
 }
-function bossDie() { clearAttack(); boss.state = 'dead'; S.endT = 4.5; S.bg = BG[4]; S.whiteA = 0.8; shake(8); SFX.roar(); S.banner = null; }
+function bossDie() { clearAttack(); sunSay("I'LL BE BACK... TOMORROW MORNING!"); boss.state = 'dead'; S.endT = 4.5; S.bg = BG[4]; S.whiteA = 0.8; shake(8); SFX.roar(); S.banner = null; }
 
 /* ================= Input ================= */
 const KEYMAP = { KeyW: 'u', ArrowUp: 'u', KeyS: 'd', ArrowDown: 'd', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
@@ -816,11 +949,11 @@ cv.addEventListener('contextmenu', e => e.preventDefault());
 }
 function start() { audioOn(); reset(); player.introFrame = null; S.mode = 'play'; $('#touch').hidden = !isTouch; banner('THE SUN', 'SCORCHER OF BACKS', 2.4); }
 function togglePause() {
-  if (S.mode === 'play') { S.mode = 'paused'; input.keys = {}; input.mouse = false; input.touchShoot = false; $('#touch').hidden = true; }
+  if (S.mode === 'play') { S.mode = 'paused'; hush(); input.keys = {}; input.mouse = false; input.touchShoot = false; $('#touch').hidden = true; }
   else if (S.mode === 'paused') { S.mode = 'play'; $('#touch').hidden = !isTouch; }
 }
 $('#pauseBtn').addEventListener('click', togglePause);
-$('#muteBtn').addEventListener('click', () => { muted = !muted; $('#muteBtn').textContent = muted ? 'SOUND OFF' : 'SOUND ON'; audioOn(); });
+$('#muteBtn').addEventListener('click', () => { muted = !muted; $('#muteBtn').textContent = muted ? 'SOUND OFF' : 'SOUND ON'; audioOn(); if (master) master.gain.value = muted ? 0 : 1; if (muted) hush(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && S.mode === 'play') togglePause(); });
 
 
@@ -858,9 +991,10 @@ function updateIntro(dt) {
   else if (t >= 12.6) boss.sinkY = 0;
   // maniacal laugh, eyes light up
   I.laugh = t >= 12.6 && t < 14.4;
-  if (I.laugh) { once('laugh', () => SFX.laugh()); boss.face = t < 13.5 ? 'grin' : 'rage'; boss.eyeGlow = clamp((t - 13.2) / 0.8, 0, 1); }
+  if (I.laugh) { once('laugh', () => { SFX.laugh(); sunSay('HA HA HA HA HA!', false); }); boss.face = t < 13.5 ? 'grin' : 'rage'; boss.eyeGlow = clamp((t - 13.2) / 0.8, 0, 1); }
   // stomps up to the beach
-  STOMPS.forEach((st, i) => { if (t >= st) once('st' + i, () => { shake(6); SFX.boom(); I.from = { k: I.k, b: I.baseY }; I.stepT = st; I.stepI = i; }); });
+  if (t >= 14.4) once('excellent', () => sunSay("EXCELLENT... WHO'S READY FOR A TAN?"));
+  STOMPS.forEach((st, i) => { if (t >= st) once('st' + i, () => { shake(6); SFX.slam(); I.from = { k: I.k, b: I.baseY }; I.stepT = st; I.stepI = i; }); });
   if (I.stepT != null) {
     const e = clamp((t - I.stepT) / 0.25, 0, 1), n = (I.stepI + 1) / STOMPS.length;
     I.k = I.from.k + (FAR_K + (1 - FAR_K) * n - I.from.k) * e; I.baseY = I.from.b + (FAR_Y + (SHORE - FAR_Y) * n - I.from.b) * e;
@@ -957,13 +1091,13 @@ function updateDrops(dt) {
 function updateBoss(dt) {
   const B = boss;
   B.headY = 42 + Math.round(Math.sin(S.time * 2) * 1.5) + B.sinkY;
-  B.flash = Math.max(0, B.flash - dt * 6); B.hurtFaceT -= dt; B.laughT -= dt;
+  B.flash = Math.max(0, B.flash - dt * 6); B.hurtFaceT -= dt; B.laughT -= dt; B.reelT -= dt; B.angerT -= dt; S.sayCD -= dt; S.killCD -= dt;
   if (B.state === 'dead') { B.sinkY += dt * (10 + B.sinkY * 0.5); if (Math.random() < 0.5) puff(rand(180, 300), SHORE, 2, C.white, 30, 40, 0.5); }
   else if (S.mode === 'play' && !player.dead) {
     B.invuln -= dt; S.flareCD -= dt;
     if (B.transition > 0) { B.transition -= dt; B.shakeHead = B.transition > 0; B.headGlow = B.transition > 0 ? 1 : 0; }
     else if (B.attack) { B.attack.t += dt * (S.phase === 3 ? 1.1 : 1); if (B.attack.update(dt)) { B.attack = null; B.cooldown = GAP[S.phase] * rand(0.8, 1.2); } }
-    else { B.cooldown -= dt; if (B.cooldown <= 0) { const k = chooseAttack(); B.last = k; Object.assign(B, { face: null, eyeGlow: 0, headGlow: 0, beams: [] }); B.attack = ATTACKS[k](); } }
+    else { B.cooldown -= dt; if (B.cooldown <= 0) { const k = chooseAttack(); B.last = k; Object.assign(B, { face: null, eyeGlow: 0, headGlow: 0, beams: [] }); B.attack = ATTACKS[k](); if (TAUNTS[k] && S.sayCD <= 0 && Math.random() < 0.4) { S.sayCD = 3; sunSay(pick(TAUNTS[k])); } } }
   }
   for (const h of B.hands) {
     if (B.state === 'dead') { h.busy = false; h.direct = false; }
@@ -1037,6 +1171,10 @@ function ignite(n) {
   n.state = 'burn'; n.t = 0; n.shout = { t: pick(SCREAMS), life: 1.2 }; S.torched++;
   if (n.dog) n.dog.flee = true;
   if (S.mode === 'play' || S.mode === 'intro') SFX.scream();
+  if (S.mode === 'play' && boss.state === 'fight' && !player.dead) {
+    boss.hp = Math.min(BOSS_MAX, boss.hp + KILL_HEAL); S.healPop = { v: (S.healPop && S.healPop.life > 0 ? S.healPop.v : 0) + KILL_HEAL, life: 1.6 }; boss.laughT = 1.6;
+    if (S.killCD <= 0) { S.killCD = 2.5; S.sayCD = 2.5; SFX.laugh(); sunSay(pick(KILL_LINES)); }
+  }
 }
 function updateNPCs(dt) {
   S.npcT -= dt;
@@ -1119,9 +1257,9 @@ function drawHand(h) {
   if (h.fire) spr(TINT.handR, f, h.x, y, { flip: h.s > 0, alpha: 0.3 + 0.15 * Math.sin(S.time * 20) });
 }
 function drawBoss() {
-  const B = boss, jx = B.shakeHead ? Math.round(rand(-1, 1)) : 0, hx = 240 + jx, hy = B.headY;
+  const B = boss, rl = B.reelT > 0 ? Math.sin(B.reelT / 0.35 * Math.PI) : 0, jx = B.shakeHead ? Math.round(rand(-1, 1)) : Math.round(rand(-2, 2) * rl), hx = 240 + jx, hy = B.headY - Math.round(8 * rl);
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, SHORE + 1); ctx.clip();
-  const ty = 162 + B.sinkY;
+  const ty = 162 + B.sinkY - Math.round(3 * rl);
   spr('sun_torso', 0, 240, ty);
   for (const s of splats) if (s.on === 'torso') { ctx.fillStyle = C.white; ctx.fillRect(240 + s.ox, hy + s.oy, s.s + 1, s.s + 1); }
   const heat = S.phase === 3 && B.state === 'fight' ? 0.15 + 0.08 * Math.sin(S.time * 6) : 0;
@@ -1129,13 +1267,23 @@ function drawBoss() {
   if (B.flash > 0 || B.whiteHot > 0) spr(TINT.torsoW, 0, 240, ty, { alpha: Math.max(B.flash * 0.5, B.whiteHot) });
   spr('sun_head', 0, hx, hy, { ay: 80 / 140 });
   if (heat || B.headGlow) spr(TINT.headR, 0, hx, hy, { ay: 80 / 140, alpha: Math.max(heat, B.headGlow * (0.15 + 0.12 * Math.sin(S.time * 14))) });
-  const face = B.state === 'dead' ? 'dead' : B.hurtFaceT > 0 ? 'hurt' : B.face || (B.laughT > 0 ? 'grin' : ['smug', 'smug', 'grin', 'rage'][S.phase]);
+  const face = B.state === 'dead' ? 'dead' : B.hurtFaceT > 0 ? (B.reactFace || 'hurt') : B.face || (B.laughT > 0 ? 'grin' : B.angerT > 0 ? 'rage' : ['smug', 'smug', 'grin', 'rage'][S.phase]);
   spr('sun_face', FACE_KINDS.indexOf(face), hx, hy + 4, { ay: 0.5 });
   for (const s of splats) if (s.on === 'head') { ctx.fillStyle = C.white; ctx.fillRect(hx + s.ox, hy + s.oy, s.s + 1, s.s + 1); ctx.fillStyle = '#d6e4ea'; ctx.fillRect(hx + s.ox, hy + s.oy + s.s + 1, s.s + 1, 1); }
   if (B.flash > 0 || B.whiteHot > 0) spr(TINT.headW, 0, hx, hy, { ay: 80 / 140, alpha: Math.max(B.flash * 0.45, B.whiteHot) });
   if (B.eyeGlow > 0) for (const s of [-1, 1]) { ctx.fillStyle = `rgba(255,80,30,${0.5 * B.eyeGlow})`; ELL(ctx, hx + s * 18, hy - 2, 6 + B.eyeGlow * 4, 5 + B.eyeGlow * 3); ctx.fill(); ctx.fillStyle = '#fff3b0'; ctx.fillRect(hx + s * 18 - 1, hy - 3, 3, 3); }
   if (B.state === 'dead') B.hands.forEach(h => { drawArm(h); drawHand(h); });
   ctx.restore();
+}
+function wrapText(t, n) { const out = []; let cur = ''; for (const w of t.split(' ')) { if (cur && (cur + ' ' + w).length > n) { out.push(cur); cur = w; } else cur = cur ? cur + ' ' + w : w; } if (cur) out.push(cur); return out; }
+function sunBubble(t, hx, hy, far) { // the Sun talks in brand yellow, beside its head
+  ctx.font = `8px ${PIX}`; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  const lines = wrapText(t, far ? 26 : 19), w = Math.max(...lines.map(l => l.length)) * 8 + 10, h = lines.length * 11 + 5;
+  const bx = Math.round(far ? clamp(hx - w / 2, 4, W - w - 4) : hx + 72), by = Math.round(far ? Math.max(22, hy - h - 6) : clamp(hy - 26, 22, H - h));
+  ctx.fillStyle = C.red; ctx.fillRect(bx - 2, by - 2, w + 4, h + 4);
+  if (!far) { ctx.beginPath(); ctx.moveTo(bx, by + h - 10); ctx.lineTo(hx + 44, hy + 20); ctx.lineTo(bx, by + h - 2); ctx.fill(); }
+  ctx.fillStyle = '#FFE800'; ctx.fillRect(bx, by, w, h); ctx.fillStyle = C.ink;
+  lines.forEach((l, i) => ctx.fillText(l, bx + 5, by + 4 + i * 11));
 }
 function bubble(t, x, y) {
   ctx.font = `8px ${PIX}`; const w = t.length * 8 + 6, bx = Math.round(clamp(x - w / 2, 2, W - w - 2)), by = Math.round(y - 13);
@@ -1224,7 +1372,7 @@ function drawWorld() {
   const G = S.guard;
   if (G && S.mode !== 'title') list.push({ y: G.y, draw: () => { shadow(G.x, G.y, 8, 2); spr('npc_lifesaver', G.state === 'drop' ? 0 : G.anim, G.x, G.y + 1, { flip: G.dir < 0 }); } });
   list.sort((a, b) => a.y - b.y).forEach(o => o.draw());
-  if (S.intro && S.intro.laugh) bubble('HA HA HA HA HA!', 240, S.intro.baseY - (SHORE - B.headY + 52) * S.intro.k);
+  if (S.sunSay) { const far = S.intro && S.intro.k < 0.99; sunBubble(S.sunSay.t, 240, far ? S.intro.baseY - (SHORE - B.headY + 50) * S.intro.k : B.headY, far); }
   for (const n of npcs) if (n.shout) bubble(n.shout.t, n.x, n.y - (n.lying ? 22 : 44));
   if (G && G.shout && S.mode !== 'title') bubble(G.shout.t, G.x, G.y - 44);
   if (P.shout && S.mode !== 'title') bubble(P.shout.t, P.x, P.y - 54);
@@ -1311,6 +1459,7 @@ function drawHUD() {
   ctx.fillStyle = '#c4281a'; ctx.fillRect(90, 261, Math.round(300 * B.hp / BOSS_MAX), 4);
   S.dmgT -= 1 / 60; if (S.dmgT <= 0) S.dmgAcc = 0;
   if (S.dmgAcc > 0) txt(String(Math.round(S.dmgAcc)), 392, 250, '#ffe08a', 8, 'right');
+  if (S.healPop) txt('+' + S.healPop.v + ' HP', 90, 240, Math.floor(S.time * 8) % 2 ? '#5fe08a' : '#ffffff', 8, 'left');
   if (S.call) {
     const c = S.call, k = Math.min(1, (2.2 - c.t) * 6), fl = Math.floor(S.time * 10) % 2;
     ctx.fillStyle = `rgba(22,18,15,${0.55 * k})`; ctx.fillRect(0, 82, W, 58);
@@ -1356,7 +1505,7 @@ function frame(now) {
       if (S.endT > 0) {
         S.endT -= dt;
         if (S.endT <= 0) {
-          S.mode = player.dead ? 'dead' : 'won'; $('#touch').hidden = true;
+          S.mode = player.dead ? 'dead' : 'won'; $('#touch').hidden = true; (player.dead ? SFX.lose : SFX.win)();
           deadLine = ['SHOULD HAVE SLATHERED.', 'SLIP, SLOP, SLAP, ROLL.', 'THE SUN IS NOT YOUR FRIEND.', 'REAPPLY EVERY TWO HOURS.'][Math.floor(Math.random() * 4)];
         }
       }
@@ -1370,9 +1519,13 @@ function frame(now) {
     } else updateBoss(dt);
     input.roll = false;
     updateNPCs(dt); updateSea(dt);
+    if (S.sunSay && (S.sunSay.life -= dt) <= 0) S.sunSay = null;
+    if (S.healPop && (S.healPop.life -= dt) <= 0) S.healPop = null;
+    if (S.mode === 'intro') { S.sayCD -= dt; }
     updateParts(dt);
     S.shake = Math.max(0, S.shake - dt * 14); S.whiteA = Math.max(0, S.whiteA - dt * 1.4); S.hurtA = Math.max(0, S.hurtA - dt * 3);
   }
+  setMusic(wantedMusic());
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
   const sx = S.shake ? Math.round(rand(-S.shake, S.shake)) : 0, sy = S.shake ? Math.round(rand(-S.shake, S.shake)) : 0;
   ctx.translate(sx, sy);
@@ -1402,7 +1555,7 @@ function fit() {
 addEventListener('resize', fit); fit();
 // debugging handle for playtesting from the console
 if (isTouch) document.body.classList.add('touch');
-window.__slather = { finishIntro, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
+window.__slather = { finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
 reset();
 if (document.fonts) document.fonts.load(`8px ${PIX}`).catch(() => {});
 if (document.fonts) document.fonts.load('44px Anton').catch(() => {});
