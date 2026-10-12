@@ -340,8 +340,9 @@ sheet('fireball', 14, 14, 2, (g, i) => {
 function drawPerson(g, o, f) { // side view, facing right, feet on the bottom row
   const R = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
   const s = [0, 1, 0, -1][f], b = f % 2 ? 0 : 1, m = o.muscle ? 2 : 0, legC = o.legs || o.skin;
-  if (o.item === 'surf') { g.fillStyle = '#fffdf2'; ELL(g, 6, 22 + b, 3, 15); g.fill(); g.fillStyle = '#2f9bd0'; g.fillRect(6, 9 + b, 1, 26); }
-  if (o.hairStyle === 'long') R(o.hair, 8, 5 + b, 4, 14);
+  if (o.item === 'surf') { g.fillStyle = o.boardCol || '#fffdf2'; ELL(g, 6, 22 + b, 3, 15); g.fill(); g.fillStyle = '#2f9bd0'; g.fillRect(6, 9 + b, 1, 26); }
+  if (o.hairStyle === 'long' || o.hairStyle === 'sunhat') R(o.hair, 8, 5 + b, 4, 14);
+  if (o.hairStyle === 'ponytail' || o.pony) { R(o.hair, 7, 5 + b, 3, 7); R(o.hair, 6, 11 + b, 2, 3); }
   R(legC, 10 - s * 2, 28, 3, 10); R(legC, 12 + s * 2, 28, 3, 10);
   R(o.feet || '#3a2a1c', 10 - s * 2, 38, 4, 2); R(o.feet || '#3a2a1c', 12 + s * 2, 38, 4, 2);
   R(o.top || o.skin, 9 - m, 13 + b, 8 + m * 2, 11);
@@ -352,7 +353,14 @@ function drawPerson(g, o, f) { // side view, facing right, feet on the bottom ro
   R(o.armC || o.skin, 12 + s, 14 + b, 3 + (m ? 1 : 0), 10);
   R(o.skin, 10, 4 + b, 7, 9);
   if (o.hairStyle === 'cap') { R(o.cap1, 10, 2 + b, 7, 3); R(o.cap2, 13, 2 + b, 4, 3); R(o.cap1, 16, 4 + b, 3, 1); }
+  else if (o.hairStyle === 'sunhat') { R(o.hat, 10, 0 + b, 7, 3); R(o.hat, 7, 3 + b, 13, 2); R(o.hatBand, 10, 2 + b, 7, 1); }
   else { R(o.hair, 10, 3 + b, 7, 3); R(o.hair, 10, 3 + b, 2, 6); }
+  if (o.tat) { // ink: a sleeve piece on the arm, something on the calf, a little one at the neck
+    const ink = '#2b3d6e';
+    if (!o.armC) { R(ink, 12 + s + (m ? 1 : 0), 16 + b, 2, 2); R(ink, 13 + s, 19 + b, 1, 2); }
+    if (!o.legs) R(ink, 12 + s * 2, 31, 2, 3);
+    R(ink, 11, 13 + b, 2, 1);
+  }
   R(C.ink, 15, 7 + b, 1, 1);
   if (o.sunnies) R(C.ink, 13, 7 + b, 4, 1);
   if (o.item === 'bodyboard') R('#2a6fd6', 15, 14 + b, 4, 13);
@@ -364,12 +372,18 @@ const NPC_TYPES = {
   surfer: { skin: '#e0a77e', hair: '#d9b25a', top: '#1b1b22', bottom: '#1b1b22', legs: '#1b1b22', armC: '#1b1b22', long: true, item: 'surf' },
   bodyboarder: { skin: '#f4c4a0', hair: '#b0602a', bottom: '#3cc46c', long: true, item: 'bodyboard' },
   muscle: { skin: '#c9824e', skinD: '#a5653a', hair: '#222222', muscle: true, bottom: '#e2361f', sunnies: true, item: 'boombox' },
-  jersey: { skin: '#e9b38f', hair: '#3a2a1c', top: '#1f7a3a', stripe: '#ffd21f', bottom: '#f4f0e2', feet: '#1f7a3a' },
-  jersey2: { skin: '#c98a5e', hair: '#151515', top: '#7a1f3a', stripe: '#ffffff', bottom: '#f4f0e2', feet: '#7a1f3a' },
   walker: { skin: '#f2c3a0', hair: '#888888', hairStyle: 'cap', cap1: '#ffffff', cap2: '#2f6fd1', top: '#7fc6a4', bottom: '#c8b08a', long: true },
+  onepiece: { skin: '#d9a07a', hair: '#3a2418', hairStyle: 'long', top: '#2f6fd1', bottom: '#2f6fd1' },
+  surfergirl: { skin: '#f0c09a', hair: '#e8c35a', hairStyle: 'ponytail', top: '#1b1b22', bottom: '#1b1b22', legs: '#1b1b22', armC: '#1b1b22', long: true, item: 'surf', boardCol: '#ff9fc4' },
+  bodyboardgirl: { skin: '#c98a5e', hair: '#151515', hairStyle: 'ponytail', bikini: '#3cc46c', bottom: '#ff8a1f', long: true, item: 'bodyboard' },
+  walkerf: { skin: '#f2c3a0', hair: '#b5652a', hairStyle: 'sunhat', hat: '#f3e3b0', hatBand: '#e2361f', top: '#ff4fa0', bottom: '#fffdf2', long: true },
+  lifesaverf: { skin: '#e8b48a', hair: '#e8c35a', hairStyle: 'cap', pony: true, cap1: '#e2361f', cap2: '#ffd21f', top: '#ffd21f', bottom: '#e2361f' },
   lifesaver: { skin: '#e8a982', hair: '#222222', hairStyle: 'cap', cap1: '#e2361f', cap2: '#ffd21f', top: '#ffd21f', bottom: '#e2361f' },
 };
-for (const k in NPC_TYPES) sheet('npc_' + k, 28, 40, 4, (g, f) => drawPerson(g, NPC_TYPES[k], f), { outline: true });
+for (const k in NPC_TYPES) {
+  sheet('npc_' + k, 28, 40, 4, (g, f) => drawPerson(g, NPC_TYPES[k], f), { outline: true });
+  sheet('npc_' + k + '_tat', 28, 40, 4, (g, f) => drawPerson(g, { ...NPC_TYPES[k], tat: true }, f), { outline: true });
+}
 function drawCrab(g, f, col, colD) {
   const R = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
   g.fillStyle = col; ELL(g, 7, 6, 4, 2.5); g.fill(); R(colD, 4, 7, 7, 1);
@@ -377,6 +391,15 @@ function drawCrab(g, f, col, colD) {
   R(C.ink, 5, 2, 1, 2); R(C.ink, 8, 2, 1, 2);
   for (const x of f ? [3, 6, 9] : [4, 7, 10]) R(colD, x, 8, 1, 2);
 }
+sheet('sandcastle', 26, 24, 2, (g, f) => { // frame 1: knocked flat
+  const R = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(x, y, w, h); }, S1 = '#e6c88a', S2 = '#c9a35f';
+  if (f) { g.fillStyle = S1; ELL(g, 13, 19, 11, 4); g.fill(); g.fillStyle = S2; ELL(g, 9, 20, 4, 2); g.fill(); ELL(g, 17, 18, 3, 2); g.fill(); R(S1, 6, 15, 4, 3); R(S1, 15, 14, 3, 3); R('#e2361f', 20, 16, 3, 2); return; }
+  R(S1, 2, 15, 22, 8); R(S2, 2, 21, 22, 2);
+  R(S1, 3, 8, 6, 8); R(S1, 17, 8, 6, 8); R(S1, 10, 4, 6, 12);
+  for (const x of [3, 7, 17, 21, 10, 14]) R(S1, x, x === 10 || x === 14 ? 2 : 6, 2, 2);
+  R(S2, 8, 9, 1, 7); R(S2, 22, 9, 1, 7); R(S2, 15, 5, 1, 11); R('#7a5a35', 12, 17, 2, 5);
+  R('#5c4630', 13, -1, 1, 5); R('#e2361f', 14, -1, 4, 2);
+}, { outline: true });
 sheet('crab', 14, 10, 2, (g, f) => drawCrab(g, f, '#e88a3c', '#b85a22'), { outline: true });
 sheet('crab_cooked', 14, 10, 1, g => drawCrab(g, 0, '#e2361f', '#9a1f12'), { outline: true });
 sheet('jeep', 54, 30, 3, (g, f) => { // lifeguard jeep facing right; frame 2 has an empty driver's seat
@@ -640,9 +663,9 @@ function sunSay(text) { S.sunSay = { t: text, life: clamp(text.length * 0.07, 2,
 /* ================= State ================= */
 const S = { mode: 'title', phase: 1, time: 0, shake: 0, flareCD: 0, shadeGlow: false, bg: BG[1], whiteA: 0, hurtA: 0,
   dmgAcc: 0, dmgT: 0, hurtAcc: 0, endT: 0, hits: 0, snacks: 0, bottleT: 0, gullT: 0, banner: null, toast: null, blink: 0 };
-const input = { keys: {}, stick: { x: 0, y: 0 }, mouse: false, touchShoot: false, shoot: false, roll: false };
+const input = { keys: {}, stick: { x: 0, y: 0 }, fire: false, roll: false };
 const player = {}, boss = {};
-const hazards = [], drops = [], parts = [], splats = [], pickups = [], gulls = [], npcs = [], sea = [], groups = [], vehicles = [], crabs = [];
+const hazards = [], drops = [], parts = [], splats = [], pickups = [], gulls = [], npcs = [], sea = [], groups = [], vehicles = [], crabs = [], castles = [];
 const UMBRELLAS = [{ x: 92, y: 236 }, { x: 388, y: 236 }, { x: 240, y: 192 }];
 const inEll = (px, py, x, y, rx, ry) => ((px - x) / rx) ** 2 + ((py - y) / ry) ** 2 < 1;
 const inShade = () => UMBRELLAS.some(u => inEll(player.x, player.y, u.x, u.y + 2, 26, 11));
@@ -650,8 +673,9 @@ const inShade = () => UMBRELLAS.some(u => inEll(player.x, player.y, u.x, u.y + 2
 function reset() {
   hazards.length = drops.length = parts.length = splats.length = pickups.length = gulls.length = npcs.length = sea.length = groups.length = vehicles.length = 0;
   crabs.length = 0; for (let i = 0; i < 3; i++) crabs.push(newCrab(rand(30, 450)));
+  castles.length = 0; for (let i = 0; i < 2; i++) castles.push(newCastle());
   Object.assign(player, { x: 240, y: 226, vx: 0, vy: 0, kbx: 0, kby: 0, hp: PLAYER_HP, spf: 0, burn: 0, rollT: 0, rollCD: 0, rdx: 0, rdy: 0,
-    iframe: false, hurtT: 0, slowT: 0, shotT: 0, shotN: 0, face: 1, anim: 0, moving: false, dead: false,
+    iframe: false, hurtT: 0, slowT: 0, shotT: 0, squirtCD: 0, shootPose: 0, burst: 0, queued: false, shotN: 0, face: 1, anim: 0, moving: false, dead: false,
     held: false, liftZ: 0, fireT: 0, eyesT: 0, scorch: 0, hairBurn: 0, shout: null, dual: 0, deathT: 0, deflectCD: 0, deflectT: 0 });
   Object.assign(boss, { hp: BOSS_MAX, trail: BOSS_MAX, state: 'fight', attack: null, cooldown: 2.4, last: '', next: null, invuln: 0, transition: 0,
     face: null, hurtFaceT: 0, reactFace: null, reelT: 0, angerT: 0, eyeGlow: 0, headGlow: 0, whiteHot: 0, flash: 0, beams: [], laughT: 0, sinkY: 0, headY: 42, shakeHead: false,
@@ -691,6 +715,7 @@ function fleeAll() { // everyone runs for it
 function scorchNPCs(test) {
   for (const n of npcs) if (ALIVE[n.state] && test(n.x, n.y)) ignite(n);
   for (const v of vehicles) if (v.state === 'drive' && (test(v.x, v.y) || test(v.x - 18, v.y) || test(v.x + 18, v.y))) igniteJeep(v);
+  for (const c of castles) if (!c.flat && test(c.x, c.y)) flattenCastle(c);
   for (const c of crabs) if (!c.cooked && test(c.x, c.y)) { c.cooked = 0.01; puff(c.x, c.y - 4, 4, '#dddddd', 10, 20, 0.6, -20); }
 }
 function firePatch(x, y, dur = 1.3, rx = 14, ry = 6) { // burning sand: hurts while you stand in it
@@ -978,23 +1003,22 @@ addEventListener('keydown', e => {
   if (e.code === 'Space') e.preventDefault();
   if (e.repeat) return;
   if (S.mode === 'play' && (e.code === 'Space' || e.code === 'ShiftLeft' || e.code === 'ShiftRight')) input.roll = true;
-  if (e.code === 'KeyJ' || e.code === 'KeyK') input.keys.shoot = true;
+  if (e.code === 'KeyJ' || e.code === 'KeyK') input.fire = true;
   if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
   if ((e.code === 'Enter' || e.code === 'Space') && S.mode === 'intro') finishIntro();
   else if ((e.code === 'Enter' || e.code === 'Space') && S.mode === 'title') startIntro();
   else if ((e.code === 'Enter' || e.code === 'Space') && ['dead', 'won'].includes(S.mode)) start();
 });
-addEventListener('keyup', e => { if (KEYMAP[e.code]) input.keys[KEYMAP[e.code]] = false; if (e.code === 'KeyJ' || e.code === 'KeyK') input.keys.shoot = false; });
-addEventListener('blur', () => { input.keys = {}; input.mouse = false; if (S.mode === 'play') togglePause(); });
+addEventListener('keyup', e => { if (KEYMAP[e.code]) input.keys[KEYMAP[e.code]] = false; });
+addEventListener('blur', () => { input.keys = {}; if (S.mode === 'play') togglePause(); });
 cv.addEventListener('pointerdown', e => {
   audioOn();
   if (S.mode === 'title') { startIntro(); return; }
   if (S.mode === 'intro') { finishIntro(); return; }
   if (['dead', 'won'].includes(S.mode)) { start(); return; }
   if (S.mode === 'paused') { togglePause(); return; }
-  if (e.pointerType === 'mouse' && e.button === 0) input.mouse = true;
+  if (e.pointerType === 'mouse' && e.button === 0) input.fire = true;
 });
-addEventListener('pointerup', e => { if (e.pointerType === 'mouse') input.mouse = false; });
 cv.addEventListener('contextmenu', e => e.preventDefault());
 {
   const zone = $('#stickZone'), base = $('#stickBase'), knob = $('#stickKnob');
@@ -1015,12 +1039,12 @@ cv.addEventListener('contextmenu', e => e.preventDefault());
     const up = () => { el.classList.remove('on'); off && off(); };
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
   };
-  hold($('#tShoot'), () => input.touchShoot = true, () => input.touchShoot = false);
+  hold($('#tShoot'), () => input.fire = true);
   hold($('#tRoll'), () => input.roll = true);
 }
 function start() { audioOn(); reset(); player.introFrame = null; S.mode = 'play'; $('#touch').hidden = !isTouch; banner('THE SUN', 'SCORCHER OF BACKS', 2.4); }
 function togglePause() {
-  if (S.mode === 'play') { S.mode = 'paused'; input.keys = {}; input.mouse = false; input.touchShoot = false; $('#touch').hidden = true; }
+  if (S.mode === 'play') { S.mode = 'paused'; input.keys = {};  $('#touch').hidden = true; }
   else if (S.mode === 'paused') { S.mode = 'play'; $('#touch').hidden = !isTouch; }
 }
 $('#pauseBtn').addEventListener('click', togglePause);
@@ -1105,7 +1129,7 @@ function updatePlayer(dt) {
   let ix = (input.keys.r ? 1 : 0) - (input.keys.l ? 1 : 0) + input.stick.x;
   let iy = (input.keys.d ? 1 : 0) - (input.keys.u ? 1 : 0) + input.stick.y;
   const il = Math.hypot(ix, iy); if (il > 1) { ix /= il; iy /= il; }
-  const px = P.x, py = P.y, shooting = input.shoot;
+  const px = P.x, py = P.y, shooting = P.shootPose > 0;
   P.hurtT -= dt; P.rollCD -= dt; P.slowT -= dt; P.shotT -= dt; P.dual -= dt;
   P.fireT -= dt; P.eyesT -= dt; P.scorch = Math.max(0, P.scorch - dt * 0.05); P.hairBurn = Math.max(0, P.hairBurn - dt * 0.012);
   if (P.fireT > 0) flames(P.x, P.y - 6, 12, 38, 2);
@@ -1131,7 +1155,11 @@ function updatePlayer(dt) {
   if (Math.abs(ix) > 0.2) P.face = Math.sign(ix);
   P.moving = Math.hypot(ix, iy) > 0.15 && P.rollT <= 0;
   P.anim += dt;
-  if (shooting && P.rollT <= 0 && P.shotT <= 0) { fireDrop(); P.shotT = 0.055; }
+  // each click or tap is one squirt: a short burst of three drops, with a short cooldown (a click during the cooldown is queued)
+  P.squirtCD -= dt; P.shootPose -= dt;
+  if (input.fire) P.queued = true;
+  if (P.queued && P.rollT <= 0 && P.squirtCD <= 0) { P.queued = false; P.burst = 3; P.squirtCD = 0.16; P.shootPose = 0.3; }
+  if (P.burst > 0 && P.shotT <= 0) { fireDrop(); P.burst--; P.shotT = 0.04; }
   P.deflectCD -= dt; P.deflectT -= dt;
   if (P.spf > 0) { const was = P.spf; P.spf -= dt; if (was > 2 && P.spf <= 2) toast('SPF WEARING OFF!', 1.6); if (P.spf <= 0) toast('UV SHIELD GONE', 1.2); }
   else if (boss.state === 'fight' && !(S.phase === 3 && inShade())) P.burn += UV_RATE[S.phase] * dt;
@@ -1213,7 +1241,7 @@ function updatePickups(dt) {
 function spawnGuard() { // a lifesaver jogs in and drops sunscreen
   const dir = Math.random() < 0.5 ? 1 : -1;
   const twin = player.dual <= 0 && Math.random() < [0, 0.3, 0.38, 0.45][S.phase];
-  S.guard = { x: dir > 0 ? -20 : W + 20, y: rand(FLOOR.y0 + 8, FLOOR.y1 - 6), dir, state: 'in', t: 0, anim: 0, dropX: rand(80, 400), twin, shout: null };
+  S.guard = { kind: pick(['lifesaver', 'lifesaverf']), tat: Math.random() < 0.5, x: dir > 0 ? -20 : W + 20, y: rand(FLOOR.y0 + 8, FLOOR.y1 - 6), dir, state: 'in', t: 0, anim: 0, dropX: rand(80, 400), twin, shout: null };
   SFX.whistle();
 }
 function updateGuard(dt) {
@@ -1228,24 +1256,20 @@ function updateGuard(dt) {
   } else if (g.state === 'drop') { if (g.t > 0.7) g.state = 'out'; }
   else { g.x += g.dir * 92 * dt; g.anim += dt * 10; if (g.x < -30 || g.x > W + 30) S.guard = null; }
 }
-const NPC_KINDS = ['bikini', 'boardies', 'surfer', 'bodyboarder', 'muscle', 'walker'];
+const NPC_KINDS = ['bikini', 'onepiece', 'surfergirl', 'bodyboardgirl', 'walkerf', 'boardies', 'surfer', 'bodyboarder', 'muscle', 'walker']; // half women, half men
+const npcSprite = n => 'npc_' + n.kind + (n.tat ? '_tat' : '');
 const SCREAMS = ['AAAH!', 'MY TAN!', 'NOOO!', 'HOT HOT HOT!', 'MUMMY!', 'WHY ME?!'];
 const TOWELS = [['#e2361f', '#fffdf2'], ['#2f6fd1', '#ffd21f'], ['#3cc46c', '#fffdf2'], ['#ff4fa0', '#ffe800']];
 function makeNPC(kind, x, y, dir, extra = {}) {
-  const n = { kind, x, y, dir, speed: rand(26, 40), state: 'walk', t: 0, anim: rand(0, 4), dog: null, shout: null, bake: false, spot: 0, towel: null, lying: false, lieFor: 0, liftZ: 0, ...extra };
+  const n = { kind, x, y, dir, tat: Math.random() < 0.5, speed: rand(26, 40), state: 'walk', t: 0, anim: rand(0, 4), dog: null, shout: null, bake: false, spot: 0, towel: null, lying: false, lieFor: 0, liftZ: 0, ...extra };
   npcs.push(n); return n;
 }
 function spawnFrisbee() { // two mates walk in from opposite sides, stop and throw a frisbee
   const playFor = rand(16, 26);
-  const a = makeNPC(pick(['bikini', 'boardies']), -20, rand(FLOOR.y0 + 8, FLOOR.y1 - 8), 1, { speed: 34, frisbee: true, spot: rand(70, 190), playFor, exitDir: -1 });
-  const b = makeNPC(pick(['boardies', 'bodyboarder', 'bikini']), W + 20, rand(FLOOR.y0 + 8, FLOOR.y1 - 8), -1, { speed: 34, frisbee: true, spot: rand(290, 410), playFor, exitDir: 1 });
+  const a = makeNPC(pick(['bikini', 'onepiece', 'bodyboardgirl', 'boardies']), -20, rand(FLOOR.y0 + 8, FLOOR.y1 - 8), 1, { speed: 34, frisbee: true, spot: rand(70, 190), playFor, exitDir: -1 });
+  const b = makeNPC(pick(['boardies', 'bodyboarder', 'bikini', 'onepiece', 'surfergirl']), W + 20, rand(FLOOR.y0 + 8, FLOOR.y1 - 8), -1, { speed: 34, frisbee: true, spot: rand(290, 410), playFor, exitDir: 1 });
   a.mate = b; b.mate = a;
   groups.push({ kind: 'frisbee', members: [a, b], holder: a, fly: null, wait: 0.8, drop: null });
-}
-function spawnRugby() { // three blokes run across passing a footy
-  const dir = Math.random() < 0.5 ? 1 : -1, y = rand(FLOOR.y0 + 18, FLOOR.y1 - 16), x0 = dir > 0 ? -20 : W + 20;
-  const m = [0, 1, 2].map(i => makeNPC(i === 1 ? 'jersey2' : 'jersey', x0 - dir * i * 34, y + [0, -14, 14][i], dir, { speed: 72 }));
-  groups.push({ kind: 'rugby', members: m, holder: m[0], fly: null, wait: 0.6, drop: null });
 }
 const handPos = m => ({ x: m.x + m.dir * 7, y: m.y - 22 - (m.liftZ || 0) });
 function updateGroups(dt) {
@@ -1255,38 +1279,37 @@ function updateGroups(dt) {
     if (!alive.length && !G.fly) { groups.splice(i, 1); continue; }
     if (G.fly) {
       G.fly.t += dt;
-      if (G.fly.t >= G.fly.dur) { const to = G.fly.to; if (alive.includes(to)) G.holder = to; else G.drop = { x: to.x, y: to.y, t: 0 }; G.fly = null; G.wait = G.kind === 'rugby' ? rand(0.4, 0.8) : rand(0.5, 1.1); }
+      if (G.fly.t >= G.fly.dur) { const to = G.fly.to; if (alive.includes(to)) G.holder = to; else G.drop = { x: to.x, y: to.y, t: 0 }; G.fly = null; G.wait = rand(0.5, 1.1); }
       continue;
     }
     if (G.holder && !alive.includes(G.holder)) { G.drop = { x: G.holder.x, y: G.holder.y, t: 0 }; G.holder = null; }
     if (!G.holder) continue;
-    const ready = G.kind === 'rugby' || (alive.length === 2 && alive.every(m => m.state === 'play'));
+    const ready = alive.length === 2 && alive.every(m => m.state === 'play');
     if (!ready || (G.wait -= dt) > 0) continue;
     const others = alive.filter(m => m !== G.holder); if (!others.length) continue;
     const from = handPos(G.holder);
-    G.fly = { fx: from.x, fy: from.y, to: pick(others), t: 0, dur: G.kind === 'rugby' ? 0.45 : 0.95 }; G.holder = null;
+    G.fly = { fx: from.x, fy: from.y, to: pick(others), t: 0, dur: 0.95 }; G.holder = null;
   }
 }
 function drawToys() {
   for (const G of groups) {
     let x, y;
-    if (G.fly) { const k = G.fly.t / G.fly.dur, b = handPos(G.fly.to); x = G.fly.fx + (b.x - G.fly.fx) * k; y = G.fly.fy + (b.y - G.fly.fy) * k - Math.sin(k * Math.PI) * (G.kind === 'rugby' ? 16 : 26); }
+    if (G.fly) { const k = G.fly.t / G.fly.dur, b = handPos(G.fly.to); x = G.fly.fx + (b.x - G.fly.fx) * k; y = G.fly.fy + (b.y - G.fly.fy) * k - Math.sin(k * Math.PI) * 26; }
     else if (G.holder) ({ x, y } = handPos(G.holder));
     else if (G.drop) { x = G.drop.x; y = G.drop.y - 2; }
     else continue;
     x = Math.round(x); y = Math.round(y);
-    if (G.kind === 'rugby') { ctx.fillStyle = C.ink; ELL(ctx, x, y, 4, 3); ctx.fill(); ctx.fillStyle = '#8a4b22'; ELL(ctx, x, y, 3, 2); ctx.fill(); ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 1, y - 1, 2, 1); }
-    else { ctx.fillStyle = C.ink; ELL(ctx, x, y, 5, 2.2); ctx.fill(); ctx.fillStyle = '#ff4fa0'; ELL(ctx, x, y, 4, 1.3); ctx.fill(); }
+    ctx.fillStyle = C.ink; ELL(ctx, x, y, 5, 2.2); ctx.fill(); ctx.fillStyle = '#ff4fa0'; ELL(ctx, x, y, 4, 1.3); ctx.fill();
   }
 }
 function spawnJeep() {
   const dir = Math.random() < 0.5 ? 1 : -1;
-  vehicles.push({ x: dir > 0 ? -40 : W + 40, y: rand(FLOOR.y0 + 12, FLOOR.y1 - 4), dir, state: 'drive', t: 0, anim: 0 });
+  vehicles.push({ driver: pick(['lifesaver', 'lifesaverf']), x: dir > 0 ? -40 : W + 40, y: rand(FLOOR.y0 + 12, FLOOR.y1 - 4), dir, state: 'drive', t: 0, anim: 0 });
   if (S.mode !== 'title') { tone(520, 520, 0.12, 0.06, 'square'); tone(520, 520, 0.12, 0.06, 'square', 0.18); }
 }
 function igniteJeep(v) { // the whole jeep goes up; the lifeguard crawls out on fire
   v.state = 'burning'; v.t = 0; shake(4); SFX.slam(); SFX.fwoosh(); flames(v.x, v.y, 50, 30, 40);
-  ignite(makeNPC('lifesaver', v.x - v.dir * 4, v.y + 7, v.dir, { speed: 0, lying: true, crawl: true }));
+  ignite(makeNPC(v.driver, v.x - v.dir * 4, v.y + 7, v.dir, { speed: 0, lying: true, crawl: true }));
 }
 function updateVehicles(dt) {
   S.jeepT -= dt; if (S.jeepT <= 0) { S.jeepT = rand(25, 40); if (!vehicles.length) spawnJeep(); }
@@ -1301,6 +1324,21 @@ function updateVehicles(dt) {
       if (Math.random() < 0.3) puff(v.x + rand(-15, 15), v.y - 26, 1, '#5a544c', 8, 30, 1.2, -25);
       if (v.t > 8) vehicles.splice(i, 1);
     }
+  }
+}
+function newCastle() { // somewhere clear of the umbrellas, the start spot and the other castle
+  for (let k = 0; k < 40; k++) {
+    const c = { x: rand(36, 444), y: rand(FLOOR.y0 + 10, FLOOR.y1 - 8), flat: false, t: 0 };
+    if (Math.hypot(c.x - 240, c.y - 226) > 60 && UMBRELLAS.every(u => Math.hypot(c.x - u.x, (c.y - u.y) * 2) > 50) && castles.every(o => Math.abs(o.x - c.x) > 80)) return c;
+  }
+  return { x: rand(36, 444), y: FLOOR.y0 + 12, flat: false, t: 0 };
+}
+function flattenCastle(c) { c.flat = true; c.t = 0; puff(c.x, c.y - 6, 16, '#e6c88a', 50, 50, 0.6); noise(0.35, 700, 0.6, 0.12, 'lowpass'); }
+function updateCastles(dt) {
+  for (let i = 0; i < castles.length; i++) {
+    const c = castles[i];
+    if (c.flat) { if ((c.t += dt) > 25) castles[i] = newCastle(); continue; } // someone builds a new one elsewhere
+    if (S.mode === 'play' && !player.dead && !player.held && inEll(player.x, player.y, c.x, c.y, 13, 6)) flattenCastle(c);
   }
 }
 function newCrab(x) { return { x, y: rand(SHORE + 8, FLOOR.y0 + 30), vx: 0, t: rand(0.5, 3), anim: 0, cooked: 0 }; }
@@ -1318,9 +1356,9 @@ function updateCrabs(dt) { // they sidle about, freeze, and scuttle off when you
 }
 function spawnNPC() {
   const kind = pick(NPC_KINDS), dir = Math.random() < 0.5 ? 1 : -1;
-  const bake = kind !== 'walker' && Math.random() < 0.35 && npcs.filter(n => n.bake).length < 2; // walks in, lays a towel, sunbakes
+  const bake = !kind.startsWith('walker') && Math.random() < 0.35 && npcs.filter(n => n.bake).length < 2; // walks in, lays a towel, sunbakes
   npcs.push({ kind, x: dir > 0 ? -20 : W + 20, y: rand(FLOOR.y0 + 4, FLOOR.y1 - 2), dir, speed: kind === 'muscle' ? 24 : rand(26, 40), state: 'walk', t: 0, anim: rand(0, 4),
-    dog: kind === 'walker' ? { x: 0, y: 0, dir, flee: false } : null, shout: null,
+    dog: kind.startsWith('walker') ? { x: 0, y: 0, dir, flee: false } : null, shout: null, tat: Math.random() < 0.5,
     bake, spot: rand(60, 420), towel: null, lying: false, lieFor: rand(18, 35) });
 }
 function ignite(n) {
@@ -1338,8 +1376,7 @@ function updateNPCs(dt) {
     S.npcT = rand(3.5, 8);
     if (npcs.filter(n => n.state === 'walk').length < 4) {
       const r = Math.random();
-      if (r < 0.14 && !groups.some(g => g.kind === 'rugby')) spawnRugby();
-      else if (r < 0.28 && !groups.some(g => g.kind === 'frisbee')) spawnFrisbee();
+      if (r < 0.16 && !groups.some(g => g.kind === 'frisbee')) spawnFrisbee();
       else spawnNPC();
     }
   }
@@ -1505,7 +1542,7 @@ function drawNPC(n) {
     if (n.state === 'ash') { spr('ash', 0, n.x, n.y - 2, { alpha: n.t > 3 ? Math.max(0, 4 - n.t) : 1 }); return; }
     if (n.state === 'bones') { sprLying('skeleton', 0, n.x, n.y, head); return; }
     const lf = n.crawl ? Math.floor(n.anim) : 0;
-    sprLying('npc_' + n.kind, lf, n.x, n.y, head);
+    sprLying(npcSprite(n), lf, n.x, n.y, head);
     if (n.state === 'burn') sprLying(TINT['npc_' + n.kind], lf, n.x, n.y, head, Math.min(0.85, n.t / (n.crawl ? 1.6 : 1.1)));
     return;
   }
@@ -1513,7 +1550,7 @@ function drawNPC(n) {
   shadow(n.x, n.y, 8, 2);
   if (n.state === 'bones') { spr('skeleton', 0, n.x, n.y + 1, { flip }); return; }
   const ny = n.y + 1 - Math.round(n.liftZ || 0), still = n.state === 'towel' || n.state === 'play';
-  spr('npc_' + n.kind, still ? 0 : n.state === 'held' ? S.time * 14 : n.anim, n.x, ny, { flip });
+  spr(npcSprite(n), still ? 0 : n.state === 'held' ? S.time * 14 : n.anim, n.x, ny, { flip });
   if (n.state === 'burn') spr(TINT['npc_' + n.kind], n.anim, n.x, ny, { flip, alpha: Math.min(0.85, n.t / 1.1) });
 }
 function drawWorld() {
@@ -1548,9 +1585,10 @@ function drawWorld() {
     shadow(v.x, v.y, 24, 4, 0.25 * fade); spr('jeep', f, v.x, v.y + 1, { flip: v.dir < 0, alpha: fade });
     if (v.state === 'burning') spr(TINT.jeepC, f, v.x, v.y + 1, { flip: v.dir < 0, alpha: Math.min(0.85, v.t / 0.8) * fade });
   } });
+  for (const c of castles) list.push({ y: c.y, draw: () => spr('sandcastle', c.flat ? 1 : 0, c.x, c.y + 1, { alpha: c.flat && c.t > 22 ? (25 - c.t) / 3 : 1 }) });
   for (const c of crabs) list.push({ y: c.y, draw: () => spr(c.cooked ? 'crab_cooked' : 'crab', c.anim, c.x, c.y + 1, { flip: c.vx < 0 }) });
   const G = S.guard;
-  if (G && S.mode !== 'title') list.push({ y: G.y, draw: () => { shadow(G.x, G.y, 8, 2); spr('npc_lifesaver', G.state === 'drop' ? 0 : G.anim, G.x, G.y + 1, { flip: G.dir < 0 }); } });
+  if (G && S.mode !== 'title') list.push({ y: G.y, draw: () => { shadow(G.x, G.y, 8, 2); spr('npc_' + G.kind + (G.tat ? '_tat' : ''), G.state === 'drop' ? 0 : G.anim, G.x, G.y + 1, { flip: G.dir < 0 }); } });
   list.sort((a, b) => a.y - b.y).forEach(o => o.draw());
   if (S.sunSay) { const far = S.intro && S.intro.k < 0.99; sunBubble(S.sunSay.t, 240, far ? S.intro.baseY - (SHORE - B.headY + 50) * S.intro.k : B.headY, far); }
   drawToys();
@@ -1585,7 +1623,7 @@ function playerFrame() {
   if (P.rollT > 0) return 8 + Math.min(4, Math.floor((0.42 - P.rollT) / 0.42 * 5));
   if (P.hurtT > HIT_INVULN - 0.25) return 19;
   const run = Math.floor(P.anim * 12) % 6;
-  if (input.shoot) return (P.dual > 0 ? 22 : 13) + (P.moving ? run : 0);
+  if (P.shootPose > 0) return (P.dual > 0 ? 22 : 13) + (P.moving ? run : 0);
   return P.moving ? 2 + run : Math.floor(P.anim * 2) % 2;
 }
 function drawPlayer() {
@@ -1659,8 +1697,8 @@ function drawTitle() {
   ctx.font = '13px Anton, Impact, sans-serif'; ctx.fillText('BECAUSE THE SUN IS NOT YOUR FRIEND.', 24, 90);
   ctx.font = `8px ${PIX}`;
   const lines = isTouch
-    ? [['MOVE', 'LEFT THUMB'], ['SQUIRT', 'HOLD BUTTON'], ['ROLL', 'DODGE ATTACKS']]
-    : [['MOVE', 'WASD/ARROWS'], ['SQUIRT', 'HOLD J/CLICK'], ['ROLL', 'SPACE']];
+    ? [['MOVE', 'LEFT THUMB'], ['SQUIRT', 'TAP BUTTON'], ['ROLL', 'DODGE ATTACKS']]
+    : [['MOVE', 'WASD/ARROWS'], ['SQUIRT', 'CLICK OR J'], ['ROLL', 'SPACE']];
   lines.forEach(([a, b], i) => { ctx.fillText(a, 24, 126 + i * 13); ctx.fillText(b, 92, 126 + i * 13); });
   spr('slather', 0, 30, 186); ctx.fillText('SPF = UV SHIELD', 42, 168); ctx.fillText('TWINS = DUAL WIELD', 42, 180);
   spr('potato', 0, 29, 204); spr('dimsim', 0, 29, 220); ctx.fillText('SEAGULL SNACKS', 42, 194); ctx.fillText('= HEALTH', 42, 207);
@@ -1679,7 +1717,6 @@ function frame(now) {
   if (S.mode !== 'paused') {
     S.time += dt;
     if (S.mode === 'play') {
-      input.shoot = input.mouse || !!input.keys.shoot || input.touchShoot;
       updatePlayer(dt); updateBoss(dt);
       for (let i = hazards.length - 1; i >= 0; i--) if (hazards[i] && !hazards[i].update(dt)) hazards.splice(i, 1);
       updateDrops(dt); updatePickups(dt); updateGuard(dt);
@@ -1698,8 +1735,8 @@ function frame(now) {
       updateIntro(dt); updateBoss(dt);
       for (let i = hazards.length - 1; i >= 0; i--) if (hazards[i] && !hazards[i].update(dt)) hazards.splice(i, 1);
     } else updateBoss(dt);
-    input.roll = false;
-    updateNPCs(dt); updateSea(dt); updateGroups(dt); updateVehicles(dt); updateCrabs(dt);
+    input.roll = false; input.fire = false;
+    updateNPCs(dt); updateSea(dt); updateGroups(dt); updateVehicles(dt); updateCrabs(dt); updateCastles(dt);
     if (S.sunSay && (S.sunSay.life -= dt) <= 0) S.sunSay = null;
     if (S.healPop && (S.healPop.life -= dt) <= 0) S.healPop = null;
     if (S.mode === 'intro') { S.sayCD -= dt; }
@@ -1736,7 +1773,7 @@ function fit() {
 addEventListener('resize', fit); fit();
 // debugging handle for playtesting from the console
 if (isTouch) document.body.classList.add('touch');
-window.__slather = { firePatch, spawnJeep, spawnRugby, spawnFrisbee, vehicles, crabs, groups, finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
+window.__slather = { firePatch, spawnJeep, castles, spawnFrisbee, vehicles, crabs, groups, finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
 reset();
 if (document.fonts) document.fonts.load(`8px ${PIX}`).catch(() => {});
 if (document.fonts) document.fonts.load('44px Anton').catch(() => {});

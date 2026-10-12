@@ -63,7 +63,7 @@ When the bogan is hit, the code adds the comedy on top of these sprites: flames,
 
 ## Beachgoers, lifesaver and sea life
 
-The beachgoers are seen **side-on, facing right**; the right-to-left walkers are mirrored. The feet go on the bottom row. Each person has a 4-frame walk cycle. Anyone the Sun hits catches fire, turns into the skeleton and then into the ash pile.
+The beachgoers are seen **side-on, facing right**; the right-to-left walkers are mirrored. The feet go on the bottom row. Each person has a 4-frame walk cycle. Anyone the Sun hits catches fire, turns into the skeleton and then into the ash pile. About half the beachgoers have tattoos: each `npc_*.png` also needs a `npc_*_tat.png` version with the same frames plus some ink.
 
 | File | Frame size | Frames | Notes |
 |---|---|---|---|
@@ -74,8 +74,12 @@ The beachgoers are seen **side-on, facing right**; the right-to-left walkers are
 | `npc_muscle.png` | 28 × 40 | 4 | Musclehead with a boom box on his shoulder. Code adds the music notes. |
 | `npc_walker.png` | 28 × 40 | 4 | Dog walker. The leash is drawn by code. |
 | `npc_lifesaver.png` | 28 × 40 | 4 | Lifesaver in the red and yellow cap. Jogs on and drops the Slather. |
-| `npc_jersey.png` | 28 × 40 | 4 | Footy player in a green and gold jersey |
-| `npc_jersey2.png` | 28 × 40 | 4 | Footy player in a maroon jersey |
+| `npc_onepiece.png` | 28 × 40 | 4 | Woman in a one-piece swimsuit |
+| `npc_surfergirl.png` | 28 × 40 | 4 | Surfer in a wetsuit with a ponytail, carrying a pink board |
+| `npc_bodyboardgirl.png` | 28 × 40 | 4 | Bodyboarder with a ponytail |
+| `npc_walkerf.png` | 28 × 40 | 4 | Dog walker in a sun hat |
+| `npc_lifesaverf.png` | 28 × 40 | 4 | Lifesaver with a ponytail under the cap |
+| `sandcastle.png` | 26 × 24 | 2 | Frame 0 standing, frame 1 knocked flat |
 | `jeep.png` | 54 × 30 | 3 | Lifeguard jeep facing right. Frames 0–1 are driving (wheels turning); frame 2 has an empty driver's seat, used once it's on fire. |
 | `crab.png` | 14 × 10 | 2 | Scuttling crab |
 | `crab_cooked.png` | 14 × 10 | 1 | Bright red cooked crab |
