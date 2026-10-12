@@ -74,6 +74,11 @@ The beachgoers are seen **side-on, facing right**; the right-to-left walkers are
 | `npc_muscle.png` | 28 × 40 | 4 | Musclehead with a boom box on his shoulder. Code adds the music notes. |
 | `npc_walker.png` | 28 × 40 | 4 | Dog walker. The leash is drawn by code. |
 | `npc_lifesaver.png` | 28 × 40 | 4 | Lifesaver in the red and yellow cap. Jogs on and drops the Slather. |
+| `npc_jersey.png` | 28 × 40 | 4 | Footy player in a green and gold jersey |
+| `npc_jersey2.png` | 28 × 40 | 4 | Footy player in a maroon jersey |
+| `jeep.png` | 54 × 30 | 3 | Lifeguard jeep facing right. Frames 0–1 are driving (wheels turning); frame 2 has an empty driver's seat, used once it's on fire. |
+| `crab.png` | 14 × 10 | 2 | Scuttling crab |
+| `crab_cooked.png` | 14 × 10 | 1 | Bright red cooked crab |
 | `dog.png` | 18 × 12 | 2 | Walk cycle. It runs away when its owner gets torched. |
 | `skeleton.png` | 28 × 40 | 1 | Standing skeleton that the burnt beachgoers become |
 | `ash.png` | 24 × 10 | 1 | Ash pile |

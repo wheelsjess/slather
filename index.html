@@ -73,7 +73,7 @@ const GAP = [0, 1.3, 0.95, 0.7];      // rest between boss attacks per phase
 const SPF_TIME = 8;          // UV shield: hits bounce off and hurt the Sun
 const DUAL_TIME = 10;
 const KILL_HEAL = 80;         // the Sun heals for every beachgoer it torches
-const DMG = { slam: 22, sweep: 18, laser: 15, orb: 14, ray: 16, grab: 24, wave: 13, flare: 36, burn: 14, fire: 8 };
+const DMG = { slam: 22, sweep: 18, laser: 15, orb: 14, ray: 16, grab: 24, grabLaser: 45, wave: 13, flare: 36, burn: 14, fire: 8 };
 const HIT_INVULN = 0.8;
 const HEAL = { potato: 25, dimsim: 18 };
 // Set to true once real PNGs are in ./assets (see ASSETS.md). Missing files fall back to the built-in art.
@@ -347,6 +347,7 @@ function drawPerson(g, o, f) { // side view, facing right, feet on the bottom ro
   R(o.top || o.skin, 9 - m, 13 + b, 8 + m * 2, 11);
   R(o.bottom, 9 - m / 2, 23 + b, 8 + m, o.long ? 8 : 5);
   if (o.bikini) R(o.bikini, 12, 15 + b, 5, 3);
+  if (o.stripe) { R(o.stripe, 9 - m, 17 + b, 8 + m * 2, 2); R(o.stripe, 9 - m, 21 + b, 8 + m * 2, 1); }
   if (o.muscle) { R(o.skinD, 11, 17 + b, 6, 1); R(o.skinD, 12, 20 + b, 4, 1); }
   R(o.armC || o.skin, 12 + s, 14 + b, 3 + (m ? 1 : 0), 10);
   R(o.skin, 10, 4 + b, 7, 9);
@@ -363,10 +364,29 @@ const NPC_TYPES = {
   surfer: { skin: '#e0a77e', hair: '#d9b25a', top: '#1b1b22', bottom: '#1b1b22', legs: '#1b1b22', armC: '#1b1b22', long: true, item: 'surf' },
   bodyboarder: { skin: '#f4c4a0', hair: '#b0602a', bottom: '#3cc46c', long: true, item: 'bodyboard' },
   muscle: { skin: '#c9824e', skinD: '#a5653a', hair: '#222222', muscle: true, bottom: '#e2361f', sunnies: true, item: 'boombox' },
+  jersey: { skin: '#e9b38f', hair: '#3a2a1c', top: '#1f7a3a', stripe: '#ffd21f', bottom: '#f4f0e2', feet: '#1f7a3a' },
+  jersey2: { skin: '#c98a5e', hair: '#151515', top: '#7a1f3a', stripe: '#ffffff', bottom: '#f4f0e2', feet: '#7a1f3a' },
   walker: { skin: '#f2c3a0', hair: '#888888', hairStyle: 'cap', cap1: '#ffffff', cap2: '#2f6fd1', top: '#7fc6a4', bottom: '#c8b08a', long: true },
   lifesaver: { skin: '#e8a982', hair: '#222222', hairStyle: 'cap', cap1: '#e2361f', cap2: '#ffd21f', top: '#ffd21f', bottom: '#e2361f' },
 };
 for (const k in NPC_TYPES) sheet('npc_' + k, 28, 40, 4, (g, f) => drawPerson(g, NPC_TYPES[k], f), { outline: true });
+function drawCrab(g, f, col, colD) {
+  const R = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  g.fillStyle = col; ELL(g, 7, 6, 4, 2.5); g.fill(); R(colD, 4, 7, 7, 1);
+  R(col, 1, 3, 2, 2); R(col, 11, 3, 2, 2); R(col, 3, 5, 1, 1); R(col, 10, 5, 1, 1);
+  R(C.ink, 5, 2, 1, 2); R(C.ink, 8, 2, 1, 2);
+  for (const x of f ? [3, 6, 9] : [4, 7, 10]) R(colD, x, 8, 1, 2);
+}
+sheet('crab', 14, 10, 2, (g, f) => drawCrab(g, f, '#e88a3c', '#b85a22'), { outline: true });
+sheet('crab_cooked', 14, 10, 1, g => drawCrab(g, 0, '#e2361f', '#9a1f12'), { outline: true });
+sheet('jeep', 54, 30, 3, (g, f) => { // lifeguard jeep facing right; frame 2 has an empty driver's seat
+  const R = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  R('#555a60', 14, 3, 2, 11); R('#555a60', 14, 3, 16, 2); R('#e2361f', 15, 1, 6, 2); R('#2f6fd1', 21, 1, 6, 2);
+  R('#9fd6ee', 37, 6, 2, 8);
+  if (f < 2) { R('#ffd21f', 21, 9, 7, 5); R('#e8a982', 22, 4, 5, 5); R('#e2361f', 22, 3, 5, 2); R('#ffd21f', 25, 3, 2, 2); }
+  R('#ffd21f', 4, 13, 46, 9); R('#c9a400', 4, 20, 46, 2); R('#e2361f', 4, 16, 46, 2); R('#c9a400', 49, 14, 3, 7); R('#fff3b0', 50, 14, 2, 2);
+  for (const wx of [13, 41]) { g.fillStyle = '#1b1b22'; ELL(g, wx, 24, 5, 5); g.fill(); R('#9aa', wx - 1 + (f === 1 ? 1 : 0), 23, 2, 2); }
+}, { outline: true });
 sheet('dog', 18, 12, 2, (g, f) => {
   const R = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
   R('#a0703a', 3, 4, 10, 4); R('#a0703a', 12, 1, 4, 4); R('#6b4520', 12, 0, 2, 2); R('#6b4520', 16, 3, 2, 2); R(C.ink, 14, 2, 1, 1);
@@ -420,6 +440,7 @@ function buildTints() {
   TINT.boganW = tinted('bogan', '#bfeaff'); TINT.boganC = tinted('bogan_burnt', '#1c0f08');
   TINT.handR = tinted('sun_hand', '#ff4a1a');
   for (const k in NPC_TYPES) TINT['npc_' + k] = tinted('npc_' + k, '#1c0f08');
+  TINT.jeepC = tinted('jeep', '#1c0f08');
 }
 buildTints();
 
@@ -457,6 +478,12 @@ function makeBg(p) {
   R('#f1e5c6', 410, 97, 8, 7); R('#7a5a3a', 444, 66, 1, 20); R('#e2361f', 445, 66, 7, 3); R('#ffd21f', 445, 69, 7, 3);
   // sand
   R(P.sand[0], 0, SHORE, W, H - SHORE); R(P.sand[1], 0, SHORE, W, 8);
+  let seed = 7; const srand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 9; i++) { // washed-up seaweed
+    const x = Math.round(20 + srand() * 440), y = Math.round(SHORE + 3 + srand() * 12), len = 6 + Math.round(srand() * 10), col = ['#2f5a2a', '#4b6b2a', '#5a4a24'][i % 3];
+    g.fillStyle = col; for (let k = 0; k < len; k++) g.fillRect(x + k, y + Math.round(Math.sin(k * 0.9 + i) * 1.5), 1, 2);
+    g.fillRect(x + 2, y - 1, 2, 2); if (i % 2) { g.fillStyle = '#7a8a3a'; g.fillRect(x + len - 3, y + 1, 2, 1); }
+  }
   for (let i = 0; i < 700; i++) { g.fillStyle = Math.random() < 0.5 ? 'rgba(150,110,60,.25)' : 'rgba(255,255,240,.35)'; g.fillRect(rand(0, W) | 0, rand(SHORE + 8, H) | 0, 1, 1); }
   for (const x of [26, 452]) { R('#5c4630', x, 138, 1, 30); R('#e2361f', x + 1, 138, 8, 4); R('#ffd21f', x + 1, 142, 8, 4); }
   return c;
@@ -615,21 +642,22 @@ const S = { mode: 'title', phase: 1, time: 0, shake: 0, flareCD: 0, shadeGlow: f
   dmgAcc: 0, dmgT: 0, hurtAcc: 0, endT: 0, hits: 0, snacks: 0, bottleT: 0, gullT: 0, banner: null, toast: null, blink: 0 };
 const input = { keys: {}, stick: { x: 0, y: 0 }, mouse: false, touchShoot: false, shoot: false, roll: false };
 const player = {}, boss = {};
-const hazards = [], drops = [], parts = [], splats = [], pickups = [], gulls = [], npcs = [], sea = [];
+const hazards = [], drops = [], parts = [], splats = [], pickups = [], gulls = [], npcs = [], sea = [], groups = [], vehicles = [], crabs = [];
 const UMBRELLAS = [{ x: 92, y: 236 }, { x: 388, y: 236 }, { x: 240, y: 192 }];
 const inEll = (px, py, x, y, rx, ry) => ((px - x) / rx) ** 2 + ((py - y) / ry) ** 2 < 1;
 const inShade = () => UMBRELLAS.some(u => inEll(player.x, player.y, u.x, u.y + 2, 26, 11));
 
 function reset() {
-  hazards.length = drops.length = parts.length = splats.length = pickups.length = gulls.length = npcs.length = sea.length = 0;
+  hazards.length = drops.length = parts.length = splats.length = pickups.length = gulls.length = npcs.length = sea.length = groups.length = vehicles.length = 0;
+  crabs.length = 0; for (let i = 0; i < 3; i++) crabs.push(newCrab(rand(30, 450)));
   Object.assign(player, { x: 240, y: 226, vx: 0, vy: 0, kbx: 0, kby: 0, hp: PLAYER_HP, spf: 0, burn: 0, rollT: 0, rollCD: 0, rdx: 0, rdy: 0,
     iframe: false, hurtT: 0, slowT: 0, shotT: 0, shotN: 0, face: 1, anim: 0, moving: false, dead: false,
-    fireT: 0, eyesT: 0, scorch: 0, hairBurn: 0, shout: null, dual: 0, deathT: 0, deflectCD: 0, deflectT: 0 });
+    held: false, liftZ: 0, fireT: 0, eyesT: 0, scorch: 0, hairBurn: 0, shout: null, dual: 0, deathT: 0, deflectCD: 0, deflectT: 0 });
   Object.assign(boss, { hp: BOSS_MAX, trail: BOSS_MAX, state: 'fight', attack: null, cooldown: 2.4, last: '', next: null, invuln: 0, transition: 0,
     face: null, hurtFaceT: 0, reactFace: null, reelT: 0, angerT: 0, eyeGlow: 0, headGlow: 0, whiteHot: 0, flash: 0, beams: [], laughT: 0, sinkY: 0, headY: 42, shakeHead: false,
     hands: [-1, 1].map(s => ({ s, x: 240 + s * 118, fy: 160, z: 46, tx: 0, tfy: 0, tz: 0, rate: 5, pose: 'open', busy: false, direct: false, fire: false })) });
   Object.assign(S, { phase: 1, time: 0, shake: 0, flareCD: 0, shadeGlow: false, bg: BG[1], whiteA: 0, hurtA: 0, dmgAcc: 0, dmgT: 0, hurtAcc: 0,
-    endT: 0, hits: 0, snacks: 0, gullT: 9, sunSay: null, sayCD: 0, killCD: 0, healPop: null, call: null, blueA: 0, banner: null, toast: null, torched: 0, npcT: 1, seaT: 2, lifeT: 4, guard: null });
+    endT: 0, hits: 0, snacks: 0, gullT: 9, held: null, jeepT: 14, sunSay: null, sayCD: 0, killCD: 0, healPop: null, call: null, blueA: 0, banner: null, toast: null, torched: 0, npcT: 1, seaT: 2, lifeT: 4, guard: null });
 }
 
 /* ================= Effects ================= */
@@ -656,11 +684,15 @@ function band(y, half, dur) {
     draw() { ctx.fillStyle = `rgba(226,54,31,${(Math.floor(t * 10) % 2 ? 0.18 : 0.32)})`; ctx.fillRect(0, y - half, W, half * 2);
       ctx.fillStyle = '#e2361f'; ctx.fillRect(0, y - half, W, 1); ctx.fillRect(0, y + half, W, 1); } });
 }
-const ALIVE = { walk: 1, towel: 1, lie: 1, flee: 1 };
+const ALIVE = { walk: 1, towel: 1, lie: 1, flee: 1, play: 1 };
 function fleeAll() { // everyone runs for it
   for (const n of npcs) if (ALIVE[n.state]) { n.state = 'flee'; n.lying = false; n.towel = null; n.dir = n.x < 240 ? -1 : 1; n.shout = { t: pick(SCREAMS), life: 1.4 }; if (n.dog) { n.dog.flee = true; n.dog.dir = n.dir; } }
 }
-function scorchNPCs(test) { for (const n of npcs) if (ALIVE[n.state] && test(n.x, n.y)) ignite(n); }
+function scorchNPCs(test) {
+  for (const n of npcs) if (ALIVE[n.state] && test(n.x, n.y)) ignite(n);
+  for (const v of vehicles) if (v.state === 'drive' && (test(v.x, v.y) || test(v.x - 18, v.y) || test(v.x + 18, v.y))) igniteJeep(v);
+  for (const c of crabs) if (!c.cooked && test(c.x, c.y)) { c.cooked = 0.01; puff(c.x, c.y - 4, 4, '#dddddd', 10, 20, 0.6, -20); }
+}
 function firePatch(x, y, dur = 1.3, rx = 14, ry = 6) { // burning sand: hurts while you stand in it
   let t = 0; if (S.time - (S.fwooshT || 0) > 0.3) { S.fwooshT = S.time; SFX.fwoosh(); }
   return addHz({ layer: 'floor', update(dt) {
@@ -795,15 +827,53 @@ const ATTACKS = {
       return false;
     });
   },
-  grab() { // Grab: a hand shadows you, then snatches
-    return script(a => {
-      a.once(0, 's', () => { a.h = handFor(player.x); a.h.busy = true; a.h.pose = 'grab'; a.h.fire = true; SFX.windup(); });
+  grab() { // The Grab: snatches you (or a beachgoer), hoists them up, cackles, then lasers them point-blank
+    return script((a, dt) => {
+      const P = player;
+      a.once(0, 's', () => {
+        const cands = npcs.filter(n => ['walk', 'lie', 'play', 'towel'].includes(n.state) && n.x > 30 && n.x < W - 30);
+        a.prey = cands.length && Math.random() < 0.3 ? pick(cands) : null;
+        a.h = handFor(a.prey ? a.prey.x : P.x); a.h.busy = true; a.h.pose = 'grab'; a.h.fire = true; SFX.windup();
+      });
       const h = a.h;
-      if (a.t < 1.5) { h.tx = player.x; h.tfy = player.y; h.tz = 56; h.rate = 4.5; a.warn = a.t > 1.05; }
-      else if (a.t < 1.68) { h.tz = 0; h.rate = 30; }
-      a.once(1.68, 'g', () => { h.z = 0; shake(3); SFX.slam(); puff(h.x, h.fy, 10, '#e6cd90', 70, 60, 0.4); flames(h.x, h.fy, 40, 10, 16); firePatch(h.x, h.fy, 1.2, 16, 6); scorchNPCs((px, py) => inEll(px, py, h.x, h.fy, 24, 11));
-        if (inEll(player.x, player.y, h.x, h.fy, 24, 11) && hurt(DMG.grab, { from: { x: h.x, y: h.fy - 30 }, reflect: 70 })) toast('GRABBED!'); });
-      if (a.t > 2.7) { freeHands(); return true; }
+      if (!a.caught) {
+        const tgt = a.prey && ALIVE[a.prey.state] ? a.prey : P;
+        if (a.t < 1.5) { h.tx = tgt.x; h.tfy = tgt.y; h.tz = 56; h.rate = 4.5; }
+        else if (a.t < 1.68) { h.tz = 0; h.rate = 30; }
+        a.once(1.68, 'g', () => {
+          h.z = 0; shake(3); SFX.slam(); puff(h.x, h.fy, 10, '#e6cd90', 70, 60, 0.4); flames(h.x, h.fy, 40, 10, 16);
+          if (!P.dead && !P.iframe && P.hurtT <= 0 && inEll(P.x, P.y, h.x, h.fy, 24, 11)) {
+            if (P.spf > 0) hurt(DMG.grab, { from: { x: h.x, y: h.fy - 30 }, reflect: 70 }); // the UV shield bounces it off
+            else { a.caught = { who: 'player' }; P.held = true; P.hurtT = 99; P.shout = { t: 'OI! PUT ME DOWN!', life: 1.6 }; }
+          }
+          if (!a.caught) {
+            const n = npcs.find(m => ALIVE[m.state] && inEll(m.x, m.y, h.x, h.fy, 26, 12));
+            if (n) { a.caught = { who: 'npc', n }; n.state = 'held'; n.lying = false; n.towel = null; n.bake = false; n.shout = { t: 'HELP!', life: 2.5 }; if (n.dog) n.dog.flee = true; }
+          }
+          if (a.caught) { a.ct = a.t; h.pose = 'fist'; S.held = a.caught; a.liftX = clamp(h.x, 120, 360); }
+          else firePatch(h.x, h.fy, 1.2, 16, 6);
+        });
+        if (!a.caught && a.t > 2.7) { freeHands(); return true; }
+        return false;
+      }
+      const c = a.caught, lt = a.t - a.ct;
+      if (lt < 2.9) { h.tx = a.liftX; h.tfy = 196; h.tz = 84; h.rate = 4; } else { h.tz = 0; h.rate = 7; }
+      const lz = Math.max(0, h.z - 12); // dangling in front of the fist, legs kicking below it
+      if (c.who === 'player' && P.held) { P.x = h.x + 2; P.y = h.fy + 1; P.liftZ = lz; }
+      if (c.who === 'npc' && S.held) { c.n.x = h.x + 2; c.n.y = h.fy + 1; c.n.liftZ = Math.max(0, h.z - 10); }
+      a.once(a.ct + 0.7, 'laugh', () => { SFX.laugh(); boss.laughT = 1.4; if (c.who === 'player') sunSay("YOU'RE MINE NOW, GARY!!!"); });
+      if (lt > 1.6 && lt < 2.4) { boss.face = 'rage'; boss.eyeGlow = clamp((lt - 1.6) / 0.6, 0, 1); a.once(a.ct + 1.6, 'chg', () => SFX.charge()); }
+      if (lt >= 2.4 && lt < 2.9) {
+        boss.beams = [{ x: h.x, y: h.fy - lz - 26, eye: 0, air: true }];
+        a.once(a.ct + 2.4, 'zap', () => {
+          SFX.laser(0.5); SFX.zap(); shake(6); flames(h.x, h.fy - lz, 20, 40, 34);
+          if (c.who === 'player') { P.hurtT = 0; hurt(DMG.grabLaser, { unblockable: true, burn: 60 }); P.eyesT = 0.6; }
+          else ignite(c.n);
+        });
+      }
+      if (lt >= 2.9) { boss.beams = []; boss.eyeGlow = Math.max(0, boss.eyeGlow - dt * 3); boss.face = null; }
+      a.once(a.ct + 3.2, 'drop', releaseHeld);
+      if (lt > 3.8) { freeHands(); return true; }
       return false;
     });
   },
@@ -836,7 +906,7 @@ ATTACKS.rain = function () {
 function chooseAttack() {
   if (boss.next) { const k = boss.next; boss.next = null; return k; }
   const w = { slam: 3, sweep: 2, laser: 4, rain: 2, rays: 1.6 };
-  if (S.phase >= 2) w.grab = 2.2;
+  w.grab = S.phase >= 2 ? 2.4 : 1.3;
   if (S.phase === 3 && S.flareCD <= 0) w.flare = 5;
   delete w[boss.last];
   let sum = 0; for (const k in w) sum += w[k];
@@ -880,7 +950,13 @@ function hurtBoss(d) {
   if (S.phase === 1 && B.hp <= BOSS_MAX * 0.6) phaseShift(2);
   else if (S.phase === 2 && B.hp <= BOSS_MAX * 0.25) phaseShift(3);
 }
+function releaseHeld() { // let go of whoever the Sun is holding
+  const c = S.held; if (!c) return; S.held = null;
+  if (c.who === 'player') { const P = player; P.held = false; P.liftZ = 0; if (P.hurtT > 5) P.hurtT = 0; if (!P.dead) P.hurtT = Math.max(P.hurtT, 1.2); P.kby = 80; }
+  else { c.n.liftZ = 0; if (c.n.state === 'held') c.n.state = 'walk'; }
+}
 function clearAttack() {
+  releaseHeld();
   hazards.length = 0; boss.attack = null; freeHands();
   Object.assign(boss, { face: null, eyeGlow: 0, headGlow: 0, whiteHot: 0, beams: [] });
   S.shadeGlow = false;
@@ -1034,6 +1110,7 @@ function updatePlayer(dt) {
   P.fireT -= dt; P.eyesT -= dt; P.scorch = Math.max(0, P.scorch - dt * 0.05); P.hairBurn = Math.max(0, P.hairBurn - dt * 0.012);
   if (P.fireT > 0) flames(P.x, P.y - 6, 12, 38, 2);
   if (P.hairBurn > 0.4 && Math.random() < 0.08) puff(P.x, P.y - 46, 1, '#7a746c', 4, 20, 0.9, -25);
+  if (P.held) { P.rollT = 0; P.iframe = false; P.anim += dt; P.vx = P.vy = 0; return; } // dangling in the Sun's fist
   if (P.rollT > 0) {
     P.rollT -= dt; P.iframe = P.rollT > 0.06;
     P.x += P.rdx * 250 * dt; P.y += P.rdy * 170 * dt;
@@ -1154,6 +1231,91 @@ function updateGuard(dt) {
 const NPC_KINDS = ['bikini', 'boardies', 'surfer', 'bodyboarder', 'muscle', 'walker'];
 const SCREAMS = ['AAAH!', 'MY TAN!', 'NOOO!', 'HOT HOT HOT!', 'MUMMY!', 'WHY ME?!'];
 const TOWELS = [['#e2361f', '#fffdf2'], ['#2f6fd1', '#ffd21f'], ['#3cc46c', '#fffdf2'], ['#ff4fa0', '#ffe800']];
+function makeNPC(kind, x, y, dir, extra = {}) {
+  const n = { kind, x, y, dir, speed: rand(26, 40), state: 'walk', t: 0, anim: rand(0, 4), dog: null, shout: null, bake: false, spot: 0, towel: null, lying: false, lieFor: 0, liftZ: 0, ...extra };
+  npcs.push(n); return n;
+}
+function spawnFrisbee() { // two mates walk in from opposite sides, stop and throw a frisbee
+  const playFor = rand(16, 26);
+  const a = makeNPC(pick(['bikini', 'boardies']), -20, rand(FLOOR.y0 + 8, FLOOR.y1 - 8), 1, { speed: 34, frisbee: true, spot: rand(70, 190), playFor, exitDir: -1 });
+  const b = makeNPC(pick(['boardies', 'bodyboarder', 'bikini']), W + 20, rand(FLOOR.y0 + 8, FLOOR.y1 - 8), -1, { speed: 34, frisbee: true, spot: rand(290, 410), playFor, exitDir: 1 });
+  a.mate = b; b.mate = a;
+  groups.push({ kind: 'frisbee', members: [a, b], holder: a, fly: null, wait: 0.8, drop: null });
+}
+function spawnRugby() { // three blokes run across passing a footy
+  const dir = Math.random() < 0.5 ? 1 : -1, y = rand(FLOOR.y0 + 18, FLOOR.y1 - 16), x0 = dir > 0 ? -20 : W + 20;
+  const m = [0, 1, 2].map(i => makeNPC(i === 1 ? 'jersey2' : 'jersey', x0 - dir * i * 34, y + [0, -14, 14][i], dir, { speed: 72 }));
+  groups.push({ kind: 'rugby', members: m, holder: m[0], fly: null, wait: 0.6, drop: null });
+}
+const handPos = m => ({ x: m.x + m.dir * 7, y: m.y - 22 - (m.liftZ || 0) });
+function updateGroups(dt) {
+  for (let i = groups.length - 1; i >= 0; i--) {
+    const G = groups[i], alive = G.members.filter(m => ALIVE[m.state] && npcs.includes(m));
+    if (G.drop && (G.drop.t += dt) > 4) G.drop = null;
+    if (!alive.length && !G.fly) { groups.splice(i, 1); continue; }
+    if (G.fly) {
+      G.fly.t += dt;
+      if (G.fly.t >= G.fly.dur) { const to = G.fly.to; if (alive.includes(to)) G.holder = to; else G.drop = { x: to.x, y: to.y, t: 0 }; G.fly = null; G.wait = G.kind === 'rugby' ? rand(0.4, 0.8) : rand(0.5, 1.1); }
+      continue;
+    }
+    if (G.holder && !alive.includes(G.holder)) { G.drop = { x: G.holder.x, y: G.holder.y, t: 0 }; G.holder = null; }
+    if (!G.holder) continue;
+    const ready = G.kind === 'rugby' || (alive.length === 2 && alive.every(m => m.state === 'play'));
+    if (!ready || (G.wait -= dt) > 0) continue;
+    const others = alive.filter(m => m !== G.holder); if (!others.length) continue;
+    const from = handPos(G.holder);
+    G.fly = { fx: from.x, fy: from.y, to: pick(others), t: 0, dur: G.kind === 'rugby' ? 0.45 : 0.95 }; G.holder = null;
+  }
+}
+function drawToys() {
+  for (const G of groups) {
+    let x, y;
+    if (G.fly) { const k = G.fly.t / G.fly.dur, b = handPos(G.fly.to); x = G.fly.fx + (b.x - G.fly.fx) * k; y = G.fly.fy + (b.y - G.fly.fy) * k - Math.sin(k * Math.PI) * (G.kind === 'rugby' ? 16 : 26); }
+    else if (G.holder) ({ x, y } = handPos(G.holder));
+    else if (G.drop) { x = G.drop.x; y = G.drop.y - 2; }
+    else continue;
+    x = Math.round(x); y = Math.round(y);
+    if (G.kind === 'rugby') { ctx.fillStyle = C.ink; ELL(ctx, x, y, 4, 3); ctx.fill(); ctx.fillStyle = '#8a4b22'; ELL(ctx, x, y, 3, 2); ctx.fill(); ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 1, y - 1, 2, 1); }
+    else { ctx.fillStyle = C.ink; ELL(ctx, x, y, 5, 2.2); ctx.fill(); ctx.fillStyle = '#ff4fa0'; ELL(ctx, x, y, 4, 1.3); ctx.fill(); }
+  }
+}
+function spawnJeep() {
+  const dir = Math.random() < 0.5 ? 1 : -1;
+  vehicles.push({ x: dir > 0 ? -40 : W + 40, y: rand(FLOOR.y0 + 12, FLOOR.y1 - 4), dir, state: 'drive', t: 0, anim: 0 });
+  if (S.mode !== 'title') { tone(520, 520, 0.12, 0.06, 'square'); tone(520, 520, 0.12, 0.06, 'square', 0.18); }
+}
+function igniteJeep(v) { // the whole jeep goes up; the lifeguard crawls out on fire
+  v.state = 'burning'; v.t = 0; shake(4); SFX.slam(); SFX.fwoosh(); flames(v.x, v.y, 50, 30, 40);
+  ignite(makeNPC('lifesaver', v.x - v.dir * 4, v.y + 7, v.dir, { speed: 0, lying: true, crawl: true }));
+}
+function updateVehicles(dt) {
+  S.jeepT -= dt; if (S.jeepT <= 0) { S.jeepT = rand(25, 40); if (!vehicles.length) spawnJeep(); }
+  for (let i = vehicles.length - 1; i >= 0; i--) {
+    const v = vehicles[i]; v.t += dt;
+    if (v.state === 'drive') {
+      v.x += v.dir * 58 * dt; v.anim += dt * 10;
+      if (Math.random() < 0.5) puff(v.x - v.dir * 22, v.y, 1, '#e6cd90', 20, 20, 0.5);
+      if (v.x < -70 || v.x > W + 70) vehicles.splice(i, 1);
+    } else {
+      if (v.t < 5) flames(v.x, v.y - 4, 44, 24, 3);
+      if (Math.random() < 0.3) puff(v.x + rand(-15, 15), v.y - 26, 1, '#5a544c', 8, 30, 1.2, -25);
+      if (v.t > 8) vehicles.splice(i, 1);
+    }
+  }
+}
+function newCrab(x) { return { x, y: rand(SHORE + 8, FLOOR.y0 + 30), vx: 0, t: rand(0.5, 3), anim: 0, cooked: 0 }; }
+function updateCrabs(dt) { // they sidle about, freeze, and scuttle off when you get close
+  for (let i = 0; i < crabs.length; i++) {
+    const c = crabs[i];
+    if (c.cooked) { c.cooked += dt; if (Math.random() < 0.05) puff(c.x, c.y - 6, 1, '#dddddd', 4, 15, 0.8, -20); if (c.cooked > 4) crabs[i] = newCrab(Math.random() < 0.5 ? -10 : W + 10); continue; }
+    c.t -= dt;
+    const near = S.mode === 'play' && Math.hypot(player.x - c.x, (player.y - c.y) * 1.5) < 26;
+    if (near && c.vx === 0) { c.vx = (c.x < player.x ? -1 : 1) * 70; c.t = 0.6; }
+    else if (c.t <= 0) { if (c.vx) { c.vx = 0; c.t = rand(0.8, 3); } else { c.vx = (Math.random() < 0.5 ? -1 : 1) * rand(30, 55); c.t = rand(0.4, 1.1); } }
+    c.x += c.vx * dt; c.anim += Math.abs(c.vx) * dt * 0.3;
+    if (c.x < -20 || c.x > W + 20) { c.vx = -c.vx; c.x = clamp(c.x, -20, W + 20); }
+  }
+}
 function spawnNPC() {
   const kind = pick(NPC_KINDS), dir = Math.random() < 0.5 ? 1 : -1;
   const bake = kind !== 'walker' && Math.random() < 0.35 && npcs.filter(n => n.bake).length < 2; // walks in, lays a towel, sunbakes
@@ -1172,12 +1334,26 @@ function ignite(n) {
 }
 function updateNPCs(dt) {
   S.npcT -= dt;
-  if (S.npcT <= 0) { S.npcT = rand(3.5, 8); if (npcs.filter(n => n.state === 'walk').length < 4) spawnNPC(); }
+  if (S.npcT <= 0) {
+    S.npcT = rand(3.5, 8);
+    if (npcs.filter(n => n.state === 'walk').length < 4) {
+      const r = Math.random();
+      if (r < 0.14 && !groups.some(g => g.kind === 'rugby')) spawnRugby();
+      else if (r < 0.28 && !groups.some(g => g.kind === 'frisbee')) spawnFrisbee();
+      else spawnNPC();
+    }
+  }
   const LINES = ['WORKING ON MY TAN', 'NO SUNSCREEN NEEDED', 'BEAUTIFUL DAY!', 'JUST FIVE MINUTES'];
   for (let i = npcs.length - 1; i >= 0; i--) {
     const n = npcs[i]; n.t += dt;
     if (n.shout && (n.shout.life -= dt) <= 0) n.shout = null;
-    if (n.state === 'walk' && n.bake && !n.towel && (n.dir > 0 ? n.x >= n.spot : n.x <= n.spot)) {
+    if (n.state === 'walk' && n.frisbee && !n.played && (n.dir > 0 ? n.x >= n.spot : n.x <= n.spot)) { n.state = 'play'; n.t = 0; n.played = true; }
+    else if (n.state === 'play') {
+      const mate = n.mate, ok = mate && ALIVE[mate.state] && npcs.includes(mate);
+      if (ok) n.dir = Math.sign(mate.x - n.x) || n.dir;
+      if (n.t > n.playFor || !ok) { n.state = 'walk'; n.dir = n.exitDir; n.t = 0; }
+    } else if (n.state === 'held') { /* dangling from the Sun's fist */ }
+    else if (n.state === 'walk' && n.bake && !n.towel && (n.dir > 0 ? n.x >= n.spot : n.x <= n.spot)) {
       n.state = 'towel'; n.t = 0; n.towel = pick(TOWELS);
     } else if (n.state === 'flee') {
       n.x += n.dir * 120 * dt; n.anim += dt * 14;
@@ -1192,8 +1368,9 @@ function updateNPCs(dt) {
       if (n.kind === 'muscle' && Math.random() < dt * 2) parts.push({ x: n.x + n.dir * 6, y: n.y - 40, vx: rand(-6, 6), vy: -18, life: 1.2, max: 1.2, col: C.ink, g: 0, s: 1, note: true });
       if (n.x < -40 || n.x > W + 40) { npcs.splice(i, 1); continue; }
     } else if (n.state === 'burn') {
-      if (!n.lying) { n.x += n.dir * n.speed * 2.2 * dt; n.anim += dt * n.speed / 4; flames(n.x, n.y, 10, 36, 2); } else flames(n.x, n.y, 36, 10, 2);
-      if (n.t > 1.1) { n.state = 'bones'; n.t = 0; puff(n.x, n.y - 24, 10, '#3a2a22', 30, 40, 0.6); }
+      if (!n.lying) { n.x += n.dir * n.speed * 2.2 * dt; n.anim += dt * n.speed / 4; flames(n.x, n.y - (n.liftZ || 0), 10, 36, 2); }
+      else { flames(n.x, n.y, 36, 10, 2); if (n.crawl) { n.x += n.dir * 14 * dt; n.anim += dt * 6; } }
+      if (n.t > (n.crawl ? 2.6 : 1.1) && !n.liftZ) { n.state = 'bones'; n.t = 0; puff(n.x, n.y - 24, 10, '#3a2a22', 30, 40, 0.6); }
     } else if (n.state === 'bones') {
       if (Math.random() < 0.3) puff(n.x, n.y - 30, 1, '#7a746c', 6, 20, 0.8, -30);
       if (n.t > 0.8) { n.state = 'ash'; n.t = 0; puff(n.x, n.y - 10, 12, '#8a847c', 30, 30, 0.6); }
@@ -1324,28 +1501,30 @@ function drawNPC(n) {
   }
   if (n.towel) drawTowel(n);
   if (n.lying) {
-    const head = -n.dir;
+    const head = n.crawl ? n.dir : -n.dir;
     if (n.state === 'ash') { spr('ash', 0, n.x, n.y - 2, { alpha: n.t > 3 ? Math.max(0, 4 - n.t) : 1 }); return; }
     if (n.state === 'bones') { sprLying('skeleton', 0, n.x, n.y, head); return; }
-    sprLying('npc_' + n.kind, 0, n.x, n.y, head);
-    if (n.state === 'burn') sprLying(TINT['npc_' + n.kind], 0, n.x, n.y, head, Math.min(0.85, n.t / 1.1));
+    const lf = n.crawl ? Math.floor(n.anim) : 0;
+    sprLying('npc_' + n.kind, lf, n.x, n.y, head);
+    if (n.state === 'burn') sprLying(TINT['npc_' + n.kind], lf, n.x, n.y, head, Math.min(0.85, n.t / (n.crawl ? 1.6 : 1.1)));
     return;
   }
   if (n.state === 'ash') { spr('ash', 0, n.x, n.y + 1, { alpha: n.t > 3 ? Math.max(0, 4 - n.t) : 1 }); return; }
   shadow(n.x, n.y, 8, 2);
   if (n.state === 'bones') { spr('skeleton', 0, n.x, n.y + 1, { flip }); return; }
-  spr('npc_' + n.kind, n.state === 'towel' ? 0 : n.anim, n.x, n.y + 1, { flip });
-  if (n.state === 'burn') spr(TINT['npc_' + n.kind], n.anim, n.x, n.y + 1, { flip, alpha: Math.min(0.85, n.t / 1.1) });
+  const ny = n.y + 1 - Math.round(n.liftZ || 0), still = n.state === 'towel' || n.state === 'play';
+  spr('npc_' + n.kind, still ? 0 : n.state === 'held' ? S.time * 14 : n.anim, n.x, ny, { flip });
+  if (n.state === 'burn') spr(TINT['npc_' + n.kind], n.anim, n.x, ny, { flip, alpha: Math.min(0.85, n.t / 1.1) });
 }
 function drawWorld() {
   const B = boss, P = player;
   ctx.drawImage(S.bg, 0, 0);
   drawSea(false);
   drawSea(true);
-  if (S.mode === 'intro') { if (S.intro.show) drawBossIntro(S.intro); } else drawBoss();
+  if (S.mode === 'intro') { if (S.intro.show) drawBossIntro(S.intro); } else if (S.mode !== 'title') drawBoss();
   // surf line over the Sun's waist
   for (let x = 0; x < W; x += 2) { const y = SHORE - 1 + Math.round(Math.sin(x * 0.06 + S.time * 2.4) * 1.5); ctx.fillStyle = C.white; ctx.fillRect(x, y, 2, 2); ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(x, y + 3 + Math.round(Math.sin(x * 0.11 - S.time * 1.7)), 2, 1); }
-  const handsOut = B.state !== 'dead' && S.mode !== 'intro';
+  const handsOut = B.state !== 'dead' && S.mode !== 'intro' && S.mode !== 'title';
   if (handsOut) B.hands.forEach(drawArm);
   // floor: umbrella shade, shadows, telegraphs
   for (const u of UMBRELLAS) { shadow(u.x, u.y + 2, 26, 9, 0.22); if (S.shadeGlow) { ctx.strokeStyle = Math.floor(S.time * 8) % 2 ? '#5fe08a' : '#fff'; ctx.lineWidth = 1; ELL(ctx, u.x, u.y + 2, 26, 9); ctx.stroke(); } }
@@ -1353,6 +1532,7 @@ function drawWorld() {
   if (handsOut) for (const h of B.hands) { const k = clamp(1 - h.z / 140, 0.35, 1); shadow(h.x, h.fy, 24 * k, 9 * k, 0.3); }
   for (const p of pickups) if (p.z > 0) shadow(p.x, p.y, 6, 2);
   for (const b of B.beams) {
+    if (b.air) continue;
     if (b.warn) { ctx.strokeStyle = Math.floor(S.time * 14) % 2 ? '#ff3a1a' : '#fff3b0'; ctx.lineWidth = 1; ELL(ctx, b.x, b.y, 12, 6); ctx.stroke(); }
     else { ctx.fillStyle = 'rgba(80,20,10,.35)'; ELL(ctx, b.x, b.y, 12, 5); ctx.fill(); }
   }
@@ -1363,13 +1543,20 @@ function drawWorld() {
   for (const u of UMBRELLAS) list.push({ y: u.y, draw: () => spr('umbrella', 0, u.x, u.y + 2) });
   for (const p of pickups) list.push({ y: p.y, draw: () => { if (p.life < 3 && Math.floor(p.life * 8) % 2) return; spr(p.kind, 0, p.x, p.y - p.z + (p.kind.startsWith('slather') ? Math.round(Math.sin(S.time * 4) * 1) : 0)); } });
   for (const n of npcs) list.push({ y: n.y, draw: () => drawNPC(n) });
+  for (const v of vehicles) list.push({ y: v.y, draw: () => {
+    const fade = v.state === 'burning' && v.t > 7 ? 8 - v.t : 1, f = v.state === 'drive' ? Math.floor(v.anim) % 2 : 2;
+    shadow(v.x, v.y, 24, 4, 0.25 * fade); spr('jeep', f, v.x, v.y + 1, { flip: v.dir < 0, alpha: fade });
+    if (v.state === 'burning') spr(TINT.jeepC, f, v.x, v.y + 1, { flip: v.dir < 0, alpha: Math.min(0.85, v.t / 0.8) * fade });
+  } });
+  for (const c of crabs) list.push({ y: c.y, draw: () => spr(c.cooked ? 'crab_cooked' : 'crab', c.anim, c.x, c.y + 1, { flip: c.vx < 0 }) });
   const G = S.guard;
   if (G && S.mode !== 'title') list.push({ y: G.y, draw: () => { shadow(G.x, G.y, 8, 2); spr('npc_lifesaver', G.state === 'drop' ? 0 : G.anim, G.x, G.y + 1, { flip: G.dir < 0 }); } });
   list.sort((a, b) => a.y - b.y).forEach(o => o.draw());
   if (S.sunSay) { const far = S.intro && S.intro.k < 0.99; sunBubble(S.sunSay.t, 240, far ? S.intro.baseY - (SHORE - B.headY + 50) * S.intro.k : B.headY, far); }
-  for (const n of npcs) if (n.shout) bubble(n.shout.t, n.x, n.y - (n.lying ? 22 : 44));
+  drawToys();
+  for (const n of npcs) if (n.shout) bubble(n.shout.t, n.x, n.y - (n.lying ? 22 : 44) - (n.liftZ || 0));
   if (G && G.shout && S.mode !== 'title') bubble(G.shout.t, G.x, G.y - 44);
-  if (P.shout && S.mode !== 'title') bubble(P.shout.t, P.x, P.y - 54);
+  if (P.shout && S.mode !== 'title') bubble(P.shout.t, P.x, P.y - 54 - (P.liftZ || 0));
   // beams and projectiles
   for (const b of B.beams) {
     if (b.warn) continue;
@@ -1393,6 +1580,7 @@ function drawWorld() {
 }
 function playerFrame() {
   const P = player;
+  if (P.held) return 19;
   if (boss.state === 'dead') return 21;
   if (P.rollT > 0) return 8 + Math.min(4, Math.floor((0.42 - P.rollT) / 0.42 * 5));
   if (P.hurtT > HIT_INVULN - 0.25) return 19;
@@ -1403,11 +1591,11 @@ function playerFrame() {
 function drawPlayer() {
   const P = player;
   if (S.mode === 'title') return;
-  const px = Math.round(P.x), py = Math.round(P.y), ox = px - 16, oy = py + 1 - 48;
+  const lz = Math.round(P.liftZ || 0), px = Math.round(P.x), py = Math.round(P.y) - lz, gy = Math.round(P.y), ox = px - 16, oy = py + 1 - 48;
   if (P.dead) { // on fire, then a skeleton, then a pile of ash (the mullet and thongs survive)
-    if (P.deathT < 1.3) { shadow(px, py, 10, 3); spr('bogan_burnt', 19, px, py + 1, { flip: Math.floor(P.deathT * 8) % 2 === 1 }); spr(TINT.boganC, 19, px, py + 1, { alpha: P.deathT / 1.3 * 0.8 }); }
+    if (P.deathT < 1.3) { shadow(px, gy, 10, 3); spr('bogan_burnt', 19, px, py + 1, { flip: Math.floor(P.deathT * 8) % 2 === 1 }); spr(TINT.boganC, 19, px, py + 1, { alpha: P.deathT / 1.3 * 0.8 }); }
     else if (P.deathT < 2.4) {
-      shadow(px, py, 10, 3); spr('skeleton', 0, px, py + 1); const sx = px - 14, sy = py + 1 - 40;
+      shadow(px, gy, 10, 3); spr('skeleton', 0, px, py + 1); const sx = px - 14, sy = py + 1 - 40;
       ctx.fillStyle = C.hair; ctx.fillRect(sx + 8, sy + 4, 3, 11); ctx.fillRect(sx + 9, sy + 3, 8, 2);
       ctx.fillStyle = C.thong; ctx.fillRect(sx + 10, sy + 38, 4, 2); ctx.fillRect(sx + 15, sy + 38, 4, 2);
     } else {
@@ -1416,9 +1604,9 @@ function drawPlayer() {
     }
     return;
   }
-  shadow(px, py, 10, 3);
+  shadow(px, gy, 10, 3);
   if (P.hurtT > 0 && P.hurtT < HIT_INVULN - 0.3 && Math.floor(P.hurtT * 14) % 2) return;
-  const f = P.introFrame ?? playerFrame(), flip = P.face < 0 && f >= 19 && f <= 21;
+  const f = P.introFrame ?? playerFrame(), flip = P.held ? Math.floor(S.time * 8) % 2 === 1 : P.face < 0 && f >= 19 && f <= 21;
   spr('bogan', f, px, py + 1, { flip });
   const burn = clamp(Math.max(P.burn / 100 * 0.9, P.scorch), 0, 1);
   if (burn > 0.02) spr('bogan_burnt', f, px, py + 1, { flip, alpha: burn });
@@ -1468,8 +1656,7 @@ function drawTitle() {
   spr('logo', 0, 22, 26, { ax: 0, ay: 0 });
   ctx.save(); ctx.translate(72, 22); ctx.scale(1, 1.18); ctx.font = '44px Anton, Impact, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = C.ink; ctx.fillText('SLATHER', 0, 0); ctx.restore();
   ctx.fillStyle = C.ink; ctx.font = `8px ${PIX}`; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-  ctx.fillText('SHADOW OF THE SUN', 24, 84);
-  ctx.font = '13px Anton, Impact, sans-serif'; ctx.fillText('BECAUSE THE SUN IS NOT YOUR FRIEND.', 24, 100);
+  ctx.font = '13px Anton, Impact, sans-serif'; ctx.fillText('BECAUSE THE SUN IS NOT YOUR FRIEND.', 24, 90);
   ctx.font = `8px ${PIX}`;
   const lines = isTouch
     ? [['MOVE', 'LEFT THUMB'], ['SQUIRT', 'HOLD BUTTON'], ['ROLL', 'DODGE ATTACKS']]
@@ -1512,7 +1699,7 @@ function frame(now) {
       for (let i = hazards.length - 1; i >= 0; i--) if (hazards[i] && !hazards[i].update(dt)) hazards.splice(i, 1);
     } else updateBoss(dt);
     input.roll = false;
-    updateNPCs(dt); updateSea(dt);
+    updateNPCs(dt); updateSea(dt); updateGroups(dt); updateVehicles(dt); updateCrabs(dt);
     if (S.sunSay && (S.sunSay.life -= dt) <= 0) S.sunSay = null;
     if (S.healPop && (S.healPop.life -= dt) <= 0) S.healPop = null;
     if (S.mode === 'intro') { S.sayCD -= dt; }
@@ -1549,7 +1736,7 @@ function fit() {
 addEventListener('resize', fit); fit();
 // debugging handle for playtesting from the console
 if (isTouch) document.body.classList.add('touch');
-window.__slather = { finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
+window.__slather = { firePatch, spawnJeep, spawnRugby, spawnFrisbee, vehicles, crabs, groups, finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
 reset();
 if (document.fonts) document.fonts.load(`8px ${PIX}`).catch(() => {});
 if (document.fonts) document.fonts.load('44px Anton').catch(() => {});
