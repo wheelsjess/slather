@@ -1407,7 +1407,7 @@ function updateGuard(dt) {
 const NPC_KINDS = ['bikini', 'onepiece', 'surfergirl', 'bodyboardgirl', 'walkerf', 'bikini', 'boardies', 'surfer', 'bodyboarder', 'muscle', 'walker', 'oldie']; // half women, half men
 const npcSprite = n => 'npc_' + n.kind + (n.tat ? '_tat' : '');
 const SCREAMS = ['AAAH!', 'MY TAN!', 'NOOO!', 'HOT HOT HOT!', 'MUMMY!', 'WHY ME?!'];
-const ITALIAN = "I'M 1/8TH ITALIAN, I DON'T NEED SUNSCREEN";
+const ITALIAN = "I'M 1/8TH ITALIAN,\nI DON'T NEED SUNSCREEN";
 const LAST_WORDS = { eshay: "I'M COOKED ADLAAAAAAY!", italian: 'MAMA MIA!' };
 const TOWELS = [['#e2361f', '#fffdf2'], ['#2f6fd1', '#ffd21f'], ['#3cc46c', '#fffdf2'], ['#ff4fa0', '#ffe800']];
 
@@ -1704,9 +1704,10 @@ function sunBubble(t, hx, hy, far) { // the Sun talks in brand yellow, beside it
   lines.forEach((l, i) => ctx.fillText(l, bx + 5, by + 4 + i * 11));
 }
 function bubble(t, x, y) {
-  ctx.font = `8px ${PIX}`; const w = t.length * 8 + 6, bx = Math.round(clamp(x - w / 2, 2, W - w - 2)), by = Math.round(y - 13);
-  ctx.fillStyle = C.ink; ctx.fillRect(bx - 1, by - 1, w + 2, 14); ctx.fillStyle = C.white; ctx.fillRect(bx, by, w, 12);
-  ctx.fillStyle = C.ink; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(t, bx + 3, by + 2);
+  const L = t.split('\n'), h = 12 + (L.length - 1) * 10; // '\n' starts a new line; extra lines grow the bubble upwards
+  ctx.font = `8px ${PIX}`; const w = Math.max(...L.map(l => l.length)) * 8 + 6, bx = Math.round(clamp(x - w / 2, 2, W - w - 2)), by = Math.round(y - 1 - h);
+  ctx.fillStyle = C.ink; ctx.fillRect(bx - 1, by - 1, w + 2, h + 2); ctx.fillStyle = C.white; ctx.fillRect(bx, by, w, h);
+  ctx.fillStyle = C.ink; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; L.forEach((l, i) => ctx.fillText(l, bx + 3, by + 2 + i * 10));
 }
 function drawSea(front) {
   for (const s of sea) {
