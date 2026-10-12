@@ -31,6 +31,12 @@ Starting from the title screen plays a short cutscene. The bogan wanders onto a 
 - **Phase 2, High Noon** (at 60% health): double slams and sweeps, more fireballs, and more grabs.
 - **Phase 3, Heat Dome** (at 25% health): triple slams with shockwaves, two laser beams at once, faster attacks, and the Solar Flare. Get under an umbrella before it goes off.
 
+## The clock and the leaderboard
+
+A timer at the top of the screen counts the fight, starting when you take control after the intro. It stops the moment the Sun dies or you do. Win, and you enter three initials, arcade style: type them, or use up and down to change a letter and left and right to move, then press Enter. On a phone, tap the arrows above and below each letter, then OK. Then the **Fastest Slatherers** board ranks the quickest kills, with your new run flashing. The top five also show on the title screen.
+
+When the game is played from its claude.ai page, the board is shared. Everyone who opens the page and is allowed to add to it lands on the same board, and each player keeps their 10 best runs. People who can only view the page see the shared board, but their own times are saved on their device. Opened anywhere else, such as straight from `index.html`, the board only keeps times on that device.
+
 ## The Sun's personality
 
 The Sun shows its lines in yellow speech bubbles. It doesn't speak them aloud.
@@ -58,7 +64,7 @@ The numbers near the top of the script in `index.html` control the difficulty:
 | Setting | What it controls |
 |---|---|
 | `DMG` | Damage from each attack |
-| `PLAYER_TAKES` / `SUN_TAKES` | Multipliers on the damage each side takes (both 0.65). Lower both to make the fight last longer without changing the difficulty. |
+| `PLAYER_TAKES` / `SUN_TAKES` | Multipliers on the damage each side takes (0.7 and 0.62). Lower both to make the fight last longer without changing the difficulty. |
 | `HAT_TIME` | How long the bucket hat lasts |
 | `HEAL` | Health restored by each snack |
 | `BOSS_MAX` | The Sun's health |

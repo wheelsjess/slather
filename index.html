@@ -66,15 +66,15 @@ const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Tuning ---------------------------------------------------------------
 const FLOOR = { x0: 18, x1: 462, y0: 166, y1: 244 };   // where the bogan can walk
 const HORIZON = 104, SHORE = 152;
-const BOSS_MAX = 3000;
+const BOSS_MAX = 3300;
 const PLAYER_HP = 100;
 const UV_RATE = [0, 2.4, 3.6, 5.2];   // sunburn build-up per second with no SPF
-const GAP = [0, 1.3, 0.95, 0.7];      // rest between boss attacks per phase
+const GAP = [0, 1.2, 0.88, 0.64];     // rest between boss attacks per phase
 const SPF_TIME = 8;          // UV shield: hits bounce off and hurt the Sun
 const DUAL_TIME = 10;
 const KILL_HEAL = 55;         // the Sun heals for every beachgoer it torches
-const PLAYER_TAKES = 0.65;     // damage multipliers: lower both to make the fight last longer at the same difficulty
-const SUN_TAKES = 0.65;
+const PLAYER_TAKES = 0.7;      // damage multipliers: lower both to make the fight last longer at the same difficulty
+const SUN_TAKES = 0.62;
 const HAT_TIME = 20;
 const DMG = { slam: 22, sweep: 18, laser: 15, orb: 14, ray: 16, grab: 24, grabLaser: 45, wave: 13, flare: 36, burn: 14, fire: 8 };
 const HIT_INVULN = 0.8;
@@ -710,7 +710,7 @@ function reset() {
   Object.assign(boss, { hp: BOSS_MAX, trail: BOSS_MAX, state: 'fight', attack: null, cooldown: 2.4, last: '', next: null, invuln: 0, transition: 0,
     face: null, hurtFaceT: 0, reactFace: null, reelT: 0, angerT: 0, eyeGlow: 0, headGlow: 0, whiteHot: 0, flash: 0, beams: [], laughT: 0, sinkY: 0, headY: 42, shakeHead: false,
     hands: [-1, 1].map(s => ({ s, x: 240 + s * 118, fy: 160, z: 46, tx: 0, tfy: 0, tz: 0, rate: 5, pose: 'open', busy: false, direct: false, fire: false })) });
-  Object.assign(S, { phase: 1, time: 0, shake: 0, flareCD: 0, shadeGlow: false, bg: BG[1], whiteA: 0, hurtA: 0, dmgAcc: 0, dmgT: 0, hurtAcc: 0,
+  Object.assign(S, { fight: 0, modeT: 0, phase: 1, time: 0, shake: 0, flareCD: 0, shadeGlow: false, bg: BG[1], whiteA: 0, hurtA: 0, dmgAcc: 0, dmgT: 0, hurtAcc: 0,
     endT: 0, hits: 0, snacks: 0, gullT: 9, hatT: 35, admireT: 0, goldA: 0, held: null, jeepT: 14, sunSay: null, sayCD: 0, killCD: 0, healPop: null, call: null, blueA: 0, banner: null, toast: null, torched: 0, npcT: 1, seaT: 2, lifeT: 4, guard: null });
 }
 
@@ -1070,13 +1070,15 @@ const KEYMAP = { KeyW: 'u', ArrowUp: 'u', KeyS: 'd', ArrowDown: 'd', KeyA: 'l', 
 addEventListener('keydown', e => {
   if (KEYMAP[e.code]) { input.keys[KEYMAP[e.code]] = true; e.preventDefault(); }
   if (e.code === 'Space') e.preventDefault();
+  if (S.mode === 'initials') { initialsKey(e); return; }
   if (e.repeat) return;
   if (S.mode === 'play' && (e.code === 'Space' || e.code === 'ShiftLeft' || e.code === 'ShiftRight')) input.roll = true;
   if (e.code === 'KeyJ' || e.code === 'KeyK') input.fire = true;
   if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
   if ((e.code === 'Enter' || e.code === 'Space') && S.mode === 'intro') finishIntro();
   else if ((e.code === 'Enter' || e.code === 'Space') && S.mode === 'title') startIntro();
-  else if ((e.code === 'Enter' || e.code === 'Space') && ['dead', 'won'].includes(S.mode)) start();
+  else if ((e.code === 'Enter' || e.code === 'Space') && S.mode === 'won' && S.modeT > 0.6) startInitials();
+  else if ((e.code === 'Enter' || e.code === 'Space') && ['dead', 'board'].includes(S.mode) && S.modeT > 0.4) start();
 });
 addEventListener('keyup', e => { if (KEYMAP[e.code]) input.keys[KEYMAP[e.code]] = false; });
 addEventListener('blur', () => { input.keys = {}; if (S.mode === 'play') togglePause(); });
@@ -1084,7 +1086,9 @@ cv.addEventListener('pointerdown', e => {
   audioOn();
   if (S.mode === 'title') { startIntro(); return; }
   if (S.mode === 'intro') { finishIntro(); return; }
-  if (['dead', 'won'].includes(S.mode)) { start(); return; }
+  if (S.mode === 'initials') { initialsTap(e); return; }
+  if (S.mode === 'won') { if (S.modeT > 0.6) startInitials(); return; }
+  if (['dead', 'board'].includes(S.mode)) { if (S.modeT > 0.4) start(); return; }
   if (S.mode === 'paused') { togglePause(); return; }
   if (e.pointerType === 'mouse' && e.button === 0) input.fire = true;
 });
@@ -1878,6 +1882,7 @@ function drawHUD() {
   if (P.dual > 0) { txt('DUAL', 8, 44, '#ffe800'); bar(48, 45, 64, 5, P.dual / DUAL_TIME, '#ffe800'); }
   if (P.hat > 0) { txt('HAT', 8, P.dual > 0 ? 56 : 44, '#ffffff'); bar(48, (P.dual > 0 ? 57 : 45), 64, 5, P.hat / HAT_TIME, '#ffffff'); }
   txt('THE SUN, SCORCHER OF BACKS', W / 2, 250, C.white, 8, 'center');
+  txt(fmtT(S.fight), W / 2, 8, boss.state === 'dead' ? '#ffe800' : C.white, 8, 'center');
   bar(90, 261, 300, 4, B.trail / BOSS_MAX, '#f3d36b', '#2a1a14');
   ctx.fillStyle = '#c4281a'; ctx.fillRect(90, 261, Math.round(300 * B.hp / BOSS_MAX), 4);
   S.dmgT -= 1 / 60; if (S.dmgT <= 0) S.dmgAcc = 0;
@@ -1908,6 +1913,11 @@ function drawTitle() {
   spr('slather', 0, 30, 186); ctx.fillText('SPF = UV SHIELD', 42, 168); ctx.fillText('TWINS = DUAL WIELD', 42, 180);
   spr('potato', 0, 29, 204); spr('dimsim', 0, 29, 220); ctx.fillText('SEAGULL SNACKS', 42, 194); ctx.fillText('= HEALTH', 42, 207);
   if (Math.floor(S.time * 2) % 2) { ctx.fillText(isTouch ? 'TAP TO START' : 'PRESS ENTER', 24, 232); }
+  if (BOARD.list.length) {
+    ctx.fillStyle = 'rgba(10,8,6,.72)'; ctx.fillRect(282, 22, 180, 30 + Math.min(5, BOARD.list.length) * 13);
+    txt('FASTEST SLATHERERS', 372, 30, '#ffe800', 8, 'center');
+    BOARD.list.slice(0, 5).forEach((r, i) => { txt(`${i + 1}.`, 298, 48 + i * 13); txt(r.i, 322, 48 + i * 13); txt(fmtT(r.t), 448, 48 + i * 13, C.white, 8, 'right'); });
+  }
 }
 function drawEnd(title, col, lines) {
   ctx.fillStyle = 'rgba(10,8,6,.78)'; ctx.fillRect(0, 84, W, 104);
@@ -1915,20 +1925,117 @@ function drawEnd(title, col, lines) {
   lines.forEach((l, i) => outlined(l, W / 2, 136 + i * 14, C.white, 8));
 }
 
+/* ================= Leaderboard ================= */
+// Fastest kills. In claude.ai the board is shared: each signed-in player keeps their own best runs at scores/<their id>
+// and everyone reads the whole collection. Anywhere else (or if the viewer can't write) it falls back to this browser only.
+const fmtT = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}.${String(Math.floor((t % 1) * 100)).padStart(2, '0')}`;
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const BOARD = { list: [], shared: false, mine: [], db: null, uid: null, saving: false, lastAt: 0 };
+const cleanRun = r => r && typeof r.t === 'number' && r.t > 5 && r.t < 36000 && typeof r.i === 'string'
+  ? { i: (r.i.toUpperCase().replace(/[^A-Z]/g, '') + 'AAA').slice(0, 3), t: r.t, at: typeof r.at === 'number' ? r.at : 0 } : null;
+const sortRuns = a => a.filter(Boolean).sort((x, y) => x.t - y.t);
+function localRuns() { try { return sortRuns((JSON.parse(localStorage.getItem('slather-board') || '[]')).map(cleanRun)); } catch (_) { return []; } }
+function useLocal() { BOARD.shared = false; BOARD.db = null; BOARD.list = localRuns(); }
+useLocal();
+(async () => {
+  try {
+    if (!window.claude || !claude.use) return;
+    const [db, user] = await Promise.all([claude.use('db'), claude.use('user')]);
+    const uid = user ? await user.id() : null;
+    if (!db || !uid) return;
+    BOARD.db = db; BOARD.uid = uid;
+    db.collection('scores').onSnapshot(snap => {
+      const all = [];
+      for (const d of snap.docs) {
+        const runs = (d.data()?.runs || []).map(cleanRun).filter(Boolean);
+        if (d.id === uid) BOARD.mine = sortRuns(runs.slice());
+        all.push(...runs);
+      }
+      if (BOARD.db) { BOARD.shared = true; BOARD.list = sortRuns(all); }
+    }, () => useLocal());
+  } catch (_) { useLocal(); }
+})();
+async function saveRun(run) {
+  try { const l = localRuns(); l.push(run); localStorage.setItem('slather-board', JSON.stringify(sortRuns(l).slice(0, 20))); } catch (_) {}
+  if (BOARD.db) {
+    const runs = sortRuns([...BOARD.mine, run]).slice(0, 10);
+    BOARD.list = sortRuns([...BOARD.list, run]);   // show it straight away; the snapshot confirms it
+    BOARD.saving = true;
+    try { await BOARD.db.doc('scores/' + BOARD.uid).set({ runs }); BOARD.mine = runs; }
+    catch (_) { useLocal(); }   // e.g. a view-only visitor: keep it on this device instead
+    BOARD.saving = false;
+  } else BOARD.list = localRuns();
+}
+function startInitials() { S.mode = 'initials'; S.modeT = 0; S.ini = { l: (S.lastIni || 'AAA').split('').map(c => LETTERS.indexOf(c)), c: 0 }; SFX.ding(); }
+function spinLetter(i, d) { const L = S.ini.l; L[i] = (L[i] + d + LETTERS.length) % LETTERS.length; S.ini.c = i; SFX.ding(); }
+function submitInitials() {
+  const i = S.ini.l.map(n => LETTERS[n]).join('');
+  S.lastIni = i; BOARD.lastAt = Date.now();
+  saveRun({ i, t: Math.round(S.fight * 100) / 100, at: BOARD.lastAt });
+  S.mode = 'board'; S.modeT = 0; SFX.win();
+}
+function initialsKey(e) {
+  const k = e.code, I = S.ini; e.preventDefault();
+  if (k === 'ArrowUp') spinLetter(I.c, -1);
+  else if (k === 'ArrowDown') spinLetter(I.c, 1);
+  else if (k === 'ArrowLeft' || k === 'Backspace') I.c = Math.max(0, I.c - 1);
+  else if (k === 'ArrowRight') I.c = Math.min(2, I.c + 1);
+  else if (k === 'Enter' || k === 'Space') { if (e.repeat || S.modeT < 0.3) return; if (I.c < 2) I.c++; else submitInitials(); }
+  else if (/^Key[A-Z]$/.test(k) && !e.repeat) { I.l[I.c] = LETTERS.indexOf(k[3]); if (I.c < 2) I.c++; SFX.ding(); }
+}
+const INI_X = [W / 2 - 44, W / 2, W / 2 + 44];
+function initialsTap(e) {
+  const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * W, y = (e.clientY - r.top) / r.height * H;
+  if (S.modeT < 0.3) return;
+  if (Math.abs(x - W / 2) < 40 && y > 196 && y < 220) { submitInitials(); return; }
+  INI_X.forEach((cx, i) => { if (Math.abs(x - cx) < 20) { if (y > 112 && y < 140) spinLetter(i, -1); else if (y > 168 && y < 194) spinLetter(i, 1); else if (y >= 140 && y <= 168) S.ini.c = i; } });
+}
+function tri(x, y, up, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x - 8, up ? y + 6 : y - 6); ctx.lineTo(x + 8, up ? y + 6 : y - 6); ctx.lineTo(x, up ? y - 6 : y + 6); ctx.closePath(); ctx.fill(); }
+function drawInitials() {
+  ctx.fillStyle = 'rgba(10,8,6,.86)'; ctx.fillRect(0, 56, W, 184);
+  outlined('NEW TIME! ' + fmtT(S.fight), W / 2, 64, '#ffe800', 16);
+  txt('ENTER YOUR INITIALS', W / 2, 96, C.white, 8, 'center');
+  const blink = Math.floor(S.time * 4) % 2;
+  S.ini.l.forEach((n, i) => {
+    const cx = INI_X[i], on = i === S.ini.c;
+    tri(cx, 126, true, on ? '#ffe800' : '#6b5a45'); tri(cx, 182, false, on ? '#ffe800' : '#6b5a45');
+    if (on) { ctx.fillStyle = blink ? '#ffe800' : '#c4281a'; ctx.fillRect(cx - 14, 168, 28, 3); }
+    outlined(LETTERS[n], cx, 140, on ? '#ffe800' : C.white, 24);
+  });
+  ctx.fillStyle = C.ink; ctx.fillRect(W / 2 - 37, 199, 76, 20); ctx.fillStyle = '#FFE800'; ctx.fillRect(W / 2 - 38, 198, 76, 20);
+  ctx.font = `8px ${PIX}`; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillStyle = C.ink; ctx.fillText('OK', W / 2, 204);
+  txt(isTouch ? 'TAP THE ARROWS, THEN OK' : 'TYPE THEM OR USE THE ARROW KEYS, THEN ENTER', W / 2, 226, '#bba98a', 8, 'center');
+}
+function drawBoard() {
+  ctx.fillStyle = 'rgba(10,8,6,.9)'; ctx.fillRect(0, 0, W, H);
+  outlined('FASTEST SLATHERERS', W / 2, 14, '#ffe800', 16);
+  txt(BOARD.shared ? 'QUICKEST SUN KILLS, EVERYONE WHO PLAYS THIS PAGE' : 'QUICKEST SUN KILLS ON THIS DEVICE', W / 2, 38, '#bba98a', 8, 'center');
+  const list = BOARD.list, me = list.findIndex(r => r.at === BOARD.lastAt), blink = Math.floor(S.time * 4) % 2;
+  if (!list.length) txt(BOARD.saving ? 'SAVING...' : 'NO TIMES YET', W / 2, 120, C.white, 8, 'center');
+  list.slice(0, 10).forEach((r, i) => {
+    const y = 58 + i * 15, mine = i === me, col = mine ? (blink ? '#ffe800' : '#ff8a1f') : i === 0 ? '#f0c95a' : C.white;
+    if (mine) { ctx.fillStyle = 'rgba(255,232,0,.14)'; ctx.fillRect(140, y - 3, 200, 14); }
+    txt(String(i + 1).padStart(2, ' ') + '.', 160, y, col); txt(r.i, 214, y, col); txt(fmtT(r.t), 320, y, col, 8, 'right');
+  });
+  if (me >= 10) txt(`YOU: #${me + 1}  ${S.lastIni}  ${fmtT(S.fight)}`, W / 2, 212, '#ffe800', 8, 'center');
+  if (Math.floor(S.time * 2) % 2) txt(isTouch ? 'TAP TO FIGHT AGAIN' : 'PRESS ENTER TO FIGHT AGAIN', W / 2, 240, C.white, 8, 'center');
+}
+
 /* ================= Loop ================= */
 let last = performance.now(), deadLine = '';
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (S.mode !== 'paused') {
-    S.time += dt;
+    S.time += dt; S.modeT += dt;
     if (S.mode === 'play') {
+      if (boss.state !== 'dead' && !player.dead) S.fight += dt;   // the clock stops the moment either side goes down
       updatePlayer(dt); updateBoss(dt);
       for (let i = hazards.length - 1; i >= 0; i--) if (hazards[i] && !hazards[i].update(dt)) hazards.splice(i, 1);
       updateDrops(dt); updatePickups(dt); updateGuard(dt);
       if (S.endT > 0) {
         S.endT -= dt;
         if (S.endT <= 0) {
-          S.mode = player.dead ? 'dead' : 'won'; $('#touch').hidden = true; (player.dead ? SFX.lose : SFX.win)();
+          S.mode = player.dead ? 'dead' : 'won'; S.modeT = 0; $('#touch').hidden = true; (player.dead ? SFX.lose : SFX.win)();
           deadLine = ['SHOULD HAVE SLATHERED.', 'SLIP, SLOP, SLAP, ROLL.', 'THE SUN IS NOT YOUR FRIEND.', 'REAPPLY EVERY TWO HOURS.'][Math.floor(Math.random() * 4)];
         }
       }
@@ -1965,7 +2072,9 @@ function frame(now) {
     drawHUD();
     const blink = Math.floor(S.time * 2) % 2, again = isTouch ? 'TAP TO TRY AGAIN' : 'PRESS ENTER TO TRY AGAIN';
     if (S.mode === 'dead') drawEnd('YOU GOT BURNT', '#d02a1c', [deadLine, blink ? again : '']);
-    if (S.mode === 'won') { const m = Math.floor(S.time / 60), s = String(Math.floor(S.time % 60)).padStart(2, '0'); drawEnd('SUN SET', '#f0c95a', ['GREAT ENEMY SLATHERED', `TIME ${m}:${s}  HITS ${S.hits}  SNACKS ${S.snacks}`, `INNOCENTS TORCHED: ${S.torched}`, blink ? (isTouch ? 'TAP TO FIGHT AGAIN' : 'PRESS ENTER TO FIGHT AGAIN') : '']); }
+    if (S.mode === 'won') drawEnd('SUN SET', '#f0c95a', ['GREAT ENEMY SLATHERED', `TIME ${fmtT(S.fight)}  HITS ${S.hits}  SNACKS ${S.snacks}`, `INNOCENTS TORCHED: ${S.torched}`, blink ? (isTouch ? 'TAP TO ENTER YOUR INITIALS' : 'PRESS ENTER FOR YOUR INITIALS') : '']);
+    if (S.mode === 'initials') drawInitials();
+    if (S.mode === 'board') drawBoard();
     if (S.mode === 'paused') drawEnd('PAUSED', '#f0c95a', [isTouch ? 'TAP TO RESUME' : 'PRESS ESC TO RESUME']);
   }
   requestAnimationFrame(frame);
@@ -1979,7 +2088,7 @@ function fit() {
 addEventListener('resize', fit); fit();
 // debugging handle for playtesting from the console
 if (isTouch) document.body.classList.add('touch');
-window.__slather = { spawnEshay, spawnInfluencer, crowdAround, firePatch, spawnJeep, castles, spawnFrisbee, vehicles, crabs, groups, finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
+window.__slather = { BOARD, saveRun, startInitials, spawnEshay, spawnInfluencer, crowdAround, firePatch, spawnJeep, castles, spawnFrisbee, vehicles, crabs, groups, finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
 reset();
 if (document.fonts) document.fonts.load(`8px ${PIX}`).catch(() => {});
 if (document.fonts) document.fonts.load('44px Anton').catch(() => {});
