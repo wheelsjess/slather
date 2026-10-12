@@ -516,6 +516,18 @@ const SFX = {
     o.connect(f).connect(g).connect(OUT()); o.start(t); lfo.start(t); o.stop(t + d); lfo.stop(t + d);
     for (let k = 0; k < d * 16; k++) noise(0.03, rand(2500, 6000), 2, rand(0.03, 0.08), 'bandpass', rand(0, d));
   },
+  fireRoar: d => { // a wall of fire racing along the sand
+    if (!actx || muted) return;
+    const t = actx.currentTime, src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+    src.buffer = getNoise(); src.loop = true; f.type = 'lowpass'; f.frequency.setValueAtTime(300, t); f.frequency.linearRampToValueAtTime(1500, t + d * 0.5); f.frequency.linearRampToValueAtTime(600, t + d);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.24, t + 0.08); g.gain.setValueAtTime(0.24, t + d * 0.8); g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.45);
+    src.connect(f).connect(g).connect(OUT()); src.start(t); src.stop(t + d + 0.5);
+    tone(58, 38, d + 0.3, 0.16, 'sawtooth');
+    for (let k = 0; k < d * 22; k++) noise(0.03, rand(1500, 4500), 2, rand(0.04, 0.11), 'bandpass', rand(0, d));
+  },
+  windup: () => { noise(0.55, 450, 0.6, 0.09, 'bandpass'); tone(70, 240, 0.55, 0.09, 'sawtooth'); },
+  fall: () => tone(1500, 320, 1.0, 0.03, 'sine'),
+  rayHum: () => { tone(60, 150, 0.85, 0.1, 'sawtooth'); noise(0.85, 2500, 3, 0.05, 'bandpass'); },
   zap: () => { tone(1900, 140, 0.25, 0.06, 'sawtooth'); noise(0.28, 4200, 0.7, 0.1, 'highpass'); },
   slam: () => { tone(72, 26, 0.6, 0.5, 'sine'); tone(150, 40, 0.22, 0.22, 'square'); noise(0.5, 220, 0.6, 0.4, 'lowpass'); noise(0.3, 1300, 0.8, 0.14, 'bandpass', 0.02); noise(0.7, 600, 0.4, 0.1, 'bandpass', 0.08); },
   fwoosh: () => noise(0.4, 520, 0.5, 0.07, 'bandpass'),
@@ -593,28 +605,10 @@ function wantedMusic() {
 }
 
 /* ================= The Sun's voice and one-liners ================= */
-const KILL_LINES = ['ANOTHER SACRIFICE TO THE SUN GOD! HAHAHAH!', 'MMMM... LOBSTER!!!', 'MEDIUM RARE. JUST HOW I LIKE EM.', 'SHOULDA WORN A HAT, MATE!',
-  'CRISPY! LIKE A SNAG ON THE BARBIE!', 'ONE LESS TAN LINE TO WORRY ABOUT!', 'NO SUNSCREEN? NO WORRIES! HAHAHA!', 'UV INDEX: EXTREME! HAHAHA!',
-  'SMELLS LIKE A SUNDAY ROAST!', 'DELICIOUS! ANYONE GOT TOMATO SAUCE?', 'SUNBAKING? MORE LIKE SUN-BAKED!', 'YOUR SKIN CANCER CHECK IS... OVERDUE!',
-  'ASHES TO ASHES, BEACH TO BEACH!', 'AH, THE SMELL OF THE AUSSIE SUMMER!'];
-const HIT_LINES = ['OI! THAT STINGS!', 'ME EYES! ME BEAUTIFUL EYES!', 'IS THAT... COCONUT SCENTED?!', 'STOP THAT, YA DROPKICK!', "ARGH! IT'S IN ME MOUTH!",
-  "I'VE GOT SPF IN ME NOSTRILS!", 'MY COMPLEXION!', 'STOP MOISTURISING ME!', "THAT'S NOT FAIR DINKUM!", "I'M NOT CRYING, IT'S THE ZINC!",
-  'YOU WILL PAY FOR THAT, SUNSCREEN BOY!', "IT'S GREASY! WHY IS IT SO GREASY?!", 'NOT THE FACE! NOT THE FACE!', 'I WAS HERE FIRST! 4.6 BILLION YEARS!',
-  "I'M TELLING ME MUM! THE MILKY WAY!", 'I CAN FEEL MY PORES CLOSING!', 'BLEURGH! TASTES LIKE A CHEMIST!'];
-const REFLECT_LINES = ['HEY! NO FAIR! NO REFLECTING!', 'OW! WHO TAUGHT YOU THAT?!', "SPF FIFTY PLUS?! THAT'S CHEATING!", 'MY OWN RAYS! THE BETRAYAL!'];
-const TAUNTS = { slam: ['SUNNY SLAP!', 'HAVE A HIGH FIVE! IN THE FACE!'], laser: ['SAY CHEESE!', 'LOOK INTO MY EYES...', 'EXCELLENT...'], sweep: ['OUTTA THE WAY, SANDGROPER!'],
-  rain: ['HAVE SOME UV, ON THE HOUSE!', 'IT IS RAINING. FIRE.'], rays: ['TANNING TIME!', 'SLIP, SLOP, SLAP THIS!'], grab: ['COME TO DADDY...', 'GIMME A CUDDLE!'] };
-let sunVoice = null;
-const hasTTS = 'speechSynthesis' in window;
-function pickVoice() { try { const v = speechSynthesis.getVoices(); sunVoice = v.find(x => /en[-_]AU/i.test(x.lang)) || v.find(x => /en[-_]GB/i.test(x.lang)) || v.find(x => /^en/i.test(x.lang)) || null; } catch (e) { sunVoice = null; } }
-if (hasTTS) { pickVoice(); try { speechSynthesis.addEventListener('voiceschanged', pickVoice); } catch (e) {} }
-function speak(text) { // a slow, low, creepy delivery; the accent comes from the device's Australian voice when it has one
-  if (muted) return;
-  if (!hasTTS || !sunVoice) { text.split(/\s+/).slice(0, 8).forEach((w, i) => voice(rand(140, 200), rand(90, 130), 0.13, 0.13, i * 0.16)); return; }
-  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text.toLowerCase().replace(/!+/g, '!')); u.voice = sunVoice; u.lang = sunVoice.lang; u.pitch = 0.45; u.rate = 0.8; speechSynthesis.speak(u); } catch (e) {}
-}
-function hush() { if (hasTTS) try { speechSynthesis.cancel(); } catch (e) {} }
-function sunSay(text, out = true) { S.sunSay = { t: text, life: clamp(text.length * 0.08, 1.8, 3.4) }; if (out) speak(text); }
+const KILL_LINES = ['ANOTHER SACRIFICE TO THE SUN GOD! HAHAHAH!', 'MMMM... LOBSTER!!!'];
+const HIT_LINES = ['ARRGGHHHH! SPF 50+', "IT HURTS! AND IT'S SO SMOOTH AND EASY TO APPLY!"];
+const REFLECT_LINES = ["NOOO! THE SPF... IT'S TOO STRONG!!!", 'THE SPECIALLY FORMULATED SPF 50+ OF SLATHER IS IMPENETRABLE'];
+function sunSay(text) { S.sunSay = { t: text, life: clamp(text.length * 0.07, 2, 3.6) }; }
 
 /* ================= State ================= */
 const S = { mode: 'title', phase: 1, time: 0, shake: 0, flareCD: 0, shadeGlow: false, bg: BG[1], whiteA: 0, hurtA: 0,
@@ -726,7 +720,7 @@ const ATTACKS = {
         a.once(t0, 'aim' + i, () => {
           const h = i === 0 ? handFor(player.x) : (a['h' + (i - 1)] === boss.hands[0] ? boss.hands[1] : boss.hands[0]);
           const p = clampFloor({ x: player.x + player.vx * 0.25, y: player.y + player.vy * 0.25 });
-          a['h' + i] = h; a['p' + i] = p; h.busy = true; h.direct = false; h.pose = 'fist'; h.fire = true; mark(p.x, p.y, 30, 12, per * 0.8);
+          a['h' + i] = h; a['p' + i] = p; h.busy = true; h.direct = false; h.pose = 'fist'; h.fire = true; mark(p.x, p.y, 30, 12, per * 0.8); SFX.windup();
         });
         const h = a['h' + i], p = a['p' + i]; if (!h || a.t < t0) continue;
         const lt = a.t - t0;
@@ -744,9 +738,10 @@ const ATTACKS = {
     return script((a, dt) => {
       for (let i = 0; i < n; i++) {
         const t0 = i * per;
-        a.once(t0, 's' + i, () => { const h = boss.hands[i % 2]; a['h' + i] = h; a['r' + i] = clamp(player.y, FLOOR.y0, FLOOR.y1); h.busy = true; h.pose = 'slam'; h.fire = true; band(a['r' + i], 13, 0.95); });
+        a.once(t0, 's' + i, () => { const h = boss.hands[i % 2]; a['h' + i] = h; a['r' + i] = clamp(player.y, FLOOR.y0, FLOOR.y1); h.busy = true; h.pose = 'slam'; h.fire = true; band(a['r' + i], 13, 0.95); SFX.windup(); });
         const h = a['h' + i], row = a['r' + i]; if (!h || a.t < t0) continue;
         const lt = a.t - t0, sx = h.s < 0 ? -24 : W + 24, ex = h.s < 0 ? W + 24 : -24;
+        a.once(t0 + 0.95, 'roar' + i, () => SFX.fireRoar(1.05));
         if (lt < 0.95) { h.tx = sx; h.tfy = row; h.tz = 4; h.rate = 8; }
         else if (lt < 2.0) {
           h.direct = true; const k = (lt - 0.95) / 1.05; h.x = sx + (ex - sx) * k; h.fy = row; h.z = 1;
@@ -772,7 +767,7 @@ const ATTACKS = {
       boss.eyeGlow = Math.min(1, a.t / 0.9);
       if (a.t < 0.9) boss.beams = a.b.map(b => ({ ...b, warn: true }));
       else if (a.t < 0.9 + dur) {
-        a.once(0.9, 'on', () => SFX.laser(dur));
+        a.once(0.9, 'on', () => { SFX.laser(dur); SFX.fireRoar(dur); });
         a.trail -= dt; const drop = a.trail <= 0; if (drop) a.trail = 0.12;
         for (const b of a.b) {
           const dx = player.x - b.x, dy = player.y - b.y, l = Math.hypot(dx, dy) || 1;
@@ -794,7 +789,7 @@ const ATTACKS = {
         const step = (FLOOR.x1 - FLOOR.x0) / cols, off = rand(0, step), xs = [];
         for (let k = 0; k < cols; k++) xs.push(FLOOR.x0 + off + k * step);
         let best = 0; xs.forEach((x, k) => { if (Math.abs(x - player.x) < Math.abs(xs[best] - player.x)) best = k; }); xs[best] = player.x;
-        xs.forEach(x => ray(Math.round(x), 0.85)); boss.headGlow = 1; SFX.charge();
+        xs.forEach(x => ray(Math.round(x), 0.85)); boss.headGlow = 1; SFX.rayHum();
       });
       if (a.t > waves * 1.15 + 0.6) { boss.headGlow = 0; return true; }
       return false;
@@ -802,7 +797,7 @@ const ATTACKS = {
   },
   grab() { // Grab: a hand shadows you, then snatches
     return script(a => {
-      a.once(0, 's', () => { a.h = handFor(player.x); a.h.busy = true; a.h.pose = 'grab'; a.h.fire = true; SFX.charge(); });
+      a.once(0, 's', () => { a.h = handFor(player.x); a.h.busy = true; a.h.pose = 'grab'; a.h.fire = true; SFX.windup(); });
       const h = a.h;
       if (a.t < 1.5) { h.tx = player.x; h.tfy = player.y; h.tz = 56; h.rate = 4.5; a.warn = a.t > 1.05; }
       else if (a.t < 1.68) { h.tz = 0; h.rate = 30; }
@@ -814,7 +809,7 @@ const ATTACKS = {
   },
   flare() { // Solar Flare: get under an umbrella
     return script(a => {
-      a.once(0, 's', () => { banner('SEEK SHADE', 'GET UNDER AN UMBRELLA', 3.6); sunSay('SOLAR FLARE! GET UNDER YA BROLLY!'); tone(90, 1400, 4.2, 0.05, 'sawtooth'); S.shadeGlow = true; boss.hands.forEach(h => { h.busy = true; h.pose = 'open'; h.tx = 240 + h.s * 150; h.tfy = 158; h.tz = 120; h.rate = 3; }); SFX.roar(); });
+      a.once(0, 's', () => { banner('SEEK SHADE', 'GET UNDER AN UMBRELLA', 3.6); tone(90, 1400, 4.2, 0.05, 'sawtooth'); S.shadeGlow = true; boss.hands.forEach(h => { h.busy = true; h.pose = 'open'; h.tx = 240 + h.s * 150; h.tfy = 158; h.tz = 120; h.rate = 3; }); SFX.roar(); });
       boss.whiteHot = a.t < 4.2 ? clamp((a.t - 0.4) / 3.6, 0, 1) : Math.max(0, 1 - (a.t - 4.2) * 1.5);
       a.once(4.2, 'boom', () => { S.whiteA = 1; shake(8); SFX.flare(); S.shadeGlow = false;
         if (!inShade()) hurt(DMG.flare, { unblockable: true, burn: 40 }); else toast('SHADE. NICE.');
@@ -832,7 +827,7 @@ ATTACKS.rain = function () {
     a.once(0, 's', () => { boss.face = 'grin'; boss.hands.forEach(h => { h.busy = true; h.pose = 'open'; h.tx = 240 + h.s * 76; h.tfy = 156; h.tz = 104; h.rate = 4; }); });
     for (let i = 0; i < n; i++) a.once(0.8 + i * 0.13, 'o' + i, () => {
       const p = clampFloor(i === 0 ? { x: player.x + player.vx * 0.5, y: player.y } : { x: player.x + rand(-100, 100), y: player.y + rand(-40, 40) });
-      orb(240, boss.headY + 24, p.x, p.y, 1.0); if (i % 3 === 0) SFX.whoosh();
+      orb(240, boss.headY + 24, p.x, p.y, 1.0); if (i % 2 === 0) SFX.fall(); if (i % 3 === 0) SFX.whoosh();
     });
     if (a.t > 0.8 + n * 0.13 + 1.3) { freeHands(); boss.face = null; return true; }
     return false;
@@ -855,7 +850,7 @@ function deflect(dmg, quiet) { // UV shield: the attack bounces back at the Sun
   const P = player; if (P.deflectCD > 0) return; P.deflectCD = 0.3;
   for (const c of ['#bfeaff', '#ffffff', '#7fd0ff']) puff(P.x, P.y - 24, 6, c, 90, 90, 0.4);
   if (quiet) return;
-  P.deflectT = 0.25; hurtBoss(dmg); sunReact(REFLECT_LINES); SFX.ding(); toast('BOUNCED OFF! -' + dmg, 0.9);
+  P.deflectT = 0.25; hurtBoss(dmg); sunReact(REFLECT_LINES, (S.time - (S.reflectSaidT ?? -9)) > 2.5) ; if ((S.time - (S.reflectSaidT ?? -9)) > 2.5) S.reflectSaidT = S.time; SFX.ding(); toast('BOUNCED OFF! -' + dmg, 0.9);
 }
 function hurt(dmg, o = {}) {
   const P = player;
@@ -868,13 +863,13 @@ function hurt(dmg, o = {}) {
   P.fireT = 1.4; P.eyesT = 0.6; P.scorch = Math.min(1, P.scorch + 0.4); P.hairBurn = Math.min(1, P.hairBurn + 0.3);
   P.shout = { t: pick(SHOUTS), life: 1.1 }; boss.laughT = 0.8;
   if (o.from) { const dx = P.x - o.from.x, dy = P.y - o.from.y, l = Math.hypot(dx, dy) || 1; P.kbx = dx / l * 180; P.kby = dy / l * 120; }
-  if (P.hp <= 0) { P.hp = 0; P.dead = true; P.deathT = 0; S.endT = 3.6; clearAttack(); boss.laughT = 99; P.shout = { t: 'NOT ME MULLET!', life: 1.4 }; SFX.scream(); SFX.laugh(); sunSay('ANOTHER BOGAN BITES THE SAND! HAHAHA!'); }
+  if (P.hp <= 0) { P.hp = 0; P.dead = true; P.deathT = 0; S.endT = 3.6; clearAttack(); boss.laughT = 99; P.shout = { t: 'NOT ME MULLET!', life: 1.4 }; SFX.scream(); SFX.laugh(); }
   return true;
 }
-function sunReact(lines) { // pulls a face, reels back, then gets cranky
+function sunReact(lines, force) { // pulls a face, reels back, then gets cranky
   const B = boss; if (B.state !== 'fight') return;
   B.hurtFaceT = 0.7; B.reactFace = pick(['hurt', 'shock', 'gross']); B.reelT = 0.35; B.angerT = 1.9; SFX.ouch();
-  if (S.sayCD <= 0) { S.sayCD = 3.5; sunSay(pick(lines)); }
+  if (force || S.sayCD <= 0) { S.sayCD = 3.5; sunSay(pick(lines)); }
 }
 function hurtBoss(d) {
   const B = boss;
@@ -893,12 +888,12 @@ function clearAttack() {
 function phaseShift(n) {
   S.phase = n; clearAttack(); S.bg = BG[n]; S.whiteA = 0.7;
   boss.transition = 2.4; boss.invuln = 2.4; boss.cooldown = 0.5;
-  sunSay(n === 2 ? "NOW I'M CRANKY!" : 'TURNING UP THE HEAT, MATE!'); SFX.grumble();
+  SFX.grumble();
   if (n === 2) banner('HIGH NOON', 'THE SUN IS GETTING ANGRY', 3);
   else { banner('HEAT DOME', 'NOWHERE IS SAFE BUT THE SHADE', 3); boss.next = 'flare'; }
   SFX.roar(); shake(6);
 }
-function bossDie() { clearAttack(); sunSay("I'LL BE BACK... TOMORROW MORNING!"); boss.state = 'dead'; S.endT = 4.5; S.bg = BG[4]; S.whiteA = 0.8; shake(8); SFX.roar(); S.banner = null; }
+function bossDie() { clearAttack(); boss.state = 'dead'; S.endT = 4.5; S.bg = BG[4]; S.whiteA = 0.8; shake(8); SFX.roar(); S.banner = null; }
 
 /* ================= Input ================= */
 const KEYMAP = { KeyW: 'u', ArrowUp: 'u', KeyS: 'd', ArrowDown: 'd', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
@@ -949,11 +944,11 @@ cv.addEventListener('contextmenu', e => e.preventDefault());
 }
 function start() { audioOn(); reset(); player.introFrame = null; S.mode = 'play'; $('#touch').hidden = !isTouch; banner('THE SUN', 'SCORCHER OF BACKS', 2.4); }
 function togglePause() {
-  if (S.mode === 'play') { S.mode = 'paused'; hush(); input.keys = {}; input.mouse = false; input.touchShoot = false; $('#touch').hidden = true; }
+  if (S.mode === 'play') { S.mode = 'paused'; input.keys = {}; input.mouse = false; input.touchShoot = false; $('#touch').hidden = true; }
   else if (S.mode === 'paused') { S.mode = 'play'; $('#touch').hidden = !isTouch; }
 }
 $('#pauseBtn').addEventListener('click', togglePause);
-$('#muteBtn').addEventListener('click', () => { muted = !muted; $('#muteBtn').textContent = muted ? 'SOUND OFF' : 'SOUND ON'; audioOn(); if (master) master.gain.value = muted ? 0 : 1; if (muted) hush(); });
+$('#muteBtn').addEventListener('click', () => { muted = !muted; $('#muteBtn').textContent = muted ? 'SOUND OFF' : 'SOUND ON'; audioOn(); if (master) master.gain.value = muted ? 0 : 1; });
 document.addEventListener('visibilitychange', () => { if (document.hidden && S.mode === 'play') togglePause(); });
 
 
@@ -991,9 +986,8 @@ function updateIntro(dt) {
   else if (t >= 12.6) boss.sinkY = 0;
   // maniacal laugh, eyes light up
   I.laugh = t >= 12.6 && t < 14.4;
-  if (I.laugh) { once('laugh', () => { SFX.laugh(); sunSay('HA HA HA HA HA!', false); }); boss.face = t < 13.5 ? 'grin' : 'rage'; boss.eyeGlow = clamp((t - 13.2) / 0.8, 0, 1); }
+  if (I.laugh) { once('laugh', () => { SFX.laugh(); sunSay('HA HA HA HA HA!'); }); boss.face = t < 13.5 ? 'grin' : 'rage'; boss.eyeGlow = clamp((t - 13.2) / 0.8, 0, 1); }
   // stomps up to the beach
-  if (t >= 14.4) once('excellent', () => sunSay("EXCELLENT... WHO'S READY FOR A TAN?"));
   STOMPS.forEach((st, i) => { if (t >= st) once('st' + i, () => { shake(6); SFX.slam(); I.from = { k: I.k, b: I.baseY }; I.stepT = st; I.stepI = i; }); });
   if (I.stepT != null) {
     const e = clamp((t - I.stepT) / 0.25, 0, 1), n = (I.stepI + 1) / STOMPS.length;
@@ -1003,7 +997,7 @@ function updateIntro(dt) {
   // a warning ray across the sand: everyone runs
   if (t >= 16.6 && t < 17.8) {
     const bx = 20 + 440 * ((t - 16.6) / 1.2); boss.eyeGlow = 1; boss.beams = [{ x: bx, y: RAY_Y, eye: 0 }];
-    once('ray', () => { SFX.laser(1.2); P.eyesT = 0.6; fleeAll(); S.npcT = 99; });
+    once('ray', () => { SFX.laser(1.2); SFX.fireRoar(1.2); P.eyesT = 0.6; fleeAll(); S.npcT = 99; });
     if ((I.ft = (I.ft || 0) - dt) <= 0) { I.ft = 0.06; firePatch(bx, RAY_Y, 1.0, 12, 5); }
     scorchNPCs((px, py) => inEll(px, py, bx, RAY_Y, 14, 8));
   } else if (t >= 17.8) { boss.beams = []; boss.eyeGlow = Math.max(0, boss.eyeGlow - dt); }
@@ -1097,7 +1091,7 @@ function updateBoss(dt) {
     B.invuln -= dt; S.flareCD -= dt;
     if (B.transition > 0) { B.transition -= dt; B.shakeHead = B.transition > 0; B.headGlow = B.transition > 0 ? 1 : 0; }
     else if (B.attack) { B.attack.t += dt * (S.phase === 3 ? 1.1 : 1); if (B.attack.update(dt)) { B.attack = null; B.cooldown = GAP[S.phase] * rand(0.8, 1.2); } }
-    else { B.cooldown -= dt; if (B.cooldown <= 0) { const k = chooseAttack(); B.last = k; Object.assign(B, { face: null, eyeGlow: 0, headGlow: 0, beams: [] }); B.attack = ATTACKS[k](); if (TAUNTS[k] && S.sayCD <= 0 && Math.random() < 0.4) { S.sayCD = 3; sunSay(pick(TAUNTS[k])); } } }
+    else { B.cooldown -= dt; if (B.cooldown <= 0) { const k = chooseAttack(); B.last = k; Object.assign(B, { face: null, eyeGlow: 0, headGlow: 0, beams: [] }); B.attack = ATTACKS[k](); } }
   }
   for (const h of B.hands) {
     if (B.state === 'dead') { h.busy = false; h.direct = false; }

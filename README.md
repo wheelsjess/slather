@@ -30,14 +30,18 @@ Starting from the title screen plays a short cutscene. The bogan wanders onto a 
 
 ## The Sun's personality
 
-- **It talks.** It gloats, taunts before attacks, and complains when hit, in yellow speech bubbles. It also speaks the lines aloud in a slow, low, creepy voice, using the device's Australian voice when there is one.
-- **It heals by killing.** Every beachgoer it torches gives it back 80 health (`KILL_HEAL`), and it laughs and boasts about it ("MMMM... LOBSTER!!!").
-- **It reacts to getting hit.** Every 110 damage, it pulls a face (hurt, shocked or grossed out), reels back, gets angry for a moment and says something like "STOP MOISTURISING ME!"
+The Sun shows its lines in yellow speech bubbles. It doesn't speak them aloud.
+
+| When | Lines |
+|---|---|
+| It torches a beachgoer and heals 80 HP (`KILL_HEAL`) | "ANOTHER SACRIFICE TO THE SUN GOD! HAHAHAH!" / "MMMM... LOBSTER!!!" |
+| You hit it (every 110 damage, it also pulls a face, reels back and gets angry) | "ARRGGHHHH! SPF 50+" / "IT HURTS! AND IT'S SO SMOOTH AND EASY TO APPLY!" |
+| It hits you while your UV shield is up and the attack bounces back | "NOOO! THE SPF... IT'S TOO STRONG!!!" / "THE SPECIALLY FORMULATED SPF 50+ OF SLATHER IS IMPENETRABLE" |
 
 ## Sound
 
 - **Music:** SNES-style chiptune. There's a sunny beach tune for the intro, then the boss theme, which gets faster and busier in each phase.
-- **Sound effects:** heavy slams for the fists, electric buzzing for the lasers, zaps for the sun rays, crackling fire, waves in the background, screams, and jingles for winning and losing.
+- **Sound effects:** a rising whoosh as a fist or hand winds up, heavy slams, a roaring wall of fire for the sweep and the laser trail, electric buzzing for the lasers, a charging hum and zaps for the sun rays, falling whistles for the fireballs, crackling fire, a croaky laugh and grunts from the Sun, waves in the background, screams, and jingles for winning and losing.
 
 ## Art
 
