@@ -29,8 +29,8 @@ The arms are drawn by code as thick yellow lines with a black outline, so they c
 
 | File | Frame size | Frames | Notes |
 |---|---|---|---|
-| `bogan.png` | 32 × 48 | 22 | Seen **from behind**, facing the Sun. |
-| `bogan_burnt.png` | 32 × 48 | 22 | The same sheet with lobster-red skin. The game fades it in as his sunburn rises. |
+| `bogan.png` | 32 × 48 | 28 | Seen **from behind**, facing the Sun. |
+| `bogan_burnt.png` | 32 × 48 | 28 | The same sheet with lobster-red skin. The game fades it in as his sunburn rises. |
 
 Frame order for both sheets:
 
@@ -43,12 +43,14 @@ Frame order for both sheets:
 | 19 | Hurt |
 | 20 | Dead, lying flat |
 | 21 | Victory, both arms up |
+| 22–27 | Run cycle while dual-wielding, with both arms raised and a bottle in each hand |
 
 ## Items, props and effects
 
 | File | Frame size | Frames | Notes |
 |---|---|---|---|
 | `slather.png` | 16 × 24 | 1 | SPF bottle pickup |
+| `slather2.png` | 26 × 24 | 1 | Twin bottles. Picking them up turns on dual-wield mode. |
 | `potato.png` | 16 × 16 | 1 | Potato cake (heals 25) |
 | `dimsim.png` | 16 × 16 | 1 | Dim sim (heals 18) |
 | `seagull.png` | 32 × 24 | 4 | Flap cycle, **facing right** |
@@ -56,6 +58,29 @@ Frame order for both sheets:
 | `fireball.png` | 14 × 14 | 2 | Spat fireball, flicker |
 | `splat.png` | 16 × 16 | 3 | Sunscreen splat (currently unused; the code draws blobs) |
 | `logo.png` | 44 × 44 | 1 | The Slather line-drawn sun for the title screen |
+
+When the bogan is hit, the code adds the comedy on top of these sprites: flames, eyes popping out on stalks, singed hair and a speech bubble. When he dies, he turns into `skeleton.png` and then `ash.png`, and code draws his mullet and thongs on top.
+
+## Beachgoers, lifesaver and sea life
+
+The beachgoers are seen **side-on, facing right**; the right-to-left walkers are mirrored. The feet go on the bottom row. Each person has a 4-frame walk cycle. Anyone the Sun hits catches fire, turns into the skeleton and then into the ash pile.
+
+| File | Frame size | Frames | Notes |
+|---|---|---|---|
+| `npc_bikini.png` | 28 × 40 | 4 | Person in a bikini |
+| `npc_boardies.png` | 28 × 40 | 4 | Person in board shorts |
+| `npc_surfer.png` | 28 × 40 | 4 | Surfer in a wetsuit, carrying a surfboard |
+| `npc_bodyboarder.png` | 28 × 40 | 4 | Person carrying a bodyboard |
+| `npc_muscle.png` | 28 × 40 | 4 | Musclehead with a boom box on his shoulder. Code adds the music notes. |
+| `npc_walker.png` | 28 × 40 | 4 | Dog walker. The leash is drawn by code. |
+| `npc_lifesaver.png` | 28 × 40 | 4 | Lifesaver in the red and yellow cap. Jogs on and drops the Slather. |
+| `dog.png` | 18 × 12 | 2 | Walk cycle. It runs away when its owner gets torched. |
+| `skeleton.png` | 28 × 40 | 1 | Standing skeleton that the burnt beachgoers become |
+| `ash.png` | 24 × 10 | 1 | Ash pile |
+| `surfer.png` | 24 × 22 | 1 | Surfer on a board, riding a wave out at sea. The wave is drawn by code. |
+| `dolphin.png` | 22 × 14 | 2 | Frame 0 is nose up, rising. Frame 1 is nose down, diving. |
+| `boat.png` | 36 × 20 | 1 | Small fishing boat on the horizon |
+| `jetski.png` | 26 × 14 | 1 | Jet ski with a rider |
 
 ## Background
 
