@@ -72,10 +72,13 @@ const UV_RATE = [0, 2.4, 3.6, 5.2];   // sunburn build-up per second with no SPF
 const GAP = [0, 1.3, 0.95, 0.7];      // rest between boss attacks per phase
 const SPF_TIME = 8;          // UV shield: hits bounce off and hurt the Sun
 const DUAL_TIME = 10;
-const KILL_HEAL = 80;         // the Sun heals for every beachgoer it torches
+const KILL_HEAL = 55;         // the Sun heals for every beachgoer it torches
+const PLAYER_TAKES = 0.65;     // damage multipliers: lower both to make the fight last longer at the same difficulty
+const SUN_TAKES = 0.65;
+const HAT_TIME = 20;
 const DMG = { slam: 22, sweep: 18, laser: 15, orb: 14, ray: 16, grab: 24, grabLaser: 45, wave: 13, flare: 36, burn: 14, fire: 8 };
 const HIT_INVULN = 0.8;
-const HEAL = { potato: 25, dimsim: 18 };
+const HEAL = { potato: 20, dimsim: 14 };
 // Set to true once real PNGs are in ./assets (see ASSETS.md). Missing files fall back to the built-in art.
 const USE_ASSET_FILES = false;
 
@@ -339,22 +342,37 @@ sheet('fireball', 14, 14, 2, (g, i) => {
 /* ---------- Beachgoers, lifesaver, sea life ---------- */
 function drawPerson(g, o, f) { // side view, facing right, feet on the bottom row
   const R = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
-  const s = [0, 1, 0, -1][f], b = f % 2 ? 0 : 1, m = o.muscle ? 2 : 0, legC = o.legs || o.skin;
+  const pose = f >= 4 ? o.extra[f - 4] : null, crouch = pose === 'photo' || pose === 'photo2';
+  const s = pose ? 0 : [0, 1, 0, -1][f], m = o.muscle ? 2 : 0, legC = o.legs || o.skin, armC = o.armC || o.skin;
+  let b = pose ? (pose === 'danceA' || pose === 'danceC' ? 1 : 0) : f % 2 ? 0 : 1;
+  if (crouch) b = 6;
   if (o.item === 'surf') { g.fillStyle = o.boardCol || '#fffdf2'; ELL(g, 6, 22 + b, 3, 15); g.fill(); g.fillStyle = '#2f9bd0'; g.fillRect(6, 9 + b, 1, 26); }
   if (o.hairStyle === 'long' || o.hairStyle === 'sunhat') R(o.hair, 8, 5 + b, 4, 14);
   if (o.hairStyle === 'ponytail' || o.pony) { R(o.hair, 7, 5 + b, 3, 7); R(o.hair, 6, 11 + b, 2, 3); }
-  R(legC, 10 - s * 2, 28, 3, 10); R(legC, 12 + s * 2, 28, 3, 10);
-  R(o.feet || '#3a2a1c', 10 - s * 2, 38, 4, 2); R(o.feet || '#3a2a1c', 12 + s * 2, 38, 4, 2);
+  const feet = o.feet || '#3a2a1c';
+  if (crouch) { R(legC, 9, 32, 3, 6); R(legC, 12, 30, 6, 3); R(legC, 16, 30, 3, 8); R(feet, 9, 38, 4, 2); R(feet, 16, 38, 4, 2); }
+  else if (pose === 'danceB') { R(legC, 10, 28, 3, 10); R(feet, 10, 38, 4, 2); R(legC, 13, 25, 3, 6); R(legC, 15, 28, 3, 4); R(feet, 15, 31, 4, 2); }
+  else if (pose === 'danceD') { R(legC, 13, 28, 3, 10); R(feet, 13, 38, 4, 2); R(legC, 9, 25, 3, 6); R(legC, 6, 28, 4, 3); R(feet, 5, 30, 3, 2); }
+  else { R(legC, 10 - s * 2, 28, 3, 10); R(legC, 12 + s * 2, 28, 3, 10); R(feet, 10 - s * 2, 38, 4, 2); R(feet, 12 + s * 2, 38, 4, 2); }
   R(o.top || o.skin, 9 - m, 13 + b, 8 + m * 2, 11);
   R(o.bottom, 9 - m / 2, 23 + b, 8 + m, o.long ? 8 : 5);
   if (o.bikini) R(o.bikini, 12, 15 + b, 5, 3);
   if (o.stripe) { R(o.stripe, 9 - m, 17 + b, 8 + m * 2, 2); R(o.stripe, 9 - m, 21 + b, 8 + m * 2, 1); }
+  if (o.sideStripe) { R(o.sideStripe, 11, 13 + b, 1, 11); R(o.sideStripe, 12, 23 + b, 1, 15 - b); }
+  if (o.bumbag) { for (let i = 0; i < 8; i++) R('#e8e8e8', 9 + i, 13 + b + i, 1, 1); R('#e2361f', 13, 19 + b, 6, 3); R('#ffffff', 14, 20 + b, 4, 1); }
   if (o.muscle) { R(o.skinD, 11, 17 + b, 6, 1); R(o.skinD, 12, 20 + b, 4, 1); }
-  R(o.armC || o.skin, 12 + s, 14 + b, 3 + (m ? 1 : 0), 10);
+  if (pose === 'danceA') R(armC, 13, 14 + b, 7, 3);                 // pumping forward
+  else if (pose === 'danceB' || pose === 'danceD') { R(armC, 13, 3 + b, 3, 11); R(o.skin, 13, 2 + b, 3, 2); } // fist in the air
+  else if (pose === 'hip') { R(armC, 15, 14 + b, 2, 5); R(armC, 13, 19 + b, 3, 2); }
+  else if (pose === 'peace') { R(armC, 13, 2 + b, 3, 12); R(o.skin, 13, 0 + b, 1, 2); R(o.skin, 15, 0 + b, 1, 2); }
+  else if (pose === 'flip') { R(armC, 11, 1 + b, 3, 12); R(o.hair, 4, 2 + b, 6, 3); }
+  else if (crouch) { R(armC, 14, 15 + b, 7, 3); R('#1b1b22', 20, 10 + b, 3, 6); if (pose === 'photo2') R('#9fd6ee', 21, 11 + b, 1, 4); }
+  else R(armC, 12 + s, 14 + b, 3 + (m ? 1 : 0), 10);
   R(o.skin, 10, 4 + b, 7, 9);
   if (o.hairStyle === 'cap') { R(o.cap1, 10, 2 + b, 7, 3); R(o.cap2, 13, 2 + b, 4, 3); R(o.cap1, 16, 4 + b, 3, 1); }
   else if (o.hairStyle === 'sunhat') { R(o.hat, 10, 0 + b, 7, 3); R(o.hat, 7, 3 + b, 13, 2); R(o.hatBand, 10, 2 + b, 7, 1); }
   else { R(o.hair, 10, 3 + b, 7, 3); R(o.hair, 10, 3 + b, 2, 6); }
+  if (o.ratTail) R(o.hair, 8, 9 + b, 2, 6);
   if (o.tat) { // ink: a sleeve piece on the arm, something on the calf, a little one at the neck
     const ink = '#2b3d6e';
     if (!o.armC) { R(ink, 12 + s + (m ? 1 : 0), 16 + b, 2, 2); R(ink, 13 + s, 19 + b, 1, 2); }
@@ -378,11 +396,16 @@ const NPC_TYPES = {
   bodyboardgirl: { skin: '#c98a5e', hair: '#151515', hairStyle: 'ponytail', bikini: '#3cc46c', bottom: '#ff8a1f', long: true, item: 'bodyboard' },
   walkerf: { skin: '#f2c3a0', hair: '#b5652a', hairStyle: 'sunhat', hat: '#f3e3b0', hatBand: '#e2361f', top: '#ff4fa0', bottom: '#fffdf2', long: true },
   lifesaverf: { skin: '#e8b48a', hair: '#e8c35a', hairStyle: 'cap', pony: true, cap1: '#e2361f', cap2: '#ffd21f', top: '#ffd21f', bottom: '#e2361f' },
+  eshay: { skin: '#f0c8a8', hair: '#3a2a1c', hairStyle: 'cap', cap1: '#1b1b22', cap2: '#ffffff', ratTail: true, top: '#1b1b22', armC: '#1b1b22', bottom: '#9aa0a8', legs: '#9aa0a8',
+    long: true, feet: '#fffdf2', sideStripe: '#ffffff', bumbag: true, extra: ['danceA', 'danceB', 'danceC', 'danceD'] },
+  influencer: { skin: '#e9b48c', hair: '#f5d76e', hairStyle: 'long', bikini: '#ff4fa0', bottom: '#ff4fa0', sunnies: true, extra: ['hip', 'peace', 'flip'] },
+  boyfriend: { skin: '#e0a77e', hair: '#5a3a22', top: '#fffdf2', bottom: '#2f6fd1', long: true, extra: ['photo', 'photo2'] },
   lifesaver: { skin: '#e8a982', hair: '#222222', hairStyle: 'cap', cap1: '#e2361f', cap2: '#ffd21f', top: '#ffd21f', bottom: '#e2361f' },
 };
 for (const k in NPC_TYPES) {
-  sheet('npc_' + k, 28, 40, 4, (g, f) => drawPerson(g, NPC_TYPES[k], f), { outline: true });
-  sheet('npc_' + k + '_tat', 28, 40, 4, (g, f) => drawPerson(g, { ...NPC_TYPES[k], tat: true }, f), { outline: true });
+  const nf = 4 + (NPC_TYPES[k].extra || []).length;
+  sheet('npc_' + k, 28, 40, nf, (g, f) => drawPerson(g, NPC_TYPES[k], f), { outline: true });
+  sheet('npc_' + k + '_tat', 28, 40, nf, (g, f) => drawPerson(g, { ...NPC_TYPES[k], tat: true }, f), { outline: true });
 }
 function drawCrab(g, f, col, colD) {
   const R = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
@@ -432,6 +455,11 @@ function bottle(g, ox, oy) {
   R(C.slather, 2, 1, 12, 2); R(C.slather, 3, 3, 10, 14); R('#e8cf00', 11, 3, 2, 14); R(C.slather, 5, 17, 6, 6); R('#e8cf00', 5, 21, 6, 1);
   R(C.ink, 4, 5, 8, 3); R(C.white, 7, 10, 2, 1); R(C.white, 6, 11, 4, 2); R(C.white, 7, 13, 2, 1);
 }
+sheet('hat', 22, 13, 1, g => { // black Slather bucket hat with the white sun on the front
+  const R = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  R('#151515', 6, 1, 10, 7); R('#151515', 5, 3, 12, 5); R('#262626', 1, 8, 20, 3); R('#3a3a3a', 2, 10, 18, 1); R('#2e2e2e', 6, 7, 10, 1);
+  R('#ffffff', 10, 3, 2, 2); R('#ffffff', 9, 4, 1, 1); R('#ffffff', 12, 4, 1, 1); R('#ffffff', 10, 2, 1, 1); R('#ffffff', 11, 5, 1, 1);
+}, { outline: true });
 sheet('slather2', 26, 24, 1, g => { bottle(g, 0, 0); bottle(g, 10, 0); }, { outline: true });
 sheet('surfer', 24, 22, 1, g => {
   const R = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
@@ -463,7 +491,7 @@ function buildTints() {
   TINT.boganW = tinted('bogan', '#bfeaff'); TINT.boganC = tinted('bogan_burnt', '#1c0f08');
   TINT.handR = tinted('sun_hand', '#ff4a1a');
   for (const k in NPC_TYPES) TINT['npc_' + k] = tinted('npc_' + k, '#1c0f08');
-  TINT.jeepC = tinted('jeep', '#1c0f08');
+  TINT.jeepC = tinted('jeep', '#1c0f08'); TINT.boatC = tinted('boat', '#1c0f08');
 }
 buildTints();
 
@@ -649,7 +677,7 @@ setInterval(() => {
   while (MUS.next < actx.currentTime + 0.15) { playStep(T, MUS.step % 64, MUS.next, sp); MUS.next += sp; MUS.step++; }
 }, 25);
 function wantedMusic() {
-  if (S.mode === 'intro') { const t = S.intro.t; return t < 10.2 ? 'beach' : t < 16.6 ? null : 'fight1'; }
+  if (S.mode === 'intro') { const t = S.intro.t; return t < 10.2 ? 'beach' : t < 18.6 ? null : 'fight1'; }
   if (S.mode === 'play' || S.mode === 'paused') return boss.state === 'dead' || player.dead ? null : 'fight' + S.phase;
   return null;
 }
@@ -676,12 +704,12 @@ function reset() {
   castles.length = 0; for (let i = 0; i < 2; i++) castles.push(newCastle());
   Object.assign(player, { x: 240, y: 226, vx: 0, vy: 0, kbx: 0, kby: 0, hp: PLAYER_HP, spf: 0, burn: 0, rollT: 0, rollCD: 0, rdx: 0, rdy: 0,
     iframe: false, hurtT: 0, slowT: 0, shotT: 0, squirtCD: 0, shootPose: 0, burst: 0, queued: false, shotN: 0, face: 1, anim: 0, moving: false, dead: false,
-    held: false, liftZ: 0, fireT: 0, eyesT: 0, scorch: 0, hairBurn: 0, shout: null, dual: 0, deathT: 0, deflectCD: 0, deflectT: 0 });
+    held: false, liftZ: 0, hat: 0, fireT: 0, eyesT: 0, scorch: 0, hairBurn: 0, shout: null, dual: 0, deathT: 0, deflectCD: 0, deflectT: 0 });
   Object.assign(boss, { hp: BOSS_MAX, trail: BOSS_MAX, state: 'fight', attack: null, cooldown: 2.4, last: '', next: null, invuln: 0, transition: 0,
     face: null, hurtFaceT: 0, reactFace: null, reelT: 0, angerT: 0, eyeGlow: 0, headGlow: 0, whiteHot: 0, flash: 0, beams: [], laughT: 0, sinkY: 0, headY: 42, shakeHead: false,
     hands: [-1, 1].map(s => ({ s, x: 240 + s * 118, fy: 160, z: 46, tx: 0, tfy: 0, tz: 0, rate: 5, pose: 'open', busy: false, direct: false, fire: false })) });
   Object.assign(S, { phase: 1, time: 0, shake: 0, flareCD: 0, shadeGlow: false, bg: BG[1], whiteA: 0, hurtA: 0, dmgAcc: 0, dmgT: 0, hurtAcc: 0,
-    endT: 0, hits: 0, snacks: 0, gullT: 9, held: null, jeepT: 14, sunSay: null, sayCD: 0, killCD: 0, healPop: null, call: null, blueA: 0, banner: null, toast: null, torched: 0, npcT: 1, seaT: 2, lifeT: 4, guard: null });
+    endT: 0, hits: 0, snacks: 0, gullT: 9, hatT: 35, admireT: 0, goldA: 0, held: null, jeepT: 14, sunSay: null, sayCD: 0, killCD: 0, healPop: null, call: null, blueA: 0, banner: null, toast: null, torched: 0, npcT: 1, seaT: 2, lifeT: 4, guard: null });
 }
 
 /* ================= Effects ================= */
@@ -708,7 +736,7 @@ function band(y, half, dur) {
     draw() { ctx.fillStyle = `rgba(226,54,31,${(Math.floor(t * 10) % 2 ? 0.18 : 0.32)})`; ctx.fillRect(0, y - half, W, half * 2);
       ctx.fillStyle = '#e2361f'; ctx.fillRect(0, y - half, W, 1); ctx.fillRect(0, y + half, W, 1); } });
 }
-const ALIVE = { walk: 1, towel: 1, lie: 1, flee: 1, play: 1 };
+const ALIVE = { walk: 1, towel: 1, lie: 1, flee: 1, play: 1, admire: 1, dance: 1, pose: 1, photo: 1 };
 function fleeAll() { // everyone runs for it
   for (const n of npcs) if (ALIVE[n.state]) { n.state = 'flee'; n.lying = false; n.towel = null; n.dir = n.x < 240 ? -1 : 1; n.shout = { t: pick(SCREAMS), life: 1.4 }; if (n.dog) { n.dog.flee = true; n.dog.dir = n.dir; } }
 }
@@ -867,7 +895,7 @@ const ATTACKS = {
         else if (a.t < 1.68) { h.tz = 0; h.rate = 30; }
         a.once(1.68, 'g', () => {
           h.z = 0; shake(3); SFX.slam(); puff(h.x, h.fy, 10, '#e6cd90', 70, 60, 0.4); flames(h.x, h.fy, 40, 10, 16);
-          if (!P.dead && !P.iframe && P.hurtT <= 0 && inEll(P.x, P.y, h.x, h.fy, 24, 11)) {
+          if (!P.dead && !P.iframe && P.hurtT <= 0 && P.hat <= 0 && inEll(P.x, P.y, h.x, h.fy, 24, 11)) {
             if (P.spf > 0) hurt(DMG.grab, { from: { x: h.x, y: h.fy - 30 }, reflect: 70 }); // the UV shield bounces it off
             else { a.caught = { who: 'player' }; P.held = true; P.hurtT = 99; P.shout = { t: 'OI! PUT ME DOWN!', life: 1.6 }; }
           }
@@ -950,9 +978,10 @@ function deflect(dmg, quiet) { // UV shield: the attack bounces back at the Sun
 function hurt(dmg, o = {}) {
   const P = player;
   if (P.dead || S.mode !== 'play') return false;
+  if (P.hat > 0) { if (P.deflectCD <= 0) { P.deflectCD = 0.3; puff(P.x, P.y - 30, 8, '#fff3b0', 70, 70, 0.4); } return false; } // the hat makes you untouchable
   if (!o.unblockable && (P.iframe || P.hurtT > 0)) return false;
   if (P.spf > 0 && !o.unblockable) { deflect(o.reflect ?? 20, o.noReflect); return false; }
-  const d = P.spf > 0 ? dmg * 0.5 : dmg;
+  const d = (P.spf > 0 ? dmg * 0.5 : dmg) * PLAYER_TAKES;
   if (P.spf <= 0 && o.burn) P.burn += o.burn;
   P.hp -= d; P.hurtT = HIT_INVULN; S.hits++; S.hurtA = 1; shake(3); SFX.hurt();
   P.fireT = 1.4; P.eyesT = 0.6; P.scorch = Math.min(1, P.scorch + 0.4); P.hairBurn = Math.min(1, P.hairBurn + 0.3);
@@ -969,8 +998,9 @@ function sunReact(lines, force) { // pulls a face, reels back, then gets cranky
 function hurtBoss(d) {
   const B = boss;
   if (B.state !== 'fight' || B.invuln > 0) return;
+  d *= SUN_TAKES;
   B.hp -= d; B.flash = 1; S.dmgAcc += d; S.dmgT = 1.6; S.hurtAcc += d;
-  if (S.hurtAcc >= 110) { S.hurtAcc = 0; sunReact(HIT_LINES); }
+  if (S.hurtAcc >= 75) { S.hurtAcc = 0; sunReact(HIT_LINES); }
   if (B.hp <= 0) { B.hp = 0; bossDie(); return; }
   if (S.phase === 1 && B.hp <= BOSS_MAX * 0.6) phaseShift(2);
   else if (S.phase === 2 && B.hp <= BOSS_MAX * 0.25) phaseShift(3);
@@ -1054,8 +1084,8 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && S.m
 
 /* ================= Intro cutscene ================= */
 const INTRO_LINES = [[3.2, 5.2, 'EEEERRRGGHHHHH....'], [5.4, 7.6, 'FUCK ME, WHAT A DAY.'], [7.8, 10.2, "AT LEAST THE SUN'S OUT THOUGH...."],
-  [18.2, 20.2, 'THIS CUNT AGAIN...'], [20.4, 22.4, 'TIME TO SLATHER UP!']];
-const STOMPS = [14.4, 14.9, 15.4, 15.9], FAR_K = 0.32, FAR_Y = HORIZON + 6, RAY_Y = 186;
+  [20.2, 22.2, 'THIS CUNT AGAIN...'], [22.4, 24.4, 'TIME TO SLATHER UP!']];
+const STOMPS = [14.4, 14.9, 16.4, 18.4], FAR_K = 0.32, FAR_Y = HORIZON + 6, RAY_Y = 186;
 function startIntro() {
   audioOn(); reset(); S.mode = 'intro';
   S.intro = { t: 0, k: FAR_K, baseY: FAR_Y, show: false, fired: {}, laugh: false, stepT: null };
@@ -1064,7 +1094,72 @@ function startIntro() {
   for (let i = 0; i < 4; i++) { spawnNPC(); const n = npcs[npcs.length - 1]; n.x = rand(40, 440); n.bake = false; }
   spawnNPC(); const sb = npcs[npcs.length - 1];
   Object.assign(sb, { kind: 'bikini', dog: null, bake: true, x: 370, spot: 370, y: 198, state: 'lie', lying: true, towel: TOWELS[0], t: 0, lieFor: 99 });
-  S.npcT = 3; S.seaT = 0.5;
+  S.npcT = 3; S.seaT = 99; sea.length = 0;
+  Object.assign(S.intro, { boat: { x: 96, y: 113, state: 'float', t: 0 }, jet: { x: 372, y: 124, gone: false }, pod: { x: 316, held: false }, fly: [], beam: null });
+}
+function toLocal(I, sx, sy) { return { x: 240 + (sx - 240) / I.k, y: SHORE + (sy - I.baseY) / I.k }; }
+function toScreen(I, lx, ly) { return { x: 240 + (lx - 240) * I.k, y: I.baseY + (ly - SHORE) * I.k }; }
+function drawIntroProps(I) { // the boat, the jet ski and the dolphins the Sun is about to wreck (behind the Sun)
+  const B = I.boat;
+  if (B.state !== 'gone') {
+    ctx.save(); ctx.translate(Math.round(B.x), Math.round(B.y + (B.sink || 0))); ctx.rotate(B.rot || 0);
+    ctx.beginPath(); ctx.rect(-30, -30, 60, 30 - (B.sink || 0) * 0.8 + 6); ctx.clip();
+    spr('boat', 0, 0, 6); if (B.state === 'burn') spr(TINT.boatC, 0, 0, 6, { alpha: Math.min(0.85, B.t) });
+    ctx.restore();
+  }
+  if (!I.jet.gone) spr('jetski', 0, I.jet.x, I.jet.y + Math.round(Math.sin(S.time * 3)), { flip: true });
+  for (let i = 0; i < 3; i++) {
+    if (i === 0 && I.pod.held) continue;
+    const ph = S.time * 2.4 + i * 1.1, h = Math.sin(ph), dx = Math.round(I.pod.x - i * 22 + Math.sin(S.time * 0.3) * 10);
+    if (h > 0) spr('dolphin', Math.cos(ph) > 0 ? 0 : 1, dx, Math.round(136 - h * 12));
+  }
+}
+function drawIntroFront(I) {
+  if (I.beam) { // eyes to target, in screen space
+    for (const s of [-1, 1]) {
+      const e = toScreen(I, 240 + s * 18, boss.headY - 2);
+      ctx.lineCap = 'round'; ctx.strokeStyle = '#e2361f'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(I.beam.x, I.beam.y); ctx.stroke();
+      ctx.strokeStyle = '#fff3b0'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(I.beam.x, I.beam.y); ctx.stroke();
+    }
+  }
+  if (I.pod.inHand) { const h = boss.hands[1], c = toScreen(I, h.x, h.fy - h.z - 30); spr('dolphin', 0, c.x + 4, c.y + 8, { ay: 0.5 }); }
+  for (const o of I.fly) { // things the Sun has flung
+    const sp = SPR[o.name], fr = Math.floor(o.f || 0) % sp.n;
+    ctx.save(); ctx.translate(Math.round(o.x), Math.round(o.y)); ctx.rotate(o.rot); ctx.scale(o.sc, o.sc);
+    ctx.drawImage(sp.img, fr * sp.fw, 0, sp.fw, sp.fh, -sp.fw / 2, -sp.fh / 2, sp.fw, sp.fh); ctx.restore();
+  }
+}
+const squeak = () => { tone(2200, 3200, 0.1, 0.06, 'square'); tone(2800, 1900, 0.16, 0.05, 'square', 0.12); };
+function introHavoc(I, t, dt, once) {
+  // stomp 2 flips the jet ski into the air
+  if (t >= 14.9) once('jet', () => { I.jet.gone = true; I.fly.push({ name: 'jetski', x: I.jet.x, y: I.jet.y - 6, vx: 60, vy: -190, g: 330, rot: 0, vr: 9, sc: 1, vsc: 0, land: 127 }); tone(500, 300, 0.4, 0.05, 'square'); });
+  // eye lasers blow up the fishing boat
+  if (t >= 15.2 && t < 15.9) { I.beam = { x: I.boat.x, y: I.boat.y - 4 }; once('blast', () => SFX.laser(0.7)); } else I.beam = null;
+  if (t >= 15.55) once('boom', () => { I.boat.state = 'burn'; I.boat.t = 0; SFX.slam(); shake(5); flames(I.boat.x, I.boat.y, 30, 16, 40); puff(I.boat.x, I.boat.y - 6, 18, '#7a5a3a', 70, 90, 0.8); puff(I.boat.x, I.boat.y - 6, 12, '#fffdf2', 60, 80, 0.7); });
+  const B = I.boat;
+  if (B.state === 'float') B.x += 4 * dt;
+  else if (B.state === 'burn') { B.t += dt; B.sink = B.t * 7; B.rot = Math.min(0.5, B.t * 0.3); if (Math.random() < 0.6) flames(B.x, B.y - 6 + B.sink * 0.5, 22, 10, 1); if (Math.random() < 0.3) puff(B.x, B.y - 16, 1, '#5a544c', 6, 25, 1.2, -25); if (B.sink > 26) { B.state = 'gone'; puff(B.x, B.y, 10, C.white, 30, 40, 0.5); } }
+  // the right hand plucks a dolphin out of the water and hurls it at the camera
+  const h = boss.hands[1];
+  if (t >= 16.6 && t < 17.0) {
+    const tgt = toLocal(I, I.pod.x, 126), e = (t - 16.6) / 0.4;
+    h.busy = true; h.direct = true; h.pose = 'grab'; h.fy = 158;
+    h.x += (tgt.x - h.x) * Math.min(1, e * 1.4); h.z += ((h.fy - tgt.y - 30) - h.z) * Math.min(1, e * 1.4);
+  }
+  if (t >= 17.0) once('snatch', () => { I.pod.held = true; I.pod.inHand = true; h.pose = 'fist'; squeak(); puff(I.pod.x, 132, 14, C.white, 50, 70, 0.6); });
+  if (t >= 17.0 && t < 17.6) { h.z += 140 * dt; h.x += (300 - h.x) * dt * 2; }
+  if (t >= 17.6) once('throw', () => {
+    const c = toScreen(I, h.x, h.fy - h.z - 30); I.pod.inHand = false;
+    I.fly.push({ name: 'dolphin', f: 0, x: c.x, y: c.y, vx: (330 - c.x) / 0.8, vy: (215 - c.y) / 0.8, g: 0, rot: 0, vr: 14, sc: 1, vsc: 7, splat: true });
+    squeak(); SFX.whoosh(); h.direct = false; h.busy = false;
+  });
+  // the final stomp sends a wave up the shore
+  if (t >= 18.4) once('wave', () => { for (let i = 0; i < 40; i++) puff(rand(0, W), SHORE + rand(-2, 6), 2, C.white, 40, 90, 0.8); S.whiteA = 0.25; });
+  for (let i = I.fly.length - 1; i >= 0; i--) {
+    const o = I.fly[i]; o.vy += o.g * dt; o.x += o.vx * dt; o.y += o.vy * dt; o.rot += o.vr * dt; o.sc += o.vsc * dt; o.f = (o.f || 0) + dt * 6;
+    if (o.land && o.vy > 0 && o.y > o.land) { puff(o.x, o.land, 16, C.white, 50, 80, 0.6); I.fly.splice(i, 1); }
+    else if (o.splat && o.sc > 6.5) { shake(9); S.whiteA = 0.6; SFX.slam(); squeak(); I.fly.splice(i, 1); }
+  }
 }
 function drawBossIntro(I) { // the Sun far away on the horizon, scaled down and cut off at its own waterline
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, Math.round(I.baseY) + 1); ctx.clip();
@@ -1077,7 +1172,7 @@ function updateIntro(dt) {
   const once = (k, f) => { if (!I.fired[k]) { I.fired[k] = 1; f(); } };
   P.eyesT -= dt;
   if (t < 3) { P.x = -20 + 260 * (t / 3); P.introFrame = 2 + Math.floor(t * 10) % 6; }
-  else { P.x = 240; P.introFrame = t >= 3.2 && t < 5.2 ? 21 : t >= 16.6 && t < 18 ? 19 : t >= 20.4 ? 13 : Math.floor(t * 2) % 2; }
+  else { P.x = 240; P.introFrame = t >= 3.2 && t < 5.2 ? 21 : t >= 18.6 && t < 20 ? 19 : t >= 22.4 ? 13 : Math.floor(t * 2) % 2; }
   const line = INTRO_LINES.find(([a, b]) => t >= a && t < b);
   P.shout = line ? { t: line[2], life: 1 } : null;
   // the Sun rises out of the sea on the horizon
@@ -1086,6 +1181,7 @@ function updateIntro(dt) {
   else if (t >= 12.6) boss.sinkY = 0;
   // maniacal laugh, eyes light up
   I.laugh = t >= 12.6 && t < 14.4;
+  if (t >= 14.4 && t < 18.6) { boss.face = 'rage'; boss.eyeGlow = Math.max(boss.eyeGlow, 0.6); introHavoc(I, t, dt, once); }
   if (I.laugh) { once('laugh', () => { SFX.laugh(); sunSay('HA HA HA HA HA!'); }); boss.face = t < 13.5 ? 'grin' : 'rage'; boss.eyeGlow = clamp((t - 13.2) / 0.8, 0, 1); }
   // stomps up to the beach
   STOMPS.forEach((st, i) => { if (t >= st) once('st' + i, () => { shake(6); SFX.slam(); I.from = { k: I.k, b: I.baseY }; I.stepT = st; I.stepI = i; }); });
@@ -1095,19 +1191,19 @@ function updateIntro(dt) {
     if (e < 1 && Math.random() < 0.6) puff(240 + rand(-60, 60) * I.k, I.baseY, 3, C.white, 50, 80, 0.6);
   }
   // a warning ray across the sand: everyone runs
-  if (t >= 16.6 && t < 17.8) {
-    const bx = 20 + 440 * ((t - 16.6) / 1.2); boss.eyeGlow = 1; boss.beams = [{ x: bx, y: RAY_Y, eye: 0 }];
+  if (t >= 18.6 && t < 19.8) {
+    const bx = 20 + 440 * ((t - 18.6) / 1.2); boss.eyeGlow = 1; boss.beams = [{ x: bx, y: RAY_Y, eye: 0 }];
     once('ray', () => { SFX.laser(1.2); SFX.fireRoar(1.2); P.eyesT = 0.6; fleeAll(); S.npcT = 99; });
     if ((I.ft = (I.ft || 0) - dt) <= 0) { I.ft = 0.06; firePatch(bx, RAY_Y, 1.0, 12, 5); }
     scorchNPCs((px, py) => inEll(px, py, bx, RAY_Y, 14, 8));
-  } else if (t >= 17.8) { boss.beams = []; boss.eyeGlow = Math.max(0, boss.eyeGlow - dt); }
-  if (t >= 22.6) finishIntro();
+  } else if (t >= 19.8) { boss.beams = []; boss.eyeGlow = Math.max(0, boss.eyeGlow - dt); }
+  if (t >= 24.6) finishIntro();
 }
 function finishIntro() {
-  hazards.length = 0;
+  hazards.length = 0; freeHands();
   Object.assign(boss, { sinkY: 0, beams: [], eyeGlow: 0, face: null, cooldown: 1.6 });
   Object.assign(player, { x: 240, y: 226, shout: null, introFrame: null, eyesT: 0 });
-  S.intro = null; S.mode = 'play'; S.npcT = 4; S.shake = 0;
+  S.intro = null; S.mode = 'play'; S.npcT = 4; S.shake = 0; S.seaT = 3;
   $('#touch').hidden = !isTouch; banner('THE SUN', 'SCORCHER OF BACKS', 2.4);
 }
 function drawIntroOverlay() {
@@ -1162,7 +1258,8 @@ function updatePlayer(dt) {
   if (P.burst > 0 && P.shotT <= 0) { fireDrop(); P.burst--; P.shotT = 0.04; }
   P.deflectCD -= dt; P.deflectT -= dt;
   if (P.spf > 0) { const was = P.spf; P.spf -= dt; if (was > 2 && P.spf <= 2) toast('SPF WEARING OFF!', 1.6); if (P.spf <= 0) toast('UV SHIELD GONE', 1.2); }
-  else if (boss.state === 'fight' && !(S.phase === 3 && inShade())) P.burn += UV_RATE[S.phase] * dt;
+  else if (P.hat <= 0 && boss.state === 'fight' && !(S.phase === 3 && inShade())) P.burn += UV_RATE[S.phase] * dt;
+  if (P.hat > 0) { const was = P.hat; P.hat -= dt; if (Math.random() < 0.25) puff(P.x + rand(-14, 14), P.y - rand(10, 50), 1, '#fff3b0', 4, 10, 0.5, -20); if (was > 3 && P.hat <= 3) toast('STYLE WEARING OFF!', 1.5); if (P.hat <= 0) hatOver(); }
   if (P.burn >= 100) { P.burn = 0; P.slowT = 2; toast('SUNBURNT!', 1.8); hurt(DMG.burn, { unblockable: true }); }
 }
 function fireDrop() {
@@ -1208,7 +1305,8 @@ function updateBoss(dt) {
 }
 function updatePickups(dt) {
   if (boss.state === 'fight' && !player.dead) {
-    S.lifeT -= dt; S.gullT -= dt;
+    S.lifeT -= dt; S.gullT -= dt; S.hatT -= dt;
+    if (S.hatT <= 0) { S.hatT = rand(50, 75); if (player.hat <= 0 && !pickups.some(p => p.kind === 'hat')) { const dir = Math.random() < 0.5 ? 1 : -1; pickups.push({ kind: 'hat', x: dir > 0 ? -10 : W + 10, y: rand(FLOOR.y0 + 12, FLOOR.y1 - 8), z: 18, vz: 30, vx: dir * rand(110, 150), life: 16 }); toast('A HAT IS BLOWING IN!', 1.6); } }
     if (S.lifeT <= 0 && !S.guard) { S.lifeT = rand(11, 16); if (pickups.filter(p => p.kind.startsWith('slather')).length < 2) spawnGuard(); }
     if (S.gullT <= 0) { S.gullT = rand(13, 20); const dir = Math.random() < 0.5 ? 1 : -1; gulls.push({ x: dir > 0 ? -20 : W + 20, y: rand(118, 136), dir, dropX: rand(70, 410), dropped: false }); SFX.squawk(); }
   }
@@ -1222,9 +1320,11 @@ function updatePickups(dt) {
   }
   for (let i = pickups.length - 1; i >= 0; i--) {
     const p = pickups[i]; p.life -= dt;
+    if (p.vx) { p.x += p.vx * dt; p.vx *= Math.exp(-0.9 * dt); if (Math.abs(p.vx) < 6) p.vx = 0; else if (p.z <= 0) p.vz = 40; } // tumbling in on the breeze
     if (p.z > 0) { p.vz -= 320 * dt; p.z = Math.max(0, p.z + p.vz * dt); if (p.z === 0) puff(p.x, p.y, 4, '#e6cd90', 30, 30, 0.3); }
     const P = player;
     if (p.z < 6 && !P.dead && S.mode === 'play' && Math.abs(P.x - p.x) < 12 && Math.abs(P.y - p.y) < 9) {
+      if (p.kind === 'hat') { P.hat = HAT_TIME; P.fireT = 0; P.burn = 0; S.goldA = 0.8; S.call = { h: 'UV PROTECTION + STYLE BONUS', p: 'INVINCIBLE. EVERYONE IS WATCHING.', t: 2.4 }; SFX.win(); crowdAround(); pickups.splice(i, 1); continue; }
       if (p.kind.startsWith('slather')) {
         P.spf = SPF_TIME; P.burn = Math.max(0, P.burn - 60);
         if (P.fireT > 0) puff(P.x, P.y - 24, 10, '#dfe6ea', 20, 40, 0.7, -40);
@@ -1260,10 +1360,41 @@ const NPC_KINDS = ['bikini', 'onepiece', 'surfergirl', 'bodyboardgirl', 'walkerf
 const npcSprite = n => 'npc_' + n.kind + (n.tat ? '_tat' : '');
 const SCREAMS = ['AAAH!', 'MY TAN!', 'NOOO!', 'HOT HOT HOT!', 'MUMMY!', 'WHY ME?!'];
 const TOWELS = [['#e2361f', '#fffdf2'], ['#2f6fd1', '#ffd21f'], ['#3cc46c', '#fffdf2'], ['#ff4fa0', '#ffe800']];
+
+const ADMIRE = ['DAMN HE LOOKS GOOD', 'THIS GUY RULES ASS', 'SLATHER IS MY BRAND OF PREFERENCE'];
+function crowdAround() { // everyone on the beach drops what they're doing to check out the hat
+  let i = 0;
+  for (const n of npcs) if (['walk', 'lie', 'towel', 'play', 'dance', 'pose', 'photo'].includes(n.state)) {
+    n.prevState = n.state === 'walk' ? 'walk' : 'walk'; n.state = 'admire'; n.lying = false; n.towel = null; n.ang = (i++ * 2.4) % TAU; n.t = 0;
+  }
+  S.admireT = 0.6;
+}
+function hatOver() {
+  toast('BACK TO NORMAL', 1.2);
+  for (const n of npcs) if (n.state === 'admire') { n.state = 'walk'; n.dir = n.x < 240 ? -1 : 1; n.bake = false; n.frisbee = false; n.routine = null; n.t = 0; }
+}
+function updateAdmirer(n, dt) {
+  const P = player, tx = clamp(P.x + Math.cos(n.ang) * 54, FLOOR.x0, FLOOR.x1), ty = clamp(P.y + Math.sin(n.ang) * 18 - 2, FLOOR.y0, FLOOR.y1);
+  const dx = tx - n.x, dy = ty - n.y, d = Math.hypot(dx, dy);
+  if (d > 3) { n.x += dx / d * 70 * dt; n.y += dy / d * 50 * dt; n.anim += dt * 8; n.moving = true; } else n.moving = false;
+  n.dir = P.x >= n.x ? 1 : -1;
+  if (S.mode === 'play' && P.hat <= 0) { n.state = 'walk'; n.dir = n.x < 240 ? -1 : 1; }
+}
 function makeNPC(kind, x, y, dir, extra = {}) {
   const n = { kind, x, y, dir, tat: Math.random() < 0.5, speed: rand(26, 40), state: 'walk', t: 0, anim: rand(0, 4), dog: null, shout: null, bake: false, spot: 0, towel: null, lying: false, lieFor: 0, liftZ: 0, ...extra };
   npcs.push(n); return n;
 }
+function spawnEshay() { // turns up, finds a spot and gabber dances
+  const dir = Math.random() < 0.5 ? 1 : -1;
+  makeNPC('eshay', dir > 0 ? -20 : W + 20, rand(FLOOR.y0 + 10, FLOOR.y1 - 6), dir, { speed: 46, routine: 'dance', spot: rand(70, 410), stayFor: rand(14, 22) });
+}
+function spawnInfluencer() { // she poses by the water while he takes the photos
+  const dir = Math.random() < 0.5 ? 1 : -1, x0 = dir > 0 ? -20 : W + 20, spot = rand(110, 370), stayFor = rand(18, 28);
+  const girl = makeNPC('influencer', x0, FLOOR.y0 + 3, dir, { speed: 32, routine: 'pose', spot, stayFor });
+  const bf = makeNPC('boyfriend', x0 - dir * 18, FLOOR.y0 + 40, dir, { speed: 32, routine: 'photo', spot: spot - dir * 4, stayFor, tat: girl.tat ? false : bf_tat() });
+  girl.mate = bf; bf.mate = girl;
+}
+const bf_tat = () => Math.random() < 0.5;
 function spawnFrisbee() { // two mates walk in from opposite sides, stop and throw a frisbee
   const playFor = rand(16, 26);
   const a = makeNPC(pick(['bikini', 'onepiece', 'bodyboardgirl', 'boardies']), -20, rand(FLOOR.y0 + 8, FLOOR.y1 - 8), 1, { speed: 34, frisbee: true, spot: rand(70, 190), playFor, exitDir: -1 });
@@ -1374,13 +1505,17 @@ function updateNPCs(dt) {
   S.npcT -= dt;
   if (S.npcT <= 0) {
     S.npcT = rand(3.5, 8);
-    if (npcs.filter(n => n.state === 'walk').length < 4) {
+    if (player.hat > 0 && S.mode === 'play') { spawnNPC(); crowdAround(); }
+    else if (npcs.filter(n => n.state === 'walk').length < 4) {
       const r = Math.random();
       if (r < 0.16 && !groups.some(g => g.kind === 'frisbee')) spawnFrisbee();
+      else if (r < 0.26 && !npcs.some(n => n.kind === 'eshay')) spawnEshay();
+      else if (r < 0.36 && !npcs.some(n => n.kind === 'influencer')) spawnInfluencer();
       else spawnNPC();
     }
   }
   const LINES = ['WORKING ON MY TAN', 'NO SUNSCREEN NEEDED', 'BEAUTIFUL DAY!', 'JUST FIVE MINUTES'];
+  S.admireT -= dt;
   for (let i = npcs.length - 1; i >= 0; i--) {
     const n = npcs[i]; n.t += dt;
     if (n.shout && (n.shout.life -= dt) <= 0) n.shout = null;
@@ -1390,6 +1525,18 @@ function updateNPCs(dt) {
       if (ok) n.dir = Math.sign(mate.x - n.x) || n.dir;
       if (n.t > n.playFor || !ok) { n.state = 'walk'; n.dir = n.exitDir; n.t = 0; }
     } else if (n.state === 'held') { /* dangling from the Sun's fist */ }
+    else if (n.state === 'admire') updateAdmirer(n, dt);
+    if (n.state === 'admire' && S.admireT <= 0 && Math.random() < 0.25) { S.admireT = rand(1.6, 2.2); n.shout = { t: pick(ADMIRE), life: 1.4 }; }
+    else if (n.state === 'walk' && n.routine && !n.done && (n.dir > 0 ? n.x >= n.spot : n.x <= n.spot)) { n.state = n.routine; n.t = 0; n.done = true; n.anim = 0; }
+    else if (n.state === 'dance' || n.state === 'pose' || n.state === 'photo') {
+      n.anim += dt * (n.state === 'dance' ? 9 : n.state === 'pose' ? 0.8 : 1.4);
+      if (n.state === 'dance' && Math.random() < dt * 3) parts.push({ x: n.x + rand(-8, 8), y: n.y - 42, vx: rand(-8, 8), vy: -22, life: 1, max: 1, col: C.ink, g: 0, s: 1, note: true });
+      if (n.state === 'photo') { n.dir = Math.sign(n.mate.x - n.x) || n.dir; if (Math.floor(n.anim) % 2 && Math.random() < dt * 2) n.flash = 0.12; }
+      if (n.state === 'pose' && n.mate) n.dir = n.mate.x >= n.x ? 1 : -1;
+      if (n.flash) n.flash -= dt;
+      if (n.mate && !ALIVE[n.mate.state]) { n.state = 'flee'; n.dir = n.x < 240 ? -1 : 1; n.shout = { t: pick(SCREAMS), life: 1.2 }; }
+      else if (n.t > n.stayFor) { n.state = 'walk'; n.t = 0; }
+    }
     else if (n.state === 'walk' && n.bake && !n.towel && (n.dir > 0 ? n.x >= n.spot : n.x <= n.spot)) {
       n.state = 'towel'; n.t = 0; n.towel = pick(TOWELS);
     } else if (n.state === 'flee') {
@@ -1466,7 +1613,7 @@ function drawHand(h) {
 }
 function drawBoss() {
   const B = boss, rl = B.reelT > 0 ? Math.sin(B.reelT / 0.35 * Math.PI) : 0, jx = B.shakeHead ? Math.round(rand(-1, 1)) : Math.round(rand(-2, 2) * rl), hx = 240 + jx, hy = B.headY - Math.round(8 * rl);
-  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, SHORE + 1); ctx.clip();
+  ctx.save(); ctx.beginPath(); ctx.rect(0, -400, W, SHORE + 401); ctx.clip(); // only cut off at the waterline
   const ty = 162 + B.sinkY - Math.round(3 * rl);
   spr('sun_torso', 0, 240, ty);
   for (const s of splats) if (s.on === 'torso') { ctx.fillStyle = C.white; ctx.fillRect(240 + s.ox, hy + s.oy, s.s + 1, s.s + 1); }
@@ -1549,15 +1696,19 @@ function drawNPC(n) {
   if (n.state === 'ash') { spr('ash', 0, n.x, n.y + 1, { alpha: n.t > 3 ? Math.max(0, 4 - n.t) : 1 }); return; }
   shadow(n.x, n.y, 8, 2);
   if (n.state === 'bones') { spr('skeleton', 0, n.x, n.y + 1, { flip }); return; }
-  const ny = n.y + 1 - Math.round(n.liftZ || 0), still = n.state === 'towel' || n.state === 'play';
-  spr(npcSprite(n), still ? 0 : n.state === 'held' ? S.time * 14 : n.anim, n.x, ny, { flip });
-  if (n.state === 'burn') spr(TINT['npc_' + n.kind], n.anim, n.x, ny, { flip, alpha: Math.min(0.85, n.t / 1.1) });
+  const ny = n.y + 1 - Math.round(n.liftZ || 0), still = n.state === 'towel' || n.state === 'play' || (n.state === 'admire' && !n.moving);
+  const fr = n.state === 'dance' ? 4 + Math.floor(n.anim) % 4 : n.state === 'pose' ? 4 + Math.floor(n.anim) % 3 : n.state === 'photo' ? 4 + Math.floor(n.anim) % 2
+    : still ? 0 : n.state === 'held' ? S.time * 14 : Math.floor(n.anim) % 4;
+  spr(npcSprite(n), fr, n.x, ny, { flip });
+  if (n.state === 'photo' && n.flash > 0) { ctx.fillStyle = '#ffffff'; const fx = Math.round(n.x + n.dir * 8), fy = Math.round(ny - 30); ctx.fillRect(fx - 4, fy, 9, 1); ctx.fillRect(fx, fy - 4, 1, 9); ctx.fillRect(fx - 1, fy - 1, 3, 3); }
+  if (n.state === 'burn') spr(TINT['npc_' + n.kind], Math.floor(n.anim) % 4, n.x, ny, { flip, alpha: Math.min(0.85, n.t / 1.1) });
 }
 function drawWorld() {
   const B = boss, P = player;
   ctx.drawImage(S.bg, 0, 0);
   drawSea(false);
   drawSea(true);
+  if (S.intro) drawIntroProps(S.intro);
   if (S.mode === 'intro') { if (S.intro.show) drawBossIntro(S.intro); } else if (S.mode !== 'title') drawBoss();
   // surf line over the Sun's waist
   for (let x = 0; x < W; x += 2) { const y = SHORE - 1 + Math.round(Math.sin(x * 0.06 + S.time * 2.4) * 1.5); ctx.fillStyle = C.white; ctx.fillRect(x, y, 2, 2); ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(x, y + 3 + Math.round(Math.sin(x * 0.11 - S.time * 1.7)), 2, 1); }
@@ -1592,7 +1743,8 @@ function drawWorld() {
   list.sort((a, b) => a.y - b.y).forEach(o => o.draw());
   if (S.sunSay) { const far = S.intro && S.intro.k < 0.99; sunBubble(S.sunSay.t, 240, far ? S.intro.baseY - (SHORE - B.headY + 50) * S.intro.k : B.headY, far); }
   drawToys();
-  for (const n of npcs) if (n.shout) bubble(n.shout.t, n.x, n.y - (n.lying ? 22 : 44) - (n.liftZ || 0));
+  for (const n of npcs) if (n.shout && n.state === 'admire') bubble(n.shout.t, n.x, n.y - 44);
+  for (const n of npcs) if (n.shout && n.state !== 'admire') bubble(n.shout.t, n.x, n.y - (n.lying ? 22 : 44) - (n.liftZ || 0));
   if (G && G.shout && S.mode !== 'title') bubble(G.shout.t, G.x, G.y - 44);
   if (P.shout && S.mode !== 'title') bubble(P.shout.t, P.x, P.y - 54 - (P.liftZ || 0));
   // beams and projectiles
@@ -1615,6 +1767,7 @@ function drawWorld() {
   for (const d of drops) { ctx.fillStyle = '#bfeaff'; ctx.fillRect(Math.round(d.x - d.vx * 0.012), Math.round(d.y - d.vy * 0.012), 2, 2); ctx.fillStyle = C.white; ctx.fillRect(Math.round(d.x), Math.round(d.y), 3, 3); }
   for (const p of parts) { ctx.fillStyle = p.col; const x = Math.round(p.x), y = Math.round(p.y); if (p.note) { ctx.fillRect(x, y, 1, 4); ctx.fillRect(x + 1, y, 2, 1); ctx.fillRect(x - 1, y + 3, 2, 2); } else ctx.fillRect(x, y, p.s, p.s); }
   for (const g of gulls) spr('seagull', S.time * 10, g.x, g.y, { ay: 0.5, flip: g.dir < 0 });
+  if (S.intro) drawIntroFront(S.intro);
 }
 function playerFrame() {
   const P = player;
@@ -1658,6 +1811,11 @@ function drawPlayer() {
   if (f >= 8 && f <= 12) return;
   if (P.hairBurn > 0.05) { ctx.fillStyle = `rgba(30,18,10,${P.hairBurn * 0.85})`; ctx.fillRect(ox + 10, oy + 2, 12, 14); }
   if (P.fireT > 0) for (let i = 0; i < 5; i++) { const h = 3 + ((S.time * 30 + i * 7) | 0) % 6; ctx.fillStyle = i % 2 ? '#ffd23a' : '#ff8a1f'; ctx.fillRect(ox + 10 + Math.round(i * 2.5), oy + 2 - h, 2, h); }
+  if (P.hat > 0 && (P.hat > 3 || Math.floor(S.time * 8) % 2)) { // the bucket hat, from behind
+    ctx.fillStyle = '#141414'; ctx.fillRect(ox + 10, oy - 1, 12, 7); ctx.fillRect(ox + 7, oy + 5, 18, 3);
+    ctx.fillStyle = '#3a3a3a'; ctx.fillRect(ox + 8, oy + 7, 16, 1); ctx.fillStyle = '#ffffff'; ctx.fillRect(ox + 15, oy + 1, 2, 2);
+    if (Math.floor(S.time * 6) % 3 === 0) { ctx.fillStyle = '#fff3b0'; ctx.fillRect(ox + 26, oy + 2 + Math.round(Math.sin(S.time * 9) * 3), 2, 2); }
+  }
   if (P.eyesT > 0) { // cartoon eyes on stalks
     const k = Math.sin(clamp(1 - P.eyesT / 0.6, 0, 1) * Math.PI);
     for (const s of [-1, 1]) {
@@ -1674,6 +1832,7 @@ function drawHUD() {
   txt('SPF', 8, 20); if (P.spf > 0) bar(48, 21, 64, 5, P.spf / SPF_TIME, '#7fd0ff'); else txt('NONE', 48, 20, '#bba98a');
   txt('BURN', 8, 32); bar(48, 33, 64, 5, P.burn / 100, P.burn > 70 && Math.floor(S.time * 6) % 2 ? '#ffd23a' : '#ff8a1f');
   if (P.dual > 0) { txt('DUAL', 8, 44, '#ffe800'); bar(48, 45, 64, 5, P.dual / DUAL_TIME, '#ffe800'); }
+  if (P.hat > 0) { txt('HAT', 8, P.dual > 0 ? 56 : 44, '#ffffff'); bar(48, (P.dual > 0 ? 57 : 45), 64, 5, P.hat / HAT_TIME, '#ffffff'); }
   txt('THE SUN, SCORCHER OF BACKS', W / 2, 250, C.white, 8, 'center');
   bar(90, 261, 300, 4, B.trail / BOSS_MAX, '#f3d36b', '#2a1a14');
   ctx.fillStyle = '#c4281a'; ctx.fillRect(90, 261, Math.round(300 * B.hp / BOSS_MAX), 4);
@@ -1683,7 +1842,7 @@ function drawHUD() {
   if (S.call) {
     const c = S.call, k = Math.min(1, (2.2 - c.t) * 6), fl = Math.floor(S.time * 10) % 2;
     ctx.fillStyle = `rgba(22,18,15,${0.55 * k})`; ctx.fillRect(0, 82, W, 58);
-    outlined(c.h, W / 2, 90, fl ? '#FFE800' : '#ffffff', Math.round(14 + 10 * k));
+    outlined(c.h, W / 2, 90, fl ? '#FFE800' : '#ffffff', Math.min(Math.round(14 + 10 * k), Math.floor(460 / c.h.length)));
     if (c.p) outlined(c.p, W / 2, 124, '#bfeaff', 8);
   } else if (S.banner) { const b = S.banner; outlined(b.h, W / 2, 96, '#ffe800', 16); if (b.p) outlined(b.p, W / 2, 120, C.white, 8); }
   if (S.toast) { const w = S.toast.t.length * 8 + 12; ctx.fillStyle = '#FFE800'; ctx.fillRect(W / 2 - w / 2, 214 - 70, w, 14); ctx.fillStyle = C.ink; ctx.font = `8px ${PIX}`; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(S.toast.t, W / 2, 214 - 67); }
@@ -1730,7 +1889,7 @@ function frame(now) {
       if (S.banner && (S.banner.t -= dt) <= 0) S.banner = null;
       if (S.toast && (S.toast.life -= dt) <= 0) S.toast = null;
       if (S.call && (S.call.t -= dt) <= 0) S.call = null;
-      S.blueA = Math.max(0, S.blueA - dt * 1.6);
+      S.blueA = Math.max(0, S.blueA - dt * 1.6); S.goldA = Math.max(0, S.goldA - dt * 1.2);
     } else if (S.mode === 'intro') {
       updateIntro(dt); updateBoss(dt);
       for (let i = hazards.length - 1; i >= 0; i--) if (hazards[i] && !hazards[i].update(dt)) hazards.splice(i, 1);
@@ -1752,6 +1911,7 @@ function frame(now) {
   if (S.hurtA > 0) { ctx.strokeStyle = `rgba(226,54,31,${S.hurtA * 0.8})`; ctx.lineWidth = 14; ctx.strokeRect(0, 0, W, H); }
   if (player.hp < 30 && S.mode === 'play' && !player.dead) { ctx.strokeStyle = `rgba(226,54,31,${0.4 + 0.3 * Math.sin(S.time * 6)})`; ctx.lineWidth = 6; ctx.strokeRect(0, 0, W, H); }
   if (S.blueA > 0) { ctx.fillStyle = `rgba(191,234,255,${S.blueA * (Math.floor(S.time * 16) % 2 ? 1 : 0.5)})`; ctx.fillRect(0, 0, W, H); }
+  if (S.goldA > 0) { ctx.fillStyle = `rgba(255,232,0,${S.goldA * (Math.floor(S.time * 16) % 2 ? 0.5 : 0.25)})`; ctx.fillRect(0, 0, W, H); }
   if (S.whiteA > 0) { ctx.fillStyle = `rgba(255,251,224,${S.whiteA})`; ctx.fillRect(0, 0, W, H); }
   if (S.mode === 'title') drawTitle();
   else if (S.mode === 'intro') drawIntroOverlay();
@@ -1773,7 +1933,7 @@ function fit() {
 addEventListener('resize', fit); fit();
 // debugging handle for playtesting from the console
 if (isTouch) document.body.classList.add('touch');
-window.__slather = { firePatch, spawnJeep, castles, spawnFrisbee, vehicles, crabs, groups, finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
+window.__slather = { spawnEshay, spawnInfluencer, crowdAround, firePatch, spawnJeep, castles, spawnFrisbee, vehicles, crabs, groups, finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
 reset();
 if (document.fonts) document.fonts.load(`8px ${PIX}`).catch(() => {});
 if (document.fonts) document.fonts.load('44px Anton').catch(() => {});

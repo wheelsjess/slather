@@ -51,8 +51,9 @@ Frame order for both sheets:
 |---|---|---|---|
 | `slather.png` | 16 × 24 | 1 | SPF bottle pickup |
 | `slather2.png` | 26 × 24 | 1 | Twin bottles. Picking them up turns on dual-wield mode. |
-| `potato.png` | 16 × 16 | 1 | Potato cake (heals 25) |
-| `dimsim.png` | 16 × 16 | 1 | Dim sim (heals 18) |
+| `hat.png` | 22 × 13 | 1 | Black Slather bucket hat with the white sun logo (the pickup). When worn, the code draws it on the bogan's head from behind. |
+| `potato.png` | 16 × 16 | 1 | Potato cake (heals 20) |
+| `dimsim.png` | 16 × 16 | 1 | Dim sim (heals 14) |
 | `seagull.png` | 32 × 24 | 4 | Flap cycle, **facing right** |
 | `umbrella.png` | 56 × 64 | 1 | Beach umbrella. The pole base is at the bottom centre. This is the shade from the Solar Flare. |
 | `fireball.png` | 14 × 14 | 2 | Spat fireball, flicker |
@@ -78,6 +79,9 @@ The beachgoers are seen **side-on, facing right**; the right-to-left walkers are
 | `npc_surfergirl.png` | 28 × 40 | 4 | Surfer in a wetsuit with a ponytail, carrying a pink board |
 | `npc_bodyboardgirl.png` | 28 × 40 | 4 | Bodyboarder with a ponytail |
 | `npc_walkerf.png` | 28 × 40 | 4 | Dog walker in a sun hat |
+| `npc_eshay.png` | 28 × 40 | 8 | Eshay in a black tracksuit, cap and white sneakers with a red bumbag across his chest. Frames 0–3 walk, 4–7 gabber dance (bounce, knee up with fist pumped, bounce, other knee up). |
+| `npc_influencer.png` | 28 × 40 | 7 | Influencer in a pink bikini and sunnies. Frames 0–3 walk, 4 hand on hip, 5 peace sign, 6 hair flip. |
+| `npc_boyfriend.png` | 28 × 40 | 6 | Her boyfriend. Frames 0–3 walk, 4–5 crouched taking a photo on his phone (5 has the screen lit). |
 | `npc_lifesaverf.png` | 28 × 40 | 4 | Lifesaver with a ponytail under the cap |
 | `sandcastle.png` | 26 × 24 | 2 | Frame 0 standing, frame 1 knocked flat |
 | `jeep.png` | 54 × 30 | 3 | Lifeguard jeep facing right. Frames 0–1 are driving (wheels turning); frame 2 has an empty driver's seat, used once it's on fire. |
