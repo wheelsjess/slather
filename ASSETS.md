@@ -64,25 +64,25 @@ When the bogan is hit, the code adds the comedy on top of these sprites: flames,
 
 ## Beachgoers, lifesaver and sea life
 
-The beachgoers are seen **side-on, facing right**; the right-to-left walkers are mirrored. The feet go on the bottom row. Each person has a 4-frame walk cycle. Anyone the Sun hits catches fire, turns into the skeleton and then into the ash pile. About half the beachgoers have tattoos: each `npc_*.png` also needs a `npc_*_tat.png` version with the same frames plus some ink.
+The beachgoers are seen **side-on, facing right**; the right-to-left walkers are mirrored. The feet go on the bottom row. Each person has a 4-frame walk cycle, then any special poses listed below, then one last frame pointing ahead (used when they crowd round the bogan in the bucket hat), so a plain beachgoer sheet has 5 frames. Anyone the Sun hits catches fire, turns into the skeleton and then into the ash pile. About half the beachgoers have tattoos: each `npc_*.png` also needs a `npc_*_tat.png` version with the same frames plus some ink.
 
 | File | Frame size | Frames | Notes |
 |---|---|---|---|
-| `npc_bikini.png` | 28 × 40 | 4 | Person in a bikini |
-| `npc_boardies.png` | 28 × 40 | 4 | Person in board shorts |
-| `npc_surfer.png` | 28 × 40 | 4 | Surfer in a wetsuit, carrying a surfboard |
-| `npc_bodyboarder.png` | 28 × 40 | 4 | Person carrying a bodyboard |
-| `npc_muscle.png` | 28 × 40 | 4 | Musclehead with a boom box on his shoulder. Code adds the music notes. |
-| `npc_walker.png` | 28 × 40 | 4 | Dog walker. The leash is drawn by code. |
-| `npc_lifesaver.png` | 28 × 40 | 4 | Lifesaver in the red and yellow cap. Jogs on and drops the Slather. |
-| `npc_onepiece.png` | 28 × 40 | 4 | Woman in a one-piece swimsuit |
-| `npc_surfergirl.png` | 28 × 40 | 4 | Surfer in a wetsuit with a ponytail, carrying a pink board |
-| `npc_bodyboardgirl.png` | 28 × 40 | 4 | Bodyboarder with a ponytail |
-| `npc_walkerf.png` | 28 × 40 | 4 | Dog walker in a sun hat |
-| `npc_eshay.png` | 28 × 40 | 8 | Eshay in a black tracksuit, cap and white sneakers with a red bumbag across his chest. Frames 0–3 walk, 4–7 gabber dance (bounce, knee up with fist pumped, bounce, other knee up). |
-| `npc_influencer.png` | 28 × 40 | 7 | Influencer in a pink bikini and sunnies. Frames 0–3 walk, 4 hand on hip, 5 peace sign, 6 hair flip. |
-| `npc_boyfriend.png` | 28 × 40 | 6 | Her boyfriend. Frames 0–3 walk, 4–5 crouched taking a photo on his phone (5 has the screen lit). |
-| `npc_lifesaverf.png` | 28 × 40 | 4 | Lifesaver with a ponytail under the cap |
+| `npc_bikini.png` | 28 × 40 | 5 | Person in a bikini |
+| `npc_boardies.png` | 28 × 40 | 5 | Person in board shorts |
+| `npc_surfer.png` | 28 × 40 | 5 | Surfer in a wetsuit, carrying a surfboard |
+| `npc_bodyboarder.png` | 28 × 40 | 5 | Person carrying a bodyboard |
+| `npc_muscle.png` | 28 × 40 | 5 | Musclehead with a boom box on his shoulder. Code adds the music notes. |
+| `npc_walker.png` | 28 × 40 | 5 | Dog walker. The leash is drawn by code. |
+| `npc_lifesaver.png` | 28 × 40 | 5 | Lifesaver in the red and yellow cap. Jogs on and drops the Slather. |
+| `npc_onepiece.png` | 28 × 40 | 5 | Woman in a one-piece swimsuit |
+| `npc_surfergirl.png` | 28 × 40 | 5 | Surfer in a wetsuit with a ponytail, carrying a pink board |
+| `npc_bodyboardgirl.png` | 28 × 40 | 5 | Bodyboarder with a ponytail |
+| `npc_walkerf.png` | 28 × 40 | 5 | Dog walker in a sun hat |
+| `npc_eshay.png` | 28 × 40 | 9 | Eshay in a black tracksuit, cap and white sneakers with a red bumbag across his chest. Frames 0–3 walk, 4–7 gabber dance (bounce, knee up with fist pumped, bounce, other knee up). |
+| `npc_influencer.png` | 28 × 40 | 8 | Influencer in a pink bikini and sunnies. Frames 0–3 walk, 4 hand on hip, 5 peace sign, 6 hair flip. |
+| `npc_boyfriend.png` | 28 × 40 | 7 | Her boyfriend. Frames 0–3 walk, 4–5 crouched taking a photo on his phone (5 has the screen lit). |
+| `npc_lifesaverf.png` | 28 × 40 | 5 | Lifesaver with a ponytail under the cap |
 | `sandcastle.png` | 26 × 24 | 2 | Frame 0 standing, frame 1 knocked flat |
 | `jeep.png` | 54 × 30 | 3 | Lifeguard jeep facing right. Frames 0–1 are driving (wheels turning); frame 2 has an empty driver's seat, used once it's on fire. |
 | `crab.png` | 14 × 10 | 2 | Scuttling crab |
