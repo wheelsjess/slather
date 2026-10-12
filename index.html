@@ -66,13 +66,13 @@ const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Tuning ---------------------------------------------------------------
 const FLOOR = { x0: 18, x1: 462, y0: 166, y1: 244 };   // where the bogan can walk
 const HORIZON = 104, SHORE = 152;
-const BOSS_MAX = 2700;
+const BOSS_MAX = 3000;
 const PLAYER_HP = 100;
-const UV_RATE = [0, 1.8, 3.0, 4.6];   // sunburn build-up per second with no SPF
-const GAP = [0, 1.45, 1.05, 0.75];      // rest between boss attacks per phase
-const SPF_TIME = 12;
+const UV_RATE = [0, 2.4, 3.6, 5.2];   // sunburn build-up per second with no SPF
+const GAP = [0, 1.3, 0.95, 0.7];      // rest between boss attacks per phase
+const SPF_TIME = 8;          // UV shield: hits bounce off and hurt the Sun
 const DUAL_TIME = 10;
-const DMG = { slam: 18, sweep: 15, laser: 13, orb: 12, ray: 14, grab: 20, wave: 11, flare: 32, burn: 12, fire: 6 };
+const DMG = { slam: 22, sweep: 18, laser: 15, orb: 14, ray: 16, grab: 24, wave: 13, flare: 36, burn: 14, fire: 8 };
 const HIT_INVULN = 0.8;
 const HEAL = { potato: 25, dimsim: 18 };
 // Set to true once real PNGs are in ./assets (see ASSETS.md). Missing files fall back to the built-in art.
@@ -482,6 +482,7 @@ const SFX = {
   whoosh: () => noise(0.25, 900, 0.5, 0.06),
   pickup: () => { tone(523, 523, 0.08, 0.08); tone(784, 784, 0.08, 0.08, 'square', 0.08); tone(1047, 1047, 0.12, 0.08, 'square', 0.16); },
   eat: () => { noise(0.08, 1800, 1, 0.1); noise(0.08, 1500, 1, 0.1, 'bandpass'); tone(330, 660, 0.2, 0.06, 'square', 0.1); },
+  ding: () => { tone(1400, 2800, 0.12, 0.08, 'triangle'); tone(2100, 2100, 0.2, 0.05, 'square', 0.06); },
   whistle: () => { tone(2300, 2100, 0.18, 0.05); tone(2300, 2100, 0.3, 0.05, 'square', 0.22); },
   scream: () => tone(900, 300, 0.4, 0.05, 'sawtooth'),
   squawk: () => { tone(1300, 700, 0.12, 0.06); tone(1200, 650, 0.14, 0.06, 'square', 0.16); },
@@ -501,12 +502,12 @@ function reset() {
   hazards.length = drops.length = parts.length = splats.length = pickups.length = gulls.length = npcs.length = sea.length = 0;
   Object.assign(player, { x: 240, y: 226, vx: 0, vy: 0, kbx: 0, kby: 0, hp: PLAYER_HP, spf: 0, burn: 0, rollT: 0, rollCD: 0, rdx: 0, rdy: 0,
     iframe: false, hurtT: 0, slowT: 0, shotT: 0, shotN: 0, face: 1, anim: 0, moving: false, dead: false,
-    fireT: 0, eyesT: 0, scorch: 0, hairBurn: 0, shout: null, dual: 0, deathT: 0 });
+    fireT: 0, eyesT: 0, scorch: 0, hairBurn: 0, shout: null, dual: 0, deathT: 0, deflectCD: 0, deflectT: 0 });
   Object.assign(boss, { hp: BOSS_MAX, trail: BOSS_MAX, state: 'fight', attack: null, cooldown: 2.4, last: '', next: null, invuln: 0, transition: 0,
     face: null, hurtFaceT: 0, eyeGlow: 0, headGlow: 0, whiteHot: 0, flash: 0, beams: [], laughT: 0, sinkY: 0, headY: 42, shakeHead: false,
     hands: [-1, 1].map(s => ({ s, x: 240 + s * 118, fy: 160, z: 46, tx: 0, tfy: 0, tz: 0, rate: 5, pose: 'open', busy: false, direct: false, fire: false })) });
   Object.assign(S, { phase: 1, time: 0, shake: 0, flareCD: 0, shadeGlow: false, bg: BG[1], whiteA: 0, hurtA: 0, dmgAcc: 0, dmgT: 0, hurtAcc: 0,
-    endT: 0, hits: 0, snacks: 0, gullT: 9, banner: null, toast: null, torched: 0, npcT: 1, seaT: 2, lifeT: 4, guard: null });
+    endT: 0, hits: 0, snacks: 0, gullT: 9, call: null, blueA: 0, banner: null, toast: null, torched: 0, npcT: 1, seaT: 2, lifeT: 4, guard: null });
 }
 
 /* ================= Effects ================= */
@@ -533,13 +534,14 @@ function band(y, half, dur) {
     draw() { ctx.fillStyle = `rgba(226,54,31,${(Math.floor(t * 10) % 2 ? 0.18 : 0.32)})`; ctx.fillRect(0, y - half, W, half * 2);
       ctx.fillStyle = '#e2361f'; ctx.fillRect(0, y - half, W, 1); ctx.fillRect(0, y + half, W, 1); } });
 }
-function scorchNPCs(test) { for (const n of npcs) if (n.state === 'walk' && test(n.x, n.y)) ignite(n); }
+const ALIVE = { walk: 1, towel: 1, lie: 1 };
+function scorchNPCs(test) { for (const n of npcs) if (ALIVE[n.state] && test(n.x, n.y)) ignite(n); }
 function firePatch(x, y, dur = 1.3, rx = 14, ry = 6) { // burning sand: hurts while you stand in it
   let t = 0;
   return addHz({ layer: 'floor', update(dt) {
       t += dt;
       if (Math.random() < 0.7) flames(x + rand(-rx, rx) * 0.8, y + rand(-ry, ry) * 0.5, 2, 4, 1);
-      if (t > 0.15 && t < dur - 0.2) { if (inEll(player.x, player.y, x, y, rx, ry)) hurt(DMG.fire, { from: { x, y }, burn: 20 }); scorchNPCs((px, py) => inEll(px, py, x, y, rx, ry)); }
+      if (t > 0.15 && t < dur - 0.2) { if (inEll(player.x, player.y, x, y, rx, ry)) hurt(DMG.fire, { from: { x, y }, burn: 20, noReflect: true }); scorchNPCs((px, py) => inEll(px, py, x, y, rx, ry)); }
       return t < dur; },
     draw() {
       const k = 1 - t / dur; ctx.fillStyle = `rgba(60,20,8,${0.35 * k})`; ELL(ctx, x, y, rx, ry); ctx.fill();
@@ -550,12 +552,12 @@ function impact(x, y, rx, ry, dmg, col = '#e6cd90') {
   shake(4); SFX.boom(); puff(x, y, 12, col, 90, 80, 0.5); flames(x, y, rx * 2, 10, 22);
   firePatch(x, y, 1.4, rx * 0.7, ry * 0.7);
   scorchNPCs((px, py) => inEll(px, py, x, y, rx, ry));
-  if (inEll(player.x, player.y, x, y, rx, ry)) hurt(dmg, { from: { x, y }, burn: 18 });
+  if (inEll(player.x, player.y, x, y, rx, ry)) hurt(dmg, { from: { x, y }, burn: 18, reflect: 60 });
 }
 function wave(x, y) { // shockwave ring along the sand
   let r = 8, hit = false;
   return addHz({ layer: 'floor', update(dt) { r += 150 * dt;
-      if (!hit && Math.abs(Math.hypot(player.x - x, (player.y - y) / 0.42) - r) < 7) hit = hurt(DMG.wave, { from: { x, y }, burn: 15 });
+      if (!hit && Math.abs(Math.hypot(player.x - x, (player.y - y) / 0.42) - r) < 7) hit = hurt(DMG.wave, { from: { x, y }, burn: 15, reflect: 20 });
       scorchNPCs((px, py) => Math.abs(Math.hypot(px - x, (py - y) / 0.42) - r) < 7);
       return r < 280; },
     draw() { ctx.strokeStyle = `rgba(255,140,40,${1 - r / 280})`; ctx.lineWidth = 3; ELL(ctx, x, y, r, r * 0.42); ctx.stroke(); } });
@@ -563,14 +565,14 @@ function wave(x, y) { // shockwave ring along the sand
 function orb(x0, y0, tx, ty, dur) {
   let t = 0; mark(tx, ty, 18, 8, dur);
   return addHz({ layer: 'air', update(dt) { t += dt;
-      if (t >= dur) { puff(tx, ty, 10, '#ff8a2a', 60, 70, 0.4); SFX.splat(); firePatch(tx, ty, 1.0, 12, 5); scorchNPCs((px, py) => inEll(px, py, tx, ty, 19, 9)); if (inEll(player.x, player.y, tx, ty, 19, 9)) hurt(DMG.orb, { from: { x: tx, y: ty }, burn: 12 }); return false; }
+      if (t >= dur) { puff(tx, ty, 10, '#ff8a2a', 60, 70, 0.4); SFX.splat(); firePatch(tx, ty, 1.0, 12, 5); scorchNPCs((px, py) => inEll(px, py, tx, ty, 19, 9)); if (inEll(player.x, player.y, tx, ty, 19, 9)) hurt(DMG.orb, { from: { x: tx, y: ty }, burn: 12, reflect: 20 }); return false; }
       return true; },
     draw() { const k = t / dur, x = x0 + (tx - x0) * k, y = y0 + (ty - y0) * k - Math.sin(k * Math.PI) * 70; spr('fireball', S.time * 10, x, y, { ay: 0.5 }); } });
 }
 function ray(x, warn) {
   let t = 0, hit = false;
   return addHz({ layer: 'air', update(dt) { t += dt;
-      if (t >= warn && !hit) { hit = true; shake(2); if (Math.abs(player.x - x) < 13) hurt(DMG.ray, { from: { x, y: player.y - 10 }, burn: 15 }); puff(x, rand(FLOOR.y0, FLOOR.y1), 6, '#fff3b0', 40, 50, 0.4); flames(x, FLOOR.y1, 18, FLOOR.y1 - FLOOR.y0, 12); scorchNPCs(px => Math.abs(px - x) < 13); }
+      if (t >= warn && !hit) { hit = true; shake(2); if (Math.abs(player.x - x) < 13) hurt(DMG.ray, { from: { x, y: player.y - 10 }, burn: 15, reflect: 25 }); puff(x, rand(FLOOR.y0, FLOOR.y1), 6, '#fff3b0', 40, 50, 0.4); flames(x, FLOOR.y1, 18, FLOOR.y1 - FLOOR.y0, 12); scorchNPCs(px => Math.abs(px - x) < 13); }
       return t < warn + 0.32; },
     draw() {
       if (t < warn) { ctx.fillStyle = Math.floor(t * 14) % 2 ? '#fff3b0' : '#ff8a2a'; ctx.fillRect(x, HORIZON, 1, FLOOR.y1 + 8 - HORIZON); ctx.fillRect(x - 6, FLOOR.y1 + 6, 13, 2); }
@@ -620,7 +622,7 @@ const ATTACKS = {
           if (Math.random() < 0.5) puff(h.x, row, 2, '#e6cd90', 30, 40, 0.4);
           if ((a['ft' + i] = (a['ft' + i] || 0) - dt) <= 0) { a['ft' + i] = 0.07; if (h.x > 0 && h.x < W) firePatch(h.x, row, 1.1, 12, 5); }
           scorchNPCs((px, py) => Math.abs(py - row) < 13 && Math.abs(px - h.x) < 26);
-          if (!a['hit' + i] && Math.abs(player.y - row) < 13 && Math.abs(player.x - h.x) < 26) a['hit' + i] = hurt(DMG.sweep, { from: { x: h.x - h.s * 40, y: row } });
+          if (!a['hit' + i] && Math.abs(player.y - row) < 13 && Math.abs(player.x - h.x) < 26) a['hit' + i] = hurt(DMG.sweep, { from: { x: h.x - h.s * 40, y: row }, reflect: 50 });
         } else { h.direct = false; h.busy = false; h.fire = false; }
       }
       if (a.t > (n - 1) * per + 2.4) { freeHands(); return true; }
@@ -645,7 +647,7 @@ const ATTACKS = {
           const dx = player.x - b.x, dy = player.y - b.y, l = Math.hypot(dx, dy) || 1;
           b.x += dx / l * spd * dt; b.y += dy / l * spd * 0.75 * dt;
           if (drop) firePatch(b.x, b.y, 0.9, 10, 4);
-          if (inEll(player.x, player.y, b.x, b.y, 12, 6)) hurt(DMG.laser, { from: { x: b.x, y: b.y }, burn: 25 });
+          if (inEll(player.x, player.y, b.x, b.y, 12, 6)) hurt(DMG.laser, { from: { x: b.x, y: b.y }, burn: 25, reflect: 10 });
           scorchNPCs((px, py) => inEll(px, py, b.x, b.y, 12, 6));
         }
         boss.beams = a.b;
@@ -674,7 +676,7 @@ const ATTACKS = {
       if (a.t < 1.5) { h.tx = player.x; h.tfy = player.y; h.tz = 56; h.rate = 4.5; a.warn = a.t > 1.05; }
       else if (a.t < 1.68) { h.tz = 0; h.rate = 30; }
       a.once(1.68, 'g', () => { h.z = 0; shake(3); SFX.boom(); puff(h.x, h.fy, 10, '#e6cd90', 70, 60, 0.4); flames(h.x, h.fy, 40, 10, 16); firePatch(h.x, h.fy, 1.2, 16, 6); scorchNPCs((px, py) => inEll(px, py, h.x, h.fy, 24, 11));
-        if (inEll(player.x, player.y, h.x, h.fy, 24, 11) && hurt(DMG.grab, { from: { x: h.x, y: h.fy - 30 } })) toast('GRABBED!'); });
+        if (inEll(player.x, player.y, h.x, h.fy, 24, 11) && hurt(DMG.grab, { from: { x: h.x, y: h.fy - 30 }, reflect: 70 })) toast('GRABBED!'); });
       if (a.t > 2.7) { freeHands(); return true; }
       return false;
     });
@@ -718,10 +720,17 @@ function chooseAttack() {
 
 /* ================= Damage ================= */
 const SHOUTS = ['STREWTH!', 'CRIKEY!', 'ARGH!', 'HOT HOT HOT!', 'ME MULLET!', 'OUCH!', 'FAIR DINKUM!'];
+function deflect(dmg, quiet) { // UV shield: the attack bounces back at the Sun
+  const P = player; if (P.deflectCD > 0) return; P.deflectCD = 0.3;
+  for (const c of ['#bfeaff', '#ffffff', '#7fd0ff']) puff(P.x, P.y - 24, 6, c, 90, 90, 0.4);
+  if (quiet) return;
+  P.deflectT = 0.25; hurtBoss(dmg); boss.hurtFaceT = 0.45; SFX.ding(); toast('BOUNCED OFF! -' + dmg, 0.9);
+}
 function hurt(dmg, o = {}) {
   const P = player;
   if (P.dead || S.mode !== 'play') return false;
   if (!o.unblockable && (P.iframe || P.hurtT > 0)) return false;
+  if (P.spf > 0 && !o.unblockable) { deflect(o.reflect ?? 20, o.noReflect); return false; }
   const d = P.spf > 0 ? dmg * 0.5 : dmg;
   if (P.spf <= 0 && o.burn) P.burn += o.burn;
   P.hp -= d; P.hurtT = HIT_INVULN; S.hits++; S.hurtA = 1; shake(3); SFX.hurt();
@@ -846,7 +855,8 @@ function updatePlayer(dt) {
   P.moving = Math.hypot(ix, iy) > 0.15 && P.rollT <= 0;
   P.anim += dt;
   if (shooting && P.rollT <= 0 && P.shotT <= 0) { fireDrop(); P.shotT = 0.055; }
-  if (P.spf > 0) P.spf -= dt;
+  P.deflectCD -= dt; P.deflectT -= dt;
+  if (P.spf > 0) { const was = P.spf; P.spf -= dt; if (was > 2 && P.spf <= 2) toast('SPF WEARING OFF!', 1.6); if (P.spf <= 0) toast('UV SHIELD GONE', 1.2); }
   else if (boss.state === 'fight' && !(S.phase === 3 && inShade())) P.burn += UV_RATE[S.phase] * dt;
   if (P.burn >= 100) { P.burn = 0; P.slowT = 2; toast('SUNBURNT!', 1.8); hurt(DMG.burn, { unblockable: true }); }
 }
@@ -894,7 +904,7 @@ function updateBoss(dt) {
 function updatePickups(dt) {
   if (boss.state === 'fight' && !player.dead) {
     S.lifeT -= dt; S.gullT -= dt;
-    if (S.lifeT <= 0 && !S.guard) { S.lifeT = rand(9, 14); if (pickups.filter(p => p.kind.startsWith('slather')).length < 2) spawnGuard(); }
+    if (S.lifeT <= 0 && !S.guard) { S.lifeT = rand(11, 16); if (pickups.filter(p => p.kind.startsWith('slather')).length < 2) spawnGuard(); }
     if (S.gullT <= 0) { S.gullT = rand(13, 20); const dir = Math.random() < 0.5 ? 1 : -1; gulls.push({ x: dir > 0 ? -20 : W + 20, y: rand(118, 136), dir, dropX: rand(70, 410), dropped: false }); SFX.squawk(); }
   }
   for (let i = gulls.length - 1; i >= 0; i--) {
@@ -914,7 +924,8 @@ function updatePickups(dt) {
         P.spf = SPF_TIME; P.burn = Math.max(0, P.burn - 60);
         if (P.fireT > 0) puff(P.x, P.y - 24, 10, '#dfe6ea', 20, 40, 0.7, -40);
         P.fireT = 0; SFX.pickup(); puff(P.x, P.y - 20, 12, '#bfeaff', 50, 60, 0.6);
-        if (p.kind === 'slather2') { P.dual = DUAL_TIME; banner('DUAL WIELD!', 'TWICE THE SLATHER', 1.8); } else toast('SPF50+ ON');
+        S.blueA = 0.75; S.call = { h: 'SPF50+ APPLIED', p: 'UV SHIELD ON. HITS BOUNCE BACK', t: 2.2 };
+        if (p.kind === 'slather2') { P.dual = DUAL_TIME; S.call = { h: 'DUAL WIELD!', p: 'SPF50+ APPLIED TWICE', t: 2.2 }; }
       }
       else { const hp = HEAL[p.kind]; P.hp = Math.min(PLAYER_HP, P.hp + hp); S.snacks++; toast((p.kind === 'potato' ? 'POTATO CAKE +' : 'DIM SIM +') + hp); SFX.eat(); }
       pickups.splice(i, 1); continue;
@@ -942,10 +953,13 @@ function updateGuard(dt) {
 }
 const NPC_KINDS = ['bikini', 'boardies', 'surfer', 'bodyboarder', 'muscle', 'walker'];
 const SCREAMS = ['AAAH!', 'MY TAN!', 'NOOO!', 'HOT HOT HOT!', 'MUMMY!', 'WHY ME?!'];
+const TOWELS = [['#e2361f', '#fffdf2'], ['#2f6fd1', '#ffd21f'], ['#3cc46c', '#fffdf2'], ['#ff4fa0', '#ffe800']];
 function spawnNPC() {
   const kind = pick(NPC_KINDS), dir = Math.random() < 0.5 ? 1 : -1;
+  const bake = kind !== 'walker' && Math.random() < 0.35 && npcs.filter(n => n.bake).length < 2; // walks in, lays a towel, sunbakes
   npcs.push({ kind, x: dir > 0 ? -20 : W + 20, y: rand(FLOOR.y0 + 4, FLOOR.y1 - 2), dir, speed: kind === 'muscle' ? 24 : rand(26, 40), state: 'walk', t: 0, anim: rand(0, 4),
-    dog: kind === 'walker' ? { x: 0, y: 0, dir, flee: false } : null, shout: null });
+    dog: kind === 'walker' ? { x: 0, y: 0, dir, flee: false } : null, shout: null,
+    bake, spot: rand(60, 420), towel: null, lying: false, lieFor: rand(18, 35) });
 }
 function ignite(n) {
   n.state = 'burn'; n.t = 0; n.shout = { t: pick(SCREAMS), life: 1.2 }; S.torched++;
@@ -955,15 +969,23 @@ function ignite(n) {
 function updateNPCs(dt) {
   S.npcT -= dt;
   if (S.npcT <= 0) { S.npcT = rand(3.5, 8); if (npcs.filter(n => n.state === 'walk').length < 4) spawnNPC(); }
+  const LINES = ['WORKING ON MY TAN', 'NO SUNSCREEN NEEDED', 'BEAUTIFUL DAY!', 'JUST FIVE MINUTES'];
   for (let i = npcs.length - 1; i >= 0; i--) {
     const n = npcs[i]; n.t += dt;
     if (n.shout && (n.shout.life -= dt) <= 0) n.shout = null;
-    if (n.state === 'walk') {
+    if (n.state === 'walk' && n.bake && !n.towel && (n.dir > 0 ? n.x >= n.spot : n.x <= n.spot)) {
+      n.state = 'towel'; n.t = 0; n.towel = pick(TOWELS);
+    } else if (n.state === 'towel') {
+      if (n.t > 0.8) { n.state = 'lie'; n.t = 0; n.lying = true; if (Math.random() < 0.6) n.shout = { t: pick(LINES), life: 2 }; }
+    } else if (n.state === 'lie') {
+      if (n.kind === 'muscle' && Math.random() < dt * 2) parts.push({ x: n.x, y: n.y - 16, vx: rand(-6, 6), vy: -18, life: 1.2, max: 1.2, col: C.ink, g: 0, s: 1, note: true });
+      if (n.t > n.lieFor) { n.state = 'walk'; n.lying = false; n.bake = false; n.towel = null; n.t = 0; }
+    } else if (n.state === 'walk') {
       n.x += n.dir * n.speed * dt; n.anim += dt * n.speed / 9;
       if (n.kind === 'muscle' && Math.random() < dt * 2) parts.push({ x: n.x + n.dir * 6, y: n.y - 40, vx: rand(-6, 6), vy: -18, life: 1.2, max: 1.2, col: C.ink, g: 0, s: 1, note: true });
       if (n.x < -40 || n.x > W + 40) { npcs.splice(i, 1); continue; }
     } else if (n.state === 'burn') {
-      n.x += n.dir * n.speed * 2.2 * dt; n.anim += dt * n.speed / 4; flames(n.x, n.y, 10, 36, 2);
+      if (!n.lying) { n.x += n.dir * n.speed * 2.2 * dt; n.anim += dt * n.speed / 4; flames(n.x, n.y, 10, 36, 2); } else flames(n.x, n.y, 36, 10, 2);
       if (n.t > 1.1) { n.state = 'bones'; n.t = 0; puff(n.x, n.y - 24, 10, '#3a2a22', 30, 40, 0.6); }
     } else if (n.state === 'bones') {
       if (Math.random() < 0.3) puff(n.x, n.y - 30, 1, '#7a746c', 6, 20, 0.8, -30);
@@ -1064,6 +1086,17 @@ function drawSea(front) {
     }
   }
 }
+function sprLying(s, f, x, y, dir, alpha = 1) { // a standing sprite turned on its side, head towards dir
+  if (typeof s === 'string') s = SPR[s];
+  const fr = Math.floor(f) % s.n; ctx.save(); ctx.globalAlpha = alpha; ctx.translate(Math.round(x), Math.round(y) - 6);
+  ctx.rotate(dir < 0 ? -Math.PI / 2 : Math.PI / 2); ctx.drawImage(s.img, fr * s.fw, 0, s.fw, s.fh, Math.round(-s.fw / 2), -s.fh + 20, s.fw, s.fh); ctx.restore();
+}
+function drawTowel(n) {
+  const k = n.state === 'towel' ? Math.min(1, n.t / 0.8) : 1, w = Math.round(38 * k), x = Math.round(n.x - w / 2), y = Math.round(n.y) - 10;
+  ctx.fillStyle = C.ink; ctx.fillRect(x - 1, y - 1, w + 2, 12);
+  for (let i = 0; i < w; i += 4) { ctx.fillStyle = n.towel[(i / 4) % 2]; ctx.fillRect(x + i, y, Math.min(4, w - i), 10); }
+  if (['burn', 'bones', 'ash'].includes(n.state)) { ctx.fillStyle = 'rgba(30,15,8,.55)'; ctx.fillRect(x, y, w, 10); }
+}
 function drawNPC(n) {
   const flip = n.dir < 0;
   if (n.dog) {
@@ -1071,18 +1104,27 @@ function drawNPC(n) {
     if (d.x > -30 && d.x < W + 30) { shadow(d.x, d.y, 6, 2); spr('dog', Math.floor(n.t * (d.flee ? 14 : 6)), d.x, d.y + 1, { flip: d.dir < 0 }); }
     if (n.state === 'walk') { ctx.strokeStyle = C.ink; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(n.x + n.dir * 4, n.y - 22); ctx.lineTo(d.x - n.dir * 6, d.y - 6); ctx.stroke(); }
   }
+  if (n.towel) drawTowel(n);
+  if (n.lying) {
+    const head = -n.dir;
+    if (n.state === 'ash') { spr('ash', 0, n.x, n.y - 2, { alpha: n.t > 3 ? Math.max(0, 4 - n.t) : 1 }); return; }
+    if (n.state === 'bones') { sprLying('skeleton', 0, n.x, n.y, head); return; }
+    sprLying('npc_' + n.kind, 0, n.x, n.y, head);
+    if (n.state === 'burn') sprLying(TINT['npc_' + n.kind], 0, n.x, n.y, head, Math.min(0.85, n.t / 1.1));
+    return;
+  }
   if (n.state === 'ash') { spr('ash', 0, n.x, n.y + 1, { alpha: n.t > 3 ? Math.max(0, 4 - n.t) : 1 }); return; }
   shadow(n.x, n.y, 8, 2);
   if (n.state === 'bones') { spr('skeleton', 0, n.x, n.y + 1, { flip }); return; }
-  spr('npc_' + n.kind, n.anim, n.x, n.y + 1, { flip });
+  spr('npc_' + n.kind, n.state === 'towel' ? 0 : n.anim, n.x, n.y + 1, { flip });
   if (n.state === 'burn') spr(TINT['npc_' + n.kind], n.anim, n.x, n.y + 1, { flip, alpha: Math.min(0.85, n.t / 1.1) });
 }
 function drawWorld() {
   const B = boss, P = player;
   ctx.drawImage(S.bg, 0, 0);
   drawSea(false);
-  drawBoss();
   drawSea(true);
+  drawBoss();
   // surf line over the Sun's waist
   for (let x = 0; x < W; x += 2) { const y = SHORE - 1 + Math.round(Math.sin(x * 0.06 + S.time * 2.4) * 1.5); ctx.fillStyle = C.white; ctx.fillRect(x, y, 2, 2); ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(x, y + 3 + Math.round(Math.sin(x * 0.11 - S.time * 1.7)), 2, 1); }
   if (B.state !== 'dead') B.hands.forEach(drawArm);
@@ -1105,7 +1147,7 @@ function drawWorld() {
   const G = S.guard;
   if (G && S.mode !== 'title') list.push({ y: G.y, draw: () => { shadow(G.x, G.y, 8, 2); spr('npc_lifesaver', G.state === 'drop' ? 0 : G.anim, G.x, G.y + 1, { flip: G.dir < 0 }); } });
   list.sort((a, b) => a.y - b.y).forEach(o => o.draw());
-  for (const n of npcs) if (n.shout) bubble(n.shout.t, n.x, n.y - 44);
+  for (const n of npcs) if (n.shout) bubble(n.shout.t, n.x, n.y - (n.lying ? 22 : 44));
   if (G && G.shout && S.mode !== 'title') bubble(G.shout.t, G.x, G.y - 44);
   if (P.shout && S.mode !== 'title') bubble(P.shout.t, P.x, P.y - 54);
   // beams and projectiles
@@ -1119,6 +1161,12 @@ function drawWorld() {
     ctx.fillStyle = '#fff3b0'; ELL(ctx, b.x, b.y, 7, 3); ctx.fill();
   }
   for (const h of hazards) if (h.layer === 'air') h.draw();
+  if (P.deflectT > 0 && !P.dead) { // the bounced UV fires straight back at the Sun's face
+    const sx = P.x, sy = P.y - 34, ex = 240, ey = B.headY;
+    ctx.lineCap = 'round'; ctx.strokeStyle = '#7fd0ff'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+    ctx.fillStyle = '#ffffff'; ELL(ctx, ex, ey, 10, 8); ctx.fill();
+  }
   for (const d of drops) { ctx.fillStyle = '#bfeaff'; ctx.fillRect(Math.round(d.x - d.vx * 0.012), Math.round(d.y - d.vy * 0.012), 2, 2); ctx.fillStyle = C.white; ctx.fillRect(Math.round(d.x), Math.round(d.y), 3, 3); }
   for (const p of parts) { ctx.fillStyle = p.col; const x = Math.round(p.x), y = Math.round(p.y); if (p.note) { ctx.fillRect(x, y, 1, 4); ctx.fillRect(x + 1, y, 2, 1); ctx.fillRect(x - 1, y + 3, 2, 2); } else ctx.fillRect(x, y, p.s, p.s); }
   for (const g of gulls) spr('seagull', S.time * 10, g.x, g.y, { ay: 0.5, flip: g.dir < 0 });
@@ -1154,7 +1202,13 @@ function drawPlayer() {
   spr('bogan', f, px, py + 1, { flip });
   const burn = clamp(Math.max(P.burn / 100 * 0.9, P.scorch), 0, 1);
   if (burn > 0.02) spr('bogan_burnt', f, px, py + 1, { flip, alpha: burn });
-  if (P.spf > 0) spr(TINT.boganW, f, px, py + 1, { flip, alpha: (0.2 + 0.15 * Math.sin(S.time * 8)) * Math.min(1, P.spf / 1.5) });
+  if (P.spf > 0) {
+    spr(TINT.boganW, f, px, py + 1, { flip, alpha: (0.2 + 0.15 * Math.sin(S.time * 8)) * Math.min(1, P.spf / 1.5) });
+    if (P.spf > 2 || Math.floor(S.time * 8) % 2) {
+      ctx.strokeStyle = P.deflectT > 0 ? '#ffffff' : `rgba(127,208,255,${0.55 + 0.25 * Math.sin(S.time * 6)})`; ctx.lineWidth = P.deflectT > 0 ? 3 : 1;
+      ELL(ctx, px, py - 22, 17 + (P.deflectT > 0 ? 3 : 0), 27 + (P.deflectT > 0 ? 3 : 0)); ctx.stroke();
+    }
+  }
   if (f >= 8 && f <= 12) return;
   if (P.hairBurn > 0.05) { ctx.fillStyle = `rgba(30,18,10,${P.hairBurn * 0.85})`; ctx.fillRect(ox + 10, oy + 2, 12, 14); }
   if (P.fireT > 0) for (let i = 0; i < 5; i++) { const h = 3 + ((S.time * 30 + i * 7) | 0) % 6; ctx.fillStyle = i % 2 ? '#ffd23a' : '#ff8a1f'; ctx.fillRect(ox + 10 + Math.round(i * 2.5), oy + 2 - h, 2, h); }
@@ -1179,7 +1233,12 @@ function drawHUD() {
   ctx.fillStyle = '#c4281a'; ctx.fillRect(90, 261, Math.round(300 * B.hp / BOSS_MAX), 4);
   S.dmgT -= 1 / 60; if (S.dmgT <= 0) S.dmgAcc = 0;
   if (S.dmgAcc > 0) txt(String(Math.round(S.dmgAcc)), 392, 250, '#ffe08a', 8, 'right');
-  if (S.banner) { const b = S.banner; outlined(b.h, W / 2, 96, '#ffe800', 16); if (b.p) outlined(b.p, W / 2, 120, C.white, 8); }
+  if (S.call) {
+    const c = S.call, k = Math.min(1, (2.2 - c.t) * 6), fl = Math.floor(S.time * 10) % 2;
+    ctx.fillStyle = `rgba(22,18,15,${0.55 * k})`; ctx.fillRect(0, 82, W, 58);
+    outlined(c.h, W / 2, 90, fl ? '#FFE800' : '#ffffff', Math.round(14 + 10 * k));
+    if (c.p) outlined(c.p, W / 2, 124, '#bfeaff', 8);
+  } else if (S.banner) { const b = S.banner; outlined(b.h, W / 2, 96, '#ffe800', 16); if (b.p) outlined(b.p, W / 2, 120, C.white, 8); }
   if (S.toast) { const w = S.toast.t.length * 8 + 12; ctx.fillStyle = '#FFE800'; ctx.fillRect(W / 2 - w / 2, 214 - 70, w, 14); ctx.fillStyle = C.ink; ctx.font = `8px ${PIX}`; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(S.toast.t, W / 2, 214 - 67); }
 }
 function drawTitle() {
@@ -1195,7 +1254,7 @@ function drawTitle() {
     ? [['MOVE', 'LEFT THUMB'], ['SQUIRT', 'HOLD BUTTON'], ['ROLL', 'DODGE ATTACKS']]
     : [['MOVE', 'WASD/ARROWS'], ['SQUIRT', 'HOLD J/CLICK'], ['ROLL', 'SPACE']];
   lines.forEach(([a, b], i) => { ctx.fillText(a, 24, 126 + i * 13); ctx.fillText(b, 92, 126 + i * 13); });
-  spr('slather', 0, 30, 186); ctx.fillText('SPF STOPS THE BURN', 42, 168); ctx.fillText('TWINS = DUAL WIELD', 42, 180);
+  spr('slather', 0, 30, 186); ctx.fillText('SPF = UV SHIELD', 42, 168); ctx.fillText('TWINS = DUAL WIELD', 42, 180);
   spr('potato', 0, 29, 204); spr('dimsim', 0, 29, 220); ctx.fillText('SEAGULL SNACKS', 42, 194); ctx.fillText('= HEALTH', 42, 207);
   if (Math.floor(S.time * 2) % 2) { ctx.fillText(isTouch ? 'TAP TO START' : 'PRESS ENTER', 24, 232); }
 }
@@ -1225,6 +1284,8 @@ function frame(now) {
       }
       if (S.banner && (S.banner.t -= dt) <= 0) S.banner = null;
       if (S.toast && (S.toast.life -= dt) <= 0) S.toast = null;
+      if (S.call && (S.call.t -= dt) <= 0) S.call = null;
+      S.blueA = Math.max(0, S.blueA - dt * 1.6);
     } else updateBoss(dt);
     input.roll = false;
     updateNPCs(dt); updateSea(dt);
@@ -1238,6 +1299,7 @@ function frame(now) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (S.hurtA > 0) { ctx.strokeStyle = `rgba(226,54,31,${S.hurtA * 0.8})`; ctx.lineWidth = 14; ctx.strokeRect(0, 0, W, H); }
   if (player.hp < 30 && S.mode === 'play' && !player.dead) { ctx.strokeStyle = `rgba(226,54,31,${0.4 + 0.3 * Math.sin(S.time * 6)})`; ctx.lineWidth = 6; ctx.strokeRect(0, 0, W, H); }
+  if (S.blueA > 0) { ctx.fillStyle = `rgba(191,234,255,${S.blueA * (Math.floor(S.time * 16) % 2 ? 1 : 0.5)})`; ctx.fillRect(0, 0, W, H); }
   if (S.whiteA > 0) { ctx.fillStyle = `rgba(255,251,224,${S.whiteA})`; ctx.fillRect(0, 0, W, H); }
   if (S.mode === 'title') drawTitle();
   else {

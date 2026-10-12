@@ -17,9 +17,9 @@ Open `index.html` in any modern browser. On a computer, use the keyboard and mou
 
 - **Fire:** every hit sets the bogan on fire. His eyes pop out, his mullet singes and his skin reddens. Slams, sweeps, grabs, fireballs and laser beams all leave patches of burning sand behind them.
 - **Sunburn:** with no SPF, the sunburn meter fills. When it's full, you take damage and slow down.
-- **Lifesavers** jog onto the beach and drop a **Slather bottle**. Running over one gives 12 seconds of SPF, which stops the burn, halves damage and puts out the fire. Sometimes they drop **twin bottles**, which also give 10 seconds of **dual-wield**: two streams of sunscreen at once.
+- **Lifesavers** jog onto the beach and drop a **Slather bottle**. Running over one gives 8 seconds of **SPF50+ UV shield**. While it's on, attacks bounce off you and hurt the Sun, the sunburn stops, and the fire goes out. The Solar Flare still gets through the shield, at half damage. Sometimes they drop **twin bottles**, which also give 10 seconds of **dual-wield**: two streams of sunscreen at once.
 - **Seagulls** fly past and drop a **potato cake** (+25 health) or a **dim sim** (+18).
-- **Beachgoers** wander through: bikinis, boardies, surfers, bodyboarders, a dog walker and a musclehead with a boom box. They aren't safe. If an attack hits them, they burn to a skeleton, then to ash. Surfers, dolphins, a fishing boat and a jet ski pass by out at sea.
+- **Beachgoers** wander through: bikinis, boardies, surfers, bodyboarders, a dog walker and a musclehead with a boom box. Some lay down a towel and sunbake. None of them are safe. If an attack hits them, they burn to a skeleton, then to ash. Surfers, dolphins, a fishing boat and a jet ski pass by out at sea, behind the Sun.
 - **Phase 1, Morning:** flaming Sunny Slap fist slams, Beach Sweep, the Eye Laser (the Sun's favourite attack), UV Rain fireballs, and Sun Ray columns.
 - **Phase 2, High Noon** (at 60% health): double slams and sweeps, more fireballs, and the Grab.
 - **Phase 3, Heat Dome** (at 25% health): triple slams with shockwaves, two laser beams at once, faster attacks, and the Solar Flare. Get under an umbrella before it goes off.
