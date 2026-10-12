@@ -355,7 +355,8 @@ function drawPerson(g, o, f) { // side view, facing right, feet on the bottom ro
   else if (pose === 'danceD') { R(legC, 13, 28, 3, 10); R(feet, 13, 38, 4, 2); R(legC, 9, 25, 3, 6); R(legC, 6, 28, 4, 3); R(feet, 5, 30, 3, 2); }
   else { R(legC, 10 - s * 2, 28, 3, 10); R(legC, 12 + s * 2, 28, 3, 10); R(feet, 10 - s * 2, 38, 4, 2); R(feet, 12 + s * 2, 38, 4, 2); }
   R(o.top || o.skin, 9 - m, 13 + b, 8 + m * 2, 11);
-  R(o.bottom, 9 - m / 2, 23 + b, 8 + m, o.long ? 8 : 5);
+  if (o.belly) R(o.top || o.skin, 16, 17 + b, 2, 6);                    // pot belly
+  R(o.bottom, 9 - m / 2, (o.speedo ? 24 : 23) + b, 8 + m, o.long ? 8 : o.speedo ? 3 : 5);
   if (o.bikini) R(o.bikini, 12, 15 + b, 5, 3);
   if (o.stripe) { R(o.stripe, 9 - m, 17 + b, 8 + m * 2, 2); R(o.stripe, 9 - m, 21 + b, 8 + m * 2, 1); }
   if (o.sideStripe) { R(o.sideStripe, 11, 13 + b, 1, 11); R(o.sideStripe, 12, 23 + b, 1, 15 - b); }
@@ -374,6 +375,9 @@ function drawPerson(g, o, f) { // side view, facing right, feet on the bottom ro
   else if (o.hairStyle === 'sunhat') { R(o.hat, 10, 0 + b, 7, 3); R(o.hat, 7, 3 + b, 13, 2); R(o.hatBand, 10, 2 + b, 7, 1); }
   else { R(o.hair, 10, 3 + b, 7, 3); R(o.hair, 10, 3 + b, 2, 6); }
   if (o.ratTail) R(o.hair, 8, 9 + b, 2, 6);
+  if (o.hairStyle === 'bald') { R(o.skin, 10, 3 + b, 7, 3); R(o.hair, 10, 5 + b, 2, 4); R(o.hair, 15, 5 + b, 1, 1); }
+  if (o.hairStyle === 'curly') { R(o.hair, 9, 1 + b, 9, 4); R(o.hair, 8, 3 + b, 3, 6); R(o.hair, 10, 0 + b, 2, 1); R(o.hair, 13, 0 + b, 2, 1); R(o.hair, 16, 0 + b, 2, 1); R(o.hair, 17, 3 + b, 1, 2); }
+  if (o.wrinkles) { R(o.skinD, 14, 5 + b, 2, 1); R(o.skinD, 16, 9 + b, 1, 1); R(o.skinD, 12, 11 + b, 3, 1); R(o.skinD, 10, 16 + b, 4, 1); R(o.skinD, 11, 19 + b, 5, 1); R(o.skinD, 10, 33, 3, 1); }
   if (o.tat) { // ink: a sleeve piece on the arm, something on the calf, a little one at the neck
     const ink = '#2b3d6e';
     if (!o.armC) { R(ink, 12 + s + (m ? 1 : 0), 16 + b, 2, 2); R(ink, 13 + s, 19 + b, 1, 2); }
@@ -383,14 +387,13 @@ function drawPerson(g, o, f) { // side view, facing right, feet on the bottom ro
   R(C.ink, 15, 7 + b, 1, 1);
   if (o.sunnies) R(C.ink, 13, 7 + b, 4, 1);
   if (o.item === 'bodyboard') R('#2a6fd6', 15, 14 + b, 4, 13);
-  if (o.item === 'boombox') { R('#4a4a52', 15, 2 + b, 11, 7); R('#a7aab4', 16, 4 + b, 3, 3); R('#a7aab4', 22, 4 + b, 3, 3); R('#4a4a52', 18, 1 + b, 5, 1); }
 }
 const NPC_TYPES = {
   bikini: { skin: '#e8b48a', hair: '#f2d36b', hairStyle: 'long', bikini: '#ff4fa0', bottom: '#ff4fa0', feet: '#ff4fa0' },
   boardies: { skin: '#f0b896', hair: '#5a3a22', bottom: '#2f6fd1', long: true, sunnies: true },
   surfer: { skin: '#e0a77e', hair: '#d9b25a', top: '#1b1b22', bottom: '#1b1b22', legs: '#1b1b22', armC: '#1b1b22', long: true, item: 'surf' },
   bodyboarder: { skin: '#f4c4a0', hair: '#b0602a', bottom: '#3cc46c', long: true, item: 'bodyboard' },
-  muscle: { skin: '#c9824e', skinD: '#a5653a', hair: '#222222', muscle: true, bottom: '#e2361f', sunnies: true, item: 'boombox' },
+  muscle: { skin: '#c9824e', skinD: '#a5653a', hair: '#222222', muscle: true, bottom: '#e2361f', sunnies: true },
   walker: { skin: '#f2c3a0', hair: '#888888', hairStyle: 'cap', cap1: '#ffffff', cap2: '#2f6fd1', top: '#7fc6a4', bottom: '#c8b08a', long: true },
   onepiece: { skin: '#d9a07a', hair: '#3a2418', hairStyle: 'long', top: '#2f6fd1', bottom: '#2f6fd1' },
   surfergirl: { skin: '#f0c09a', hair: '#e8c35a', hairStyle: 'ponytail', top: '#1b1b22', bottom: '#1b1b22', legs: '#1b1b22', armC: '#1b1b22', long: true, item: 'surf', boardCol: '#ff9fc4' },
@@ -401,6 +404,8 @@ const NPC_TYPES = {
     long: true, feet: '#fffdf2', sideStripe: '#ffffff', bumbag: true, extra: ['danceA', 'danceB', 'danceC', 'danceD'] },
   influencer: { skin: '#e9b48c', hair: '#f5d76e', hairStyle: 'long', bikini: '#ff4fa0', bottom: '#ff4fa0', sunnies: true, extra: ['hip', 'peace', 'flip'] },
   boyfriend: { skin: '#e0a77e', hair: '#5a3a22', top: '#fffdf2', bottom: '#2f6fd1', long: true, extra: ['photo', 'photo2'] },
+  oldie: { skin: '#9c5428', skinD: '#6e3415', hair: '#e8e8e8', hairStyle: 'bald', bottom: '#1b2fb0', speedo: true, belly: true, wrinkles: true, sunnies: true },
+  italian: { skin: '#d79a6a', skinD: '#b07448', hair: '#111111', hairStyle: 'curly', bottom: '#ffffff', speedo: true, sunnies: true },
   lifesaver: { skin: '#e8a982', hair: '#222222', hairStyle: 'cap', cap1: '#e2361f', cap2: '#ffd21f', top: '#ffd21f', bottom: '#e2361f' },
 };
 for (const k in NPC_TYPES) {
@@ -1399,9 +1404,11 @@ function updateGuard(dt) {
   } else if (g.state === 'drop') { if (g.t > 0.7) g.state = 'out'; }
   else { g.x += g.dir * 92 * dt; g.anim += dt * 10; if (g.x < -30 || g.x > W + 30) S.guard = null; }
 }
-const NPC_KINDS = ['bikini', 'onepiece', 'surfergirl', 'bodyboardgirl', 'walkerf', 'boardies', 'surfer', 'bodyboarder', 'muscle', 'walker']; // half women, half men
+const NPC_KINDS = ['bikini', 'onepiece', 'surfergirl', 'bodyboardgirl', 'walkerf', 'bikini', 'boardies', 'surfer', 'bodyboarder', 'muscle', 'walker', 'oldie']; // half women, half men
 const npcSprite = n => 'npc_' + n.kind + (n.tat ? '_tat' : '');
 const SCREAMS = ['AAAH!', 'MY TAN!', 'NOOO!', 'HOT HOT HOT!', 'MUMMY!', 'WHY ME?!'];
+const ITALIAN = "I'M 1/8TH ITALIAN, I DON'T NEED SUNSCREEN";
+const LAST_WORDS = { eshay: "I'M COOKED ADLAAAAAAY!", italian: 'MAMA MIA!' };
 const TOWELS = [['#e2361f', '#fffdf2'], ['#2f6fd1', '#ffd21f'], ['#3cc46c', '#fffdf2'], ['#ff4fa0', '#ffe800']];
 
 const ADMIRE = ['DAMN HE LOOKS GOOD', 'THIS GUY RULES ASS', 'SLATHER IS MY BRAND OF PREFERENCE'];
@@ -1432,14 +1439,19 @@ function makeNPC(kind, x, y, dir, extra = {}) {
   const n = { kind, x, y, dir, tat: Math.random() < 0.5, speed: rand(26, 40), state: 'walk', t: 0, anim: rand(0, 4), dog: null, shout: null, bake: false, spot: 0, towel: null, lying: false, lieFor: 0, liftZ: 0, ...extra };
   npcs.push(n); return n;
 }
+function spawnItalian() { // strolls in, lays a towel down and bakes; no sunscreen, he's 1/8th Italian
+  const dir = Math.random() < 0.5 ? 1 : -1;
+  makeNPC('italian', dir > 0 ? -20 : W + 20, rand(FLOOR.y0 + 6, FLOOR.y1 - 4), dir, { speed: 30, bake: true, spot: rand(70, 410), lieFor: rand(22, 32), brag: true });
+}
 function spawnEshay() { // turns up, finds a spot and gabber dances
   const dir = Math.random() < 0.5 ? 1 : -1;
   makeNPC('eshay', dir > 0 ? -20 : W + 20, rand(FLOOR.y0 + 10, FLOOR.y1 - 6), dir, { speed: 46, routine: 'dance', spot: rand(70, 410), stayFor: rand(14, 22) });
 }
 function spawnInfluencer() { // she poses by the water while he takes the photos
-  const dir = Math.random() < 0.5 ? 1 : -1, x0 = dir > 0 ? -20 : W + 20, spot = rand(110, 370), stayFor = rand(18, 28);
-  const girl = makeNPC('influencer', x0, FLOOR.y0 + 3, dir, { speed: 32, routine: 'pose', spot, stayFor });
-  const bf = makeNPC('boyfriend', x0 - dir * 18, FLOOR.y0 + 40, dir, { speed: 32, routine: 'photo', spot: spot - dir * 4, stayFor, tat: girl.tat ? false : bf_tat() });
+  const dir = Math.random() < 0.5 ? 1 : -1, x0 = dir > 0 ? -20 : W + 20, spot = rand(130, 350), stayFor = rand(18, 28), y = rand(FLOOR.y0 + 3, FLOOR.y0 + 30);
+  const girl = makeNPC('influencer', x0, y, dir, { speed: 32, routine: 'pose', spot, stayFor });
+  // he walks in behind her and stops a few steps short, crouched side-on with the phone pointed straight at her
+  const bf = makeNPC('boyfriend', x0 - dir * 18, y + 2, dir, { speed: 32, routine: 'photo', spot: spot - dir * 36, stayFor, tat: girl.tat ? false : bf_tat() });
   girl.mate = bf; bf.mate = girl;
 }
 const bf_tat = () => Math.random() < 0.5;
@@ -1467,18 +1479,18 @@ function updateGroups(dt) {
     if (!ready || (G.wait -= dt) > 0) continue;
     const others = alive.filter(m => m !== G.holder); if (!others.length) continue;
     const from = handPos(G.holder);
-    G.fly = { fx: from.x, fy: from.y, to: pick(others), t: 0, dur: 0.95 }; G.holder = null;
+    G.fly = { fx: from.x, fy: from.y, fgy: G.holder.y, to: pick(others), t: 0, dur: 0.95 }; G.holder = null;
   }
 }
-function drawToys() {
+function toyDraws(list) { // the frisbee joins the depth-sorted sprites, using the ground spot beneath it
   for (const G of groups) {
-    let x, y;
-    if (G.fly) { const k = G.fly.t / G.fly.dur, b = handPos(G.fly.to); x = G.fly.fx + (b.x - G.fly.fx) * k; y = G.fly.fy + (b.y - G.fly.fy) * k - Math.sin(k * Math.PI) * 26; }
-    else if (G.holder) ({ x, y } = handPos(G.holder));
-    else if (G.drop) { x = G.drop.x; y = G.drop.y - 2; }
+    let x, y, gy;
+    if (G.fly) { const k = G.fly.t / G.fly.dur, b = handPos(G.fly.to); x = G.fly.fx + (b.x - G.fly.fx) * k; y = G.fly.fy + (b.y - G.fly.fy) * k - Math.sin(k * Math.PI) * 26; gy = G.fly.fgy + (G.fly.to.y - G.fly.fgy) * k; }
+    else if (G.holder) { ({ x, y } = handPos(G.holder)); gy = G.holder.y + 0.1; }
+    else if (G.drop) { x = G.drop.x; y = G.drop.y - 2; gy = G.drop.y; }
     else continue;
     x = Math.round(x); y = Math.round(y);
-    ctx.fillStyle = C.ink; ELL(ctx, x, y, 5, 2.2); ctx.fill(); ctx.fillStyle = '#ff4fa0'; ELL(ctx, x, y, 4, 1.3); ctx.fill();
+    list.push({ y: gy, draw: () => { ctx.fillStyle = C.ink; ELL(ctx, x, y, 5, 2.2); ctx.fill(); ctx.fillStyle = '#ff4fa0'; ELL(ctx, x, y, 4, 1.3); ctx.fill(); } });
   }
 }
 function spawnJeep() {
@@ -1535,13 +1547,14 @@ function updateCrabs(dt) { // they sidle about, freeze, and scuttle off when you
 }
 function spawnNPC() {
   const kind = pick(NPC_KINDS), dir = Math.random() < 0.5 ? 1 : -1;
-  const bake = !kind.startsWith('walker') && Math.random() < 0.35 && npcs.filter(n => n.bake).length < 2; // walks in, lays a towel, sunbakes
-  npcs.push({ kind, x: dir > 0 ? -20 : W + 20, y: rand(FLOOR.y0 + 4, FLOOR.y1 - 2), dir, speed: kind === 'muscle' ? 24 : rand(26, 40), state: 'walk', t: 0, anim: rand(0, 4),
+  const bake = !kind.startsWith('walker') && Math.random() < (kind === 'oldie' ? 0.7 : 0.35) && npcs.filter(n => n.bake).length < 2; // walks in, lays a towel, sunbakes
+  npcs.push({ kind, x: dir > 0 ? -20 : W + 20, y: rand(FLOOR.y0 + 4, FLOOR.y1 - 2), dir, speed: kind === 'muscle' ? 24 : kind === 'oldie' ? 17 : rand(26, 40), state: 'walk', t: 0, anim: rand(0, 4),
     dog: kind.startsWith('walker') ? { x: 0, y: 0, dir, flee: false } : null, shout: null, tat: Math.random() < 0.5,
     bake, spot: rand(60, 420), towel: null, lying: false, lieFor: rand(18, 35) });
 }
 function ignite(n) {
-  n.state = 'burn'; n.t = 0; n.shout = { t: pick(SCREAMS), life: 1.2 }; S.torched++;
+  const last = LAST_WORDS[n.kind];
+  n.state = 'burn'; n.t = 0; n.shout = { t: last || pick(SCREAMS), life: last ? 2 : 1.2 }; S.torched++;
   if (n.dog) n.dog.flee = true;
   if (S.mode === 'play' || S.mode === 'intro') SFX.scream();
   if (S.mode === 'play' && boss.state === 'fight' && !player.dead) {
@@ -1557,8 +1570,9 @@ function updateNPCs(dt) {
     else if (npcs.filter(n => n.state === 'walk').length < 4) {
       const r = Math.random();
       if (r < 0.16 && !groups.some(g => g.kind === 'frisbee')) spawnFrisbee();
-      else if (r < 0.26 && !npcs.some(n => n.kind === 'eshay')) spawnEshay();
-      else if (r < 0.36 && !npcs.some(n => n.kind === 'influencer')) spawnInfluencer();
+      else if (r < 0.25 && !npcs.some(n => n.kind === 'eshay')) spawnEshay();
+      else if (r < 0.45 && !npcs.some(n => n.kind === 'influencer')) spawnInfluencer();
+      else if (r < 0.53 && !npcs.some(n => n.kind === 'italian')) spawnItalian();
       else spawnNPC();
     }
   }
@@ -1578,7 +1592,10 @@ function updateNPCs(dt) {
     else if (n.state === 'dance' || n.state === 'pose' || n.state === 'photo') {
       n.anim += dt * (n.state === 'dance' ? 9 : n.state === 'pose' ? 0.8 : 1.4);
       if (n.state === 'dance' && Math.random() < dt * 3) parts.push({ x: n.x + rand(-8, 8), y: n.y - 42, vx: rand(-8, 8), vy: -22, life: 1, max: 1, col: C.ink, g: 0, s: 1, note: true });
-      if (n.state === 'photo') { n.dir = Math.sign(n.mate.x - n.x) || n.dir; if (Math.floor(n.anim) % 2 && Math.random() < dt * 2) n.flash = 0.12; }
+      if (n.state === 'photo') {
+        n.dir = Math.sign(n.mate.x - n.x) || n.dir; if (Math.floor(n.anim) % 2 && Math.random() < dt * 2) n.flash = 0.12;
+        const g = n.mate; if (g && g.state === 'pose' && !g.shout && (n.hotT = (n.hotT ?? 0.6) - dt) <= 0) { n.hotT = rand(7, 10); g.shout = { t: 'BABE, MAKE SURE I LOOK HOT AF', life: 2.4 }; }
+      }
       if (n.state === 'pose' && n.mate) n.dir = n.mate.x >= n.x ? 1 : -1;
       if (n.flash) n.flash -= dt;
       if (n.mate && !ALIVE[n.mate.state]) { n.state = 'flee'; n.dir = n.x < 240 ? -1 : 1; n.shout = { t: pick(SCREAMS), life: 1.2 }; }
@@ -1590,13 +1607,12 @@ function updateNPCs(dt) {
       n.x += n.dir * 120 * dt; n.anim += dt * 14;
       if (n.x < -40 || n.x > W + 40) { npcs.splice(i, 1); continue; }
     } else if (n.state === 'towel') {
-      if (n.t > 0.8) { n.state = 'lie'; n.t = 0; n.lying = true; if (Math.random() < 0.6) n.shout = { t: pick(LINES), life: 2 }; }
+      if (n.t > 0.8) { n.state = 'lie'; n.t = 0; n.lying = true; n.bragT = 6; if (n.brag) n.shout = { t: ITALIAN, life: 2.8 }; else if (Math.random() < 0.6) n.shout = { t: pick(LINES), life: 2 }; }
     } else if (n.state === 'lie') {
-      if (n.kind === 'muscle' && Math.random() < dt * 2) parts.push({ x: n.x, y: n.y - 16, vx: rand(-6, 6), vy: -18, life: 1.2, max: 1.2, col: C.ink, g: 0, s: 1, note: true });
+      if (n.brag && (n.bragT -= dt) <= 0) { n.bragT = rand(8, 12); n.shout = { t: ITALIAN, life: 2.8 }; }
       if (n.t > n.lieFor) { n.state = 'walk'; n.lying = false; n.bake = false; n.towel = null; n.t = 0; }
     } else if (n.state === 'walk') {
       n.x += n.dir * n.speed * dt; n.anim += dt * n.speed / 9;
-      if (n.kind === 'muscle' && Math.random() < dt * 2) parts.push({ x: n.x + n.dir * 6, y: n.y - 40, vx: rand(-6, 6), vy: -18, life: 1.2, max: 1.2, col: C.ink, g: 0, s: 1, note: true });
       if (n.x < -40 || n.x > W + 40) { npcs.splice(i, 1); continue; }
     } else if (n.state === 'burn') {
       if (!n.lying) { n.x += n.dir * n.speed * 2.2 * dt; n.anim += dt * n.speed / 4; flames(n.x, n.y - (n.liftZ || 0), 10, 36, 2); }
@@ -1788,9 +1804,9 @@ function drawWorld() {
   for (const c of crabs) list.push({ y: c.y, draw: () => spr(c.cooked ? 'crab_cooked' : 'crab', c.anim, c.x, c.y + 1, { flip: c.vx < 0 }) });
   const G = S.guard;
   if (G && S.mode !== 'title') list.push({ y: G.y, draw: () => { shadow(G.x, G.y, 8, 2); spr('npc_' + G.kind + (G.tat ? '_tat' : ''), G.state === 'drop' ? 0 : Math.floor(G.anim) % 4, G.x, G.y + 1, { flip: G.dir < 0 }); } });
+  toyDraws(list);
   list.sort((a, b) => a.y - b.y).forEach(o => o.draw());
   if (S.sunSay) { const far = S.intro && S.intro.k < 0.99; sunBubble(S.sunSay.t, 240, far ? S.intro.baseY - (SHORE - B.headY + 50) * S.intro.k : B.headY, far); }
-  drawToys();
   for (const n of npcs) if (n.shout && n.state === 'admire') bubble(n.shout.t, n.x, n.y - 44);
   for (const n of npcs) if (n.shout && n.state !== 'admire') bubble(n.shout.t, n.x, n.y - (n.lying ? 22 : 44) - (n.liftZ || 0));
   if (G && G.shout && S.mode !== 'title') bubble(G.shout.t, G.x, G.y - 44);
@@ -2089,7 +2105,7 @@ function fit() {
 addEventListener('resize', fit); fit();
 // debugging handle for playtesting from the console
 if (isTouch) document.body.classList.add('touch');
-window.__slather = { BOARD, saveRun, startInitials, spawnEshay, spawnInfluencer, crowdAround, firePatch, spawnJeep, castles, spawnFrisbee, vehicles, crabs, groups, finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
+window.__slather = { spawnItalian, makeNPC, BOARD, saveRun, startInitials, spawnEshay, spawnInfluencer, crowdAround, firePatch, spawnJeep, castles, spawnFrisbee, vehicles, crabs, groups, finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
 reset();
 if (document.fonts) document.fonts.load(`8px ${PIX}`).catch(() => {});
 if (document.fonts) document.fonts.load('44px Anton').catch(() => {});

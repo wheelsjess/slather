@@ -72,7 +72,9 @@ The beachgoers are seen **side-on, facing right**; the right-to-left walkers are
 | `npc_boardies.png` | 28 × 40 | 5 | Person in board shorts |
 | `npc_surfer.png` | 28 × 40 | 5 | Surfer in a wetsuit, carrying a surfboard |
 | `npc_bodyboarder.png` | 28 × 40 | 5 | Person carrying a bodyboard |
-| `npc_muscle.png` | 28 × 40 | 5 | Musclehead with a boom box on his shoulder. Code adds the music notes. |
+| `npc_muscle.png` | 28 × 40 | 5 | Musclehead in red shorts and sunnies |
+| `npc_oldie.png` | 28 × 40 | 5 | Old, wrinkly, deeply tanned man in blue speedos, bald on top with grey sides and a pot belly |
+| `npc_italian.png` | 28 × 40 | 5 | Man with black curly hair and sunnies in white speedos. He lies on a towel to tan. |
 | `npc_walker.png` | 28 × 40 | 5 | Dog walker. The leash is drawn by code. |
 | `npc_lifesaver.png` | 28 × 40 | 5 | Lifesaver in the red and yellow cap. Jogs on and drops the Slather. |
 | `npc_onepiece.png` | 28 × 40 | 5 | Woman in a one-piece swimsuit |
