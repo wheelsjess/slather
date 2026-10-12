@@ -505,10 +505,14 @@ buildTints();
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
 const PALETTES = {
-  1: { sky: ['#4fb3ea', '#6cc3ef', '#8fd3f3', '#b8e5f7', '#e2f5fb'], sea: ['#8fd2ea', '#46a6d6', '#2a86bd'], sand: ['#f3dca0', '#e0c07d'], hill: '#2f6b3f', clouds: true },
-  2: { sky: ['#f08a3c', '#f6a24a', '#fbbd5e', '#ffd77a', '#ffeaa8'], sea: ['#a9cfc8', '#5aa2b7', '#3c7f9f'], sand: ['#f6dc9a', '#e4bf76'], hill: '#3f6a37', clouds: true },
-  3: { sky: ['#7d1717', '#a8241f', '#d0402b', '#ef6633', '#ff9b48'], sea: ['#d0744e', '#a14a36', '#77322a'], sand: ['#f1c38c', '#d9a26b'], hill: '#4b3a26', clouds: false },
-  4: { sky: ['#291d47', '#46306a', '#784478', '#b35f78', '#e88f6f'], sea: ['#7a6a98', '#544477', '#362b5c'], sand: ['#cdae92', '#ab8d79'], hill: '#2a2440', clouds: false },
+  1: { sky: ['#4fb3ea', '#6cc3ef', '#8fd3f3', '#b8e5f7', '#e2f5fb'], sea: ['#8fd2ea', '#46a6d6', '#2a86bd'], sand: ['#f3dca0', '#e0c07d'], clouds: true,
+    rock: ['#e0aa64', '#bd8044', '#8f5a32'], bush: ['#6b9446', '#4a7238', '#2f512b'], gum: ['#8aa66a', '#62824d'], trunk: '#efe8d8' },
+  2: { sky: ['#f08a3c', '#f6a24a', '#fbbd5e', '#ffd77a', '#ffeaa8'], sea: ['#a9cfc8', '#5aa2b7', '#3c7f9f'], sand: ['#f6dc9a', '#e4bf76'], clouds: true,
+    rock: ['#eaa85a', '#c47c3a', '#8e522a'], bush: ['#76923e', '#536f34', '#36532b'], gum: ['#959f56', '#6e8046'], trunk: '#f3e2c8' },
+  3: { sky: ['#7d1717', '#a8241f', '#d0402b', '#ef6633', '#ff9b48'], sea: ['#d0744e', '#a14a36', '#77322a'], sand: ['#f1c38c', '#d9a26b'], clouds: false,
+    rock: ['#b0592f', '#843c20', '#5a2616'], bush: ['#5a5026', '#423b1e', '#2b2614'], gum: ['#665a2a', '#4a421f'], trunk: '#d4a07e' },
+  4: { sky: ['#291d47', '#46306a', '#784478', '#b35f78', '#e88f6f'], sea: ['#7a6a98', '#544477', '#362b5c'], sand: ['#cdae92', '#ab8d79'], clouds: false,
+    rock: ['#6a5274', '#4e3a62', '#36284c'], bush: ['#36305a', '#2a2548', '#1d1934'], gum: ['#443d68', '#332d54'], trunk: '#9a88a8' },
 };
 function makeBg(p) {
   const P = PALETTES[p], c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
@@ -525,14 +529,7 @@ function makeBg(p) {
   }
   dith(HORIZON, SHORE + 2, P.sea);
   g.fillStyle = 'rgba(255,255,255,.55)';
-  for (let i = 0; i < 90; i++) { const y = rand(HORIZON + 3, SHORE - 2) | 0; g.fillRect(rand(0, W) | 0, y, (rand(3, 9) | 0) + Math.round((y - HORIZON) / 10), 1); }
-  // headland with Norfolk pines
-  g.fillStyle = P.hill; g.beginPath(); g.moveTo(0, HORIZON); g.lineTo(0, 80); g.lineTo(26, 76); g.lineTo(70, 80); g.lineTo(118, 92); g.lineTo(156, HORIZON); g.fill();
-  for (const [x, h] of [[12, 30], [30, 38], [52, 28], [80, 22]]) { for (let k = 0; k < h; k += 3) { const w = Math.round((k / h) * 10) + 1; R(P.hill === '#2f6b3f' ? '#1f4d2d' : '#1b1424', x - w, 80 - h + k, w * 2 + 1, 2); } R('#3a2a1c', x, 80, 1, 6); }
-  // surf club
-  R('#f1e5c6', 374, 86, 78, 18); R('#c23b2b', 370, 82, 86, 5); R('#c23b2b', 400, 76, 26, 6);
-  for (let x = 380; x < 446; x += 12) R('#5aa6c9', x, 91, 7, 6);
-  R('#f1e5c6', 410, 97, 8, 7); R('#7a5a3a', 444, 66, 1, 20); R('#e2361f', 445, 66, 7, 3); R('#ffd21f', 445, 69, 7, 3);
+  for (let i = 0; i < 60; i++) { const y = rand(HORIZON + 14, SHORE - 2) | 0; g.fillRect(rand(0, W) | 0, y, (rand(3, 9) | 0) + Math.round((y - HORIZON) / 10), 1); }
   // sand
   R(P.sand[0], 0, SHORE, W, H - SHORE); R(P.sand[1], 0, SHORE, W, 8);
   let seed = 7; const srand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -545,7 +542,68 @@ function makeBg(p) {
   for (const x of [26, 452]) { R('#5c4630', x, 138, 1, 30); R('#e2361f', x + 1, 138, 8, 4); R('#ffd21f', x + 1, 142, 8, 4); }
   return c;
 }
+// The cove: sandstone headlands capped with coastal scrub and gum trees. Drawn on their own layer so the
+// rolling swell can run underneath them.
+const LEFT_TOP = [[0, 56], [16, 52], [36, 54], [58, 60], [80, 64], [100, 70], [114, 78]], RIGHT_TOP = [[W, 74], [462, 72], [444, 78], [428, 84], [414, 92]];
+function makeLand(p) {
+  const P = PALETTES[p], c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+  let seed = 11; const sr = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const R = (col, x, y, w, h) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), w, h); };
+  const blob = (col, x, y, r) => { g.fillStyle = col; g.beginPath(); g.arc(Math.round(x), Math.round(y), r, 0, TAU); g.fill(); };
+  const headland = (top, toe, base) => { // top profile, then a jagged cliff face down to the water
+    g.save(); g.beginPath(); g.moveTo(top[0][0], HORIZON + 8);
+    for (const [x, y] of top) g.lineTo(x, y);
+    for (const [x, y] of toe) g.lineTo(x, y);
+    g.lineTo(base, HORIZON + 8); g.closePath(); g.fillStyle = P.rock[0]; g.fill(); g.clip();
+    for (let y = 40; y < HORIZON + 8; y += 3 + Math.floor(sr() * 3)) { R(P.rock[1], 0, y, W, 1); if (sr() < 0.5) R(P.rock[0], 0, y + 1, W, 1); } // sandstone layers
+    for (let i = 0; i < 40; i++) { const x = sr() * W, y = 50 + sr() * 60; R(P.rock[2], x, y, 1, 3 + sr() * 6); R(P.rock[1], x + 1, y + 2, 2, 1); } // cracks
+    for (let i = 0; i < 14; i++) R(P.rock[2], sr() * W, 62 + sr() * 40, 6 + sr() * 8, 3); // overhangs
+    g.restore();
+  };
+  const scrub = (top) => { // lumpy bush along the clifftop
+    for (let i = 0; i < top.length - 1; i++) {
+      const [x0, y0] = top[i], [x1, y1] = top[i + 1];
+      for (let k = 0; k <= 1; k += 0.18) { const x = x0 + (x1 - x0) * k, y = y0 + (y1 - y0) * k; blob(P.bush[2], x, y + 1, 4 + sr() * 3); blob(P.bush[1], x + sr() * 3 - 1, y - 1, 3 + sr() * 2); if (sr() < 0.5) blob(P.bush[0], x + sr() * 4 - 2, y - 3, 2); }
+    }
+  };
+  const gum = (x, y, h, lean) => { // pale trunk forking into a sparse, clumpy eucalypt crown
+    const tx = x + lean * h * 0.3, ty = y - h;
+    g.strokeStyle = P.trunk; g.lineWidth = 2; g.beginPath(); g.moveTo(x, y); g.lineTo(tx, ty + h * 0.35); g.stroke();
+    g.lineWidth = 1; g.beginPath(); g.moveTo(tx, ty + h * 0.35); g.lineTo(tx - 6, ty + 3); g.moveTo(tx, ty + h * 0.35); g.lineTo(tx + 7, ty + 1); g.moveTo(tx, ty + h * 0.35); g.lineTo(tx + 1, ty - 2); g.stroke();
+    for (const [dx, dy, r] of [[-7, 2, 5], [7, 0, 5], [0, -3, 5], [-2, 4, 3], [10, 4, 3], [-10, 5, 3]]) { blob(P.gum[1], tx + dx, ty + dy + 1, r); blob(P.gum[0], tx + dx - 1, ty + dy - 1, r - 2); }
+  };
+  const rocks = (list) => { for (const [x, y, w, h] of list) { g.fillStyle = P.rock[2]; ELL(g, x, y, w, h); g.fill(); g.fillStyle = P.rock[1]; ELL(g, x - 1, y - 1, w - 2, h - 1.5); g.fill(); } };
+  headland(LEFT_TOP, [[118, 86], [124, 94], [130, 100], [140, HORIZON + 2], [152, HORIZON + 8]], 152);
+  scrub(LEFT_TOP);
+  gum(18, 54, 22, -0.2); gum(46, 57, 18, 0.3); gum(74, 63, 14, 0.1);
+  rocks([[146, HORIZON + 6, 7, 3], [158, HORIZON + 8, 5, 2], [134, HORIZON + 7, 6, 3]]);
+  headland(RIGHT_TOP, [[408, 98], [402, HORIZON + 3], [396, HORIZON + 8]], 396);
+  scrub(RIGHT_TOP);
+  gum(456, 72, 16, 0.2);
+  rocks([[392, HORIZON + 7, 6, 3], [382, HORIZON + 9, 4, 2]]);
+  return c;
+}
 const BG = { 1: makeBg(1), 2: makeBg(2), 3: makeBg(3), 4: makeBg(4) };
+for (const k in BG) BG[k].land = makeLand(k); // each sky gets its matching headlands
+function drawSwell() { // lines of swell rolling in from the horizon, and foam breaking on the rocks at each point
+  const t = S.time;
+  for (let row = 0; row < 7; row++) {
+    const y = HORIZON + 2 + row * 3 + Math.round(row * row * 0.35), gap = 40 + row * 8, sp = 5 + row * 2;
+    for (let x = -gap + ((t * sp + row * 17) % gap); x < W; x += gap) {
+      const k = Math.max(0, Math.sin(t * 1.1 + x * 0.04 + row * 1.7)), len = Math.round((8 + row * 4) * (0.5 + 0.5 * k)), X = Math.round(x);
+      if (len < 5) continue;
+      ctx.fillStyle = `rgba(15,55,105,${(0.15 + 0.2 * k).toFixed(2)})`; ctx.fillRect(X, y + 1, len, row > 3 ? 2 : 1); // the face of the swell
+      ctx.fillStyle = `rgba(255,255,255,${(0.35 + 0.55 * k).toFixed(2)})`; ctx.fillRect(X, y, len, 1);               // its crest
+      if (k > 0.6) ctx.fillRect(X + 2, y - 1, len - 4, 1);                                                             // breaking white
+    }
+  }
+  for (const [x, y] of [[146, HORIZON + 7], [392, HORIZON + 8]]) { // foam bursts against the rocks
+    const k = (t * 0.45 + x) % 1, r = Math.round(k * 16);
+    ctx.fillStyle = `rgba(255,255,255,${(0.9 * (1 - k)).toFixed(2)})`;
+    for (let i = -r; i <= r; i += 2) { const h = Math.round(Math.sqrt(Math.max(0, r * r - i * i)) * 0.6); ctx.fillRect(x + i, y - h, 2, 2); }
+    ctx.fillRect(x - 10, y + 2, 20, 1);
+  }
+}
 
 /* ================= Audio ================= */
 let actx = null, muted = false, noiseBuf = null, master = null, ambience = null;
@@ -1770,7 +1828,7 @@ function drawNPC(n) {
 }
 function drawWorld() {
   const B = boss, P = player;
-  ctx.drawImage(S.bg, 0, 0);
+  ctx.drawImage(S.bg, 0, 0); drawSwell(); ctx.drawImage(S.bg.land, 0, 0);
   drawSea(false);
   drawSea(true);
   if (S.intro) drawIntroProps(S.intro);

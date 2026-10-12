@@ -119,7 +119,9 @@ Layout lines to keep:
 | 166–244 | The area the bogan can walk on. Keep it clear of anything that looks solid. |
 | 248–270 | Covered by the boss health bar |
 
-Name them `bg_1.png` to `bg_4.png`. They aren't loaded yet; loading them is a one-line change when they arrive.
+The scene is a rocky Australian cove: sandstone headlands on the left and right, topped with coastal scrub and gum trees, with rocks at their feet in the water. The code animates lines of swell rolling across the sea and foam bursting on those rocks, so the headlands are a separate layer drawn over the sea. To replace them, send one **480 × 270** transparent PNG per phase, `land_1.png` to `land_4.png`, containing only the headlands. Keep them to the left of x ≈ 160 and the right of x ≈ 380, so the open sea behind the Sun stays clear.
+
+Name the backgrounds `bg_1.png` to `bg_4.png`. They aren't loaded yet; loading them is a one-line change when they arrive.
 
 ## Audio
 
