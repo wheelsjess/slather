@@ -33,7 +33,7 @@ Starting from the title screen plays a short cutscene. The bogan wanders onto a 
 
 ## The clock and the leaderboard
 
-A timer at the top of the screen counts the fight, starting when you take control after the intro. It stops the moment the Sun dies or you do. Win, and you enter three initials, arcade style: type them, or use up and down to change a letter and left and right to move, then press Enter. On a phone, tap the arrows above and below each letter, then OK. Then the **Fastest Slatherers** board ranks the quickest kills, with your new run flashing. The top five also show on the title screen.
+A timer at the top of the screen counts the fight, starting when you take control after the intro. It stops the moment the Sun dies or you do. Win, and you enter three initials, arcade style: type them, or use up and down to change a letter and left and right to move, then press Enter. On a phone, tap the arrows above and below each letter, then OK. Then the leaderboard, "OFFICIAL SICKEST PEOPLE IN THE UNIVERSE", ranks the quickest kills, with your new run flashing. The top five also show on the title screen as **Legendary Slatherers**.
 
 When the game is played from its claude.ai page, the board is shared. Everyone who opens the page and is allowed to add to it lands on the same board, and each player keeps their 10 best runs. People who can only view the page see the shared board, but their own times are saved on their device. Opened anywhere else, such as straight from `index.html`, the board only keeps times on that device.
 
@@ -44,7 +44,7 @@ The Sun shows its lines in yellow speech bubbles. It doesn't speak them aloud.
 | When | Lines |
 |---|---|
 | It torches a beachgoer and heals 55 HP (`KILL_HEAL`) | "ANOTHER SACRIFICE TO THE SUN GOD! HAHAHAH!" / "MMMM... LOBSTER!!!" |
-| You hit it (every 75 damage, it also pulls a face, reels back and gets angry) | "ARRGGHHHH! SPF 50+" / "IT HURTS! AND IT'S SO SMOOTH AND EASY TO APPLY!" |
+| You hit it (every 75 damage, it also pulls a face, reels back and gets angry) | "ARRGGHHHH! SPF 50+" / "IT HURTS! AND IT'S SO SMOOTH AND EASY TO APPLY!" / "MY EYES!!! THEY STING!!!" |
 | It gets caked in sunscreen (40+ splats), loses it, scrubs itself clean and flings the gunk across the beach. A glob that lands on you is a free 3-second top-up of SPF. | "GET THIS SPECIALLY FORMULATED SPF OFF OF ME!!!" / "I DO NOT APPROVE OF THIS INCREDIBLE SUNSCREEN PRODUCT!" |
 | It hits you while your UV shield is up and the attack bounces back | "NOOO! THE SPF... IT'S TOO STRONG!!!" / "THE SPECIALLY FORMULATED SPF 50+ OF SLATHER IS IMPENETRABLE" |
 

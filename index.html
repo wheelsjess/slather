@@ -685,7 +685,7 @@ function wantedMusic() {
 
 /* ================= The Sun's voice and one-liners ================= */
 const KILL_LINES = ['ANOTHER SACRIFICE TO THE SUN GOD! HAHAHAH!', 'MMMM... LOBSTER!!!'];
-const HIT_LINES = ['ARRGGHHHH! SPF 50+', "IT HURTS! AND IT'S SO SMOOTH AND EASY TO APPLY!"];
+const HIT_LINES = ['ARRGGHHHH! SPF 50+', "IT HURTS! AND IT'S SO SMOOTH AND EASY TO APPLY!", 'MY EYES!!! THEY STING!!!'];
 const WIPE_LINES = ['GET THIS SPECIALLY FORMULATED SPF OFF OF ME!!!', 'I DO NOT APPROVE OF THIS INCREDIBLE SUNSCREEN PRODUCT!'];
 const REFLECT_LINES = ["NOOO! THE SPF... IT'S TOO STRONG!!!", 'THE SPECIALLY FORMULATED SPF 50+ OF SLATHER IS IMPENETRABLE'];
 function sunSay(text) { S.sunSay = { t: text, life: clamp(text.length * 0.07, 2, 3.6) }; }
@@ -1915,7 +1915,7 @@ function drawTitle() {
   if (Math.floor(S.time * 2) % 2) { ctx.fillText(isTouch ? 'TAP TO START' : 'PRESS ENTER', 24, 232); }
   if (BOARD.list.length) {
     ctx.fillStyle = 'rgba(10,8,6,.72)'; ctx.fillRect(282, 22, 180, 30 + Math.min(5, BOARD.list.length) * 13);
-    txt('FASTEST SLATHERERS', 372, 30, '#ffe800', 8, 'center');
+    txt('LEGENDARY SLATHERERS', 372, 30, '#ffe800', 8, 'center');
     BOARD.list.slice(0, 5).forEach((r, i) => { txt(`${i + 1}.`, 298, 48 + i * 13); txt(r.i, 322, 48 + i * 13); txt(fmtT(r.t), 448, 48 + i * 13, C.white, 8, 'right'); });
   }
 }
@@ -2009,7 +2009,8 @@ function drawInitials() {
 function drawBoard() {
   ctx.fillStyle = 'rgba(10,8,6,.9)'; ctx.fillRect(0, 0, W, H);
   outlined('FASTEST SLATHERERS', W / 2, 14, '#ffe800', 16);
-  txt(BOARD.shared ? 'QUICKEST SUN KILLS, EVERYONE WHO PLAYS THIS PAGE' : 'QUICKEST SUN KILLS ON THIS DEVICE', W / 2, 38, '#bba98a', 8, 'center');
+  txt('OFFICIAL SICKEST PEOPLE IN THE UNIVERSE', W / 2, 38, '#bba98a', 8, 'center');
+  if (!BOARD.shared) txt('(TIMES ON THIS DEVICE)', W / 2, 226, '#bba98a', 8, 'center');
   const list = BOARD.list, me = list.findIndex(r => r.at === BOARD.lastAt), blink = Math.floor(S.time * 4) % 2;
   if (!list.length) txt(BOARD.saving ? 'SAVING...' : 'NO TIMES YET', W / 2, 120, C.white, 8, 'center');
   list.slice(0, 10).forEach((r, i) => {
