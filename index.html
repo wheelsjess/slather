@@ -6,7 +6,7 @@
 <title>Slather Ring</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Permanent+Marker&family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Knewave&family=Permanent+Marker&family=Press+Start+2P&display=swap">
 <style>
 /* Layout: one 480x270 pixel canvas scaled up and centred; touch controls float over the letterbox. Single deliberate look. */
 :root{
@@ -2162,7 +2162,7 @@ function drawHUD() {
    dart, SLATHER slams down with a metallic glint, the Sun emerges, "Sun Fighter" writes itself on, and he flips it the
    bird. Then INSERT COIN and the top five. Painted at the game's resolution, then dithered to a palette so it reads
    as pixel art. */
-const TITLE_T = { walk: 2.6, slam: 2.8, rise: 3.8, risen: 5.8, write: 6.0, written: 7.2, flip: 7.5, coin: 7.9 };
+const TITLE_T = { rise: 1.0, risen: 3.0, slam: 3.2, run: 4.0, arrive: 5.3, flip: 5.5, write: 6.0, written: 7.2, coin: 7.6 };
 const T_HORIZON = 164, T_SUN = { x: 404, k: 0.8 };
 const shoreY = x => 168 + 48 * Math.pow(clamp(x / W, 0, 1), 1.2);
 let TITLE_ART = null;
@@ -2214,9 +2214,9 @@ function makeTitleArt() {
   h.restore();
   pixelize(land, ['#3a8f8a', '#2f7f7c', '#226a6e', '#1a5458', '#78c8be', '#c99a48', '#b8863e', '#ffe9a8', '#ffd57a', '#f0b850', '#d89a3a', '#b07828']);
   // --- SLATHER, in sunset chrome ---
-  const [slat, s] = mk(330, 128);
+  const [slat, s] = mk(330, 150);
   s.font = '96px Anton, Impact, sans-serif'; s.textAlign = 'center'; s.textBaseline = 'top'; s.lineJoin = 'round';
-  s.save(); s.translate(165, 6); s.scale(1, 1.14);
+  s.save(); s.translate(165, 8); s.scale(1, 1.14);
   s.fillStyle = '#3a0806'; s.fillText('SLATHER', 5, 7); s.strokeStyle = '#3a0806'; s.lineWidth = 11; s.strokeText('SLATHER', 5, 7);
   s.strokeStyle = '#16120f'; s.lineWidth = 9; s.strokeText('SLATHER', 0, 0);
   gr = s.createLinearGradient(0, 6, 0, 100);
@@ -2224,26 +2224,37 @@ function makeTitleArt() {
   s.fillStyle = gr; s.fillText('SLATHER', 0, 0); s.strokeStyle = 'rgba(255,240,190,.6)'; s.lineWidth = 1.5; s.strokeText('SLATHER', 0, 0);
   s.restore();
   pixelize(slat, ['#fff6c0', '#ffe36a', '#ffc23a', '#ff9a2a', '#ff6a1f', '#e2361f', '#b8200f', '#7a1208', '#3a0806', '#16120f']);
-  // --- Sun Fighter, brushed on ---
-  const [fight, f] = mk(270, 70);
-  f.font = '46px "Permanent Marker", "Brush Script MT", cursive'; f.textAlign = 'center'; f.textBaseline = 'middle'; f.lineJoin = 'round';
-  f.save(); f.translate(135, 36); f.rotate(-0.07); f.transform(1, 0, -0.12, 1, 0, 0);
-  f.strokeStyle = '#16120f'; f.lineWidth = 9; f.strokeText('Sun Fighter', 0, 0);
-  gr = f.createLinearGradient(0, -18, 0, 18); gr.addColorStop(0, '#ffb02a'); gr.addColorStop(0.45, '#ff5a1f'); gr.addColorStop(1, '#b8200f');
-  f.fillStyle = gr; f.fillText('Sun Fighter', 0, 0); f.restore();
-  pixelize(fight, ['#ffd23a', '#ffb02a', '#ff8a1f', '#ff5a1f', '#e2361f', '#b8200f', '#16120f']);
+  // --- SUN FIGHTER, slapped on with a fat brush ---
+  const [fight, f] = mk(300, 80);
+  const brush = (txt, x, y, size) => {
+    f.font = `${size}px Knewave, "Permanent Marker", Impact, sans-serif`; f.textAlign = 'left'; f.textBaseline = 'alphabetic'; f.lineJoin = 'round';
+    f.save(); f.translate(x, y); f.rotate(-0.09); f.transform(1, 0, -0.18, 1, 0, 0);
+    f.fillStyle = '#3a0806'; f.fillText(txt, 3, 4);                                                   // drop shadow
+    f.strokeStyle = '#16120f'; f.lineWidth = 7; f.strokeText(txt, 0, 0);
+    const gr2 = f.createLinearGradient(0, -size * 0.8, 0, 0); gr2.addColorStop(0, '#ffb02a'); gr2.addColorStop(0.35, '#ff5a1f'); gr2.addColorStop(0.75, '#e2361f'); gr2.addColorStop(1, '#a01208');
+    f.fillStyle = gr2; f.fillText(txt, 0, 0);
+    const w = f.measureText(txt).width; f.restore(); return w;
+  };
+  const w1 = brush('SUN', 8, 60, 34); brush('FIGHTER', 8 + w1 * 0.96 + 10, 66, 46);
+  f.globalCompositeOperation = 'source-atop';                                                       // dry-brush streaks through the paint
+  for (let i = 0; i < 26; i++) { const y = 18 + r() * 52, x = r() * 300; f.fillStyle = r() < 0.5 ? 'rgba(255,214,90,.75)' : 'rgba(120,10,4,.6)'; f.fillRect(x, y, 10 + r() * 30, 1); }
+  f.globalCompositeOperation = 'destination-out';
+  for (let i = 0; i < 14; i++) { const y = 20 + r() * 50, x = r() * 300; f.fillRect(x, y, 4 + r() * 10, 1); }
+  f.globalCompositeOperation = 'source-over';
+  pixelize(fight, ['#ffd25a', '#ffb02a', '#ff8a1f', '#ff5a1f', '#e2361f', '#a01208', '#3a0806', '#16120f']);
   const [sheen] = mk(slat.width, slat.height), [aura] = mk(280, 260);
   TITLE_ART = { sky, land, slat, fight, sheen, aura, embers: [] };
 }
-if (document.fonts) Promise.all([document.fonts.load('96px Anton'), document.fonts.load('46px "Permanent Marker"')]).then(() => { TITLE_ART = null; }).catch(() => {});
+if (document.fonts) Promise.all([document.fonts.load('96px Anton'), document.fonts.load('46px Knewave')]).then(() => { TITLE_ART = null; }).catch(() => {});
 function titleUpdate(dt) {
   const T = S.ttl; if (!T) return; const was = T.t; T.t += dt; const t = T.t, crossed = k => was < TITLE_T[k] && t >= TITLE_T[k];
   if (crossed('slam')) { shake(7); S.whiteA = 0.6; SFX.slam(); if (TITLE_ART) for (let i = 0; i < 40; i++) TITLE_ART.embers.push({ x: rand(60, 330), y: rand(40, 140), vx: rand(-90, 90), vy: rand(-120, 0), life: rand(0.5, 1.1) }); }
   if (crossed('rise')) SFX.roar();
   if (crossed('risen')) SFX.laugh();
   if (crossed('write')) tone(300, 900, 0.9, 0.05, 'sawtooth');
+  if (crossed('arrive')) tone(220, 160, 0.08, 0.05, 'square');
   if (crossed('flip')) { tone(660, 330, 0.18, 0.08, 'square'); tone(330, 660, 0.18, 0.08, 'square', 0.18); }
-  boss.face = t > TITLE_T.flip + 0.3 ? 'shock' : 'rage'; boss.eyeGlow = t > TITLE_T.risen && t < TITLE_T.flip + 0.3 ? 0.6 + 0.4 * Math.sin(S.time * 5) : 0;
+  boss.face = t > TITLE_T.flip + 0.3 ? 'shock' : t > TITLE_T.risen - 0.6 ? 'grin' : 'smug'; boss.eyeGlow = 0;   // smiling as it rises, until it gets the finger
   boss.sinkY = t < TITLE_T.rise ? 170 : t < TITLE_T.risen ? 170 * (1 - (t - TITLE_T.rise) / (TITLE_T.risen - TITLE_T.rise)) : 0;
   for (const hh of boss.hands) { hh.busy = true; hh.pose = 'open'; hh.tx = 240 + hh.s * 112; hh.tfy = 160; hh.tz = 96 + Math.sin(S.time * 2 + hh.s) * 4; hh.rate = 4; }
   if (t > TITLE_T.rise && t < TITLE_T.risen) shake(1.2);
@@ -2251,10 +2262,10 @@ function titleUpdate(dt) {
   if (A) {
     if (t > TITLE_T.slam && Math.random() < dt * 14) A.embers.push({ x: rand(60, 330), y: rand(60, 140), vx: rand(-10, 10), vy: rand(-40, -15), life: rand(0.8, 1.6) });
     const P = player, smokeX = P.x + 10, smokeY = 232 - 64;
-    if (Math.random() < dt * 3) A.embers.push({ x: smokeX, y: smokeY, vx: rand(2, 8), vy: -12, life: 1.6, smoke: true });
+    if (t >= TITLE_T.run && Math.random() < dt * 3) A.embers.push({ x: smokeX, y: smokeY, vx: rand(2, 8), vy: -12, life: 1.6, smoke: true });
     for (let i = A.embers.length - 1; i >= 0; i--) { const e = A.embers[i]; e.life -= dt; e.x += e.vx * dt; e.y += e.vy * dt; if (!e.smoke) e.vy += 60 * dt; if (e.life <= 0) A.embers.splice(i, 1); }
   }
-  player.x = t < TITLE_T.walk ? -30 + 116 * (t / TITLE_T.walk) : 86;
+  player.x = t < TITLE_T.run ? -60 : t < TITLE_T.arrive ? -30 + 116 * ((t - TITLE_T.run) / (TITLE_T.arrive - TITLE_T.run)) : 86;
 }
 function skipTitle() { if (S.ttl && S.ttl.t < TITLE_T.coin) { S.ttl.t = TITLE_T.coin; boss.sinkY = 0; } }
 function drawTitleScene() { // everything behind the title lettering
@@ -2301,16 +2312,16 @@ function drawTitleScene() { // everything behind the title lettering
   // the bogan, long shadow thrown away from the Sun
   const P = player, px = Math.round(P.x), py = 252;
   ctx.fillStyle = 'rgba(90,50,10,.35)'; ctx.beginPath(); ctx.moveTo(px - 8, py); ctx.lineTo(px - 46, py + 12); ctx.lineTo(px - 28, py + 14); ctx.lineTo(px + 10, py + 1); ctx.fill();
-  const fr = t < TITLE_T.walk ? Math.floor(t * 9) % 6 : t >= TITLE_T.flip ? 7 : 6;
+  const fr = t < TITLE_T.arrive ? Math.floor(t * 12) % 6 : t >= TITLE_T.flip ? 7 : 6;   // runs in, stops, flips the bird
   if (TITLE_BOGAN.complete && TITLE_BOGAN.naturalWidth) ctx.drawImage(TITLE_BOGAN, fr * 48, 0, 48, 84, px - 24, py - 83, 48, 84);
-  if (t < TITLE_T.flip) { ctx.fillStyle = '#fffdf2'; ctx.fillRect(px + 7, py - 63, 4, 1); ctx.fillStyle = Math.floor(S.time * 4) % 2 ? '#ff8a1f' : '#ffd23a'; ctx.fillRect(px + 11, py - 63, 1, 1); }   // the dart
+  if (t >= TITLE_T.run && t < TITLE_T.flip) { ctx.fillStyle = '#fffdf2'; ctx.fillRect(px + 7, py - 63, 4, 1); ctx.fillStyle = Math.floor(S.time * 4) % 2 ? '#ff8a1f' : '#ffd23a'; ctx.fillRect(px + 11, py - 63, 1, 1); }   // the dart
   for (const e of A.embers) if (e.smoke) { const a = Math.max(0, e.life / 1.6) * 0.6; ctx.fillStyle = `rgba(235,235,230,${a.toFixed(2)})`; ctx.fillRect(Math.round(e.x), Math.round(e.y), 2, 2); }
 }
 function drawTitle() { // the lettering, sparks, and the coin prompt over the scene
   if (!TITLE_ART) return;
   const A = TITLE_ART, t = S.ttl ? S.ttl.t : 99;
   if (t >= TITLE_T.slam) {
-    const e = clamp((t - TITLE_T.slam) / 0.22, 0, 1), sc = 1 + (1 - e) * (1 - e) * 2.4, cx = 196, cy = 80;
+    const e = clamp((t - TITLE_T.slam) / 0.22, 0, 1), sc = 1 + (1 - e) * (1 - e) * 2.4, cx = 196, cy = 84;
     const s = A.sheen, g = s.getContext('2d'); g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, s.width, s.height); g.drawImage(A.slat, 0, 0);
     const sw = ((t - TITLE_T.slam - 0.3) % 3.2) / 1.1;
     if (sw >= 0 && sw <= 1) { // a band of light rippling across the metal
@@ -2322,7 +2333,7 @@ function drawTitle() { // the lettering, sparks, and the coin prompt over the sc
     ctx.save(); ctx.globalAlpha = e < 1 ? 0.4 + 0.6 * e : 1; ctx.translate(cx, cy); ctx.scale(sc, sc); ctx.drawImage(s, -s.width / 2, -s.height / 2); ctx.restore();
   }
   if (t >= TITLE_T.write) {
-    const p = clamp((t - TITLE_T.write) / (TITLE_T.written - TITLE_T.write), 0, 1), f = A.fight, w = Math.round(f.width * p), x0 = 214 - f.width / 2, y0 = 122;
+    const p = clamp((t - TITLE_T.write) / (TITLE_T.written - TITLE_T.write), 0, 1), f = A.fight, w = Math.round(f.width * p), x0 = 268 - f.width / 2, y0 = 118;
     ctx.drawImage(f, 0, 0, w, f.height, x0, y0, w, f.height);
     if (p < 1) for (let i = 0; i < 2; i++) A.embers.push({ x: x0 + w, y: y0 + 36 + rand(-12, 12) - p * 8, vx: rand(-20, 40), vy: rand(-50, 10), life: 0.4 });
   }
