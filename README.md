@@ -76,5 +76,5 @@ The numbers near the top of the script in `index.html` control the difficulty:
 
 ## Saved versions
 
-- `versions/slather-ring-v1.html` is a frozen copy of the game with the stand-in pixel art, saved before the real art references came in. Open it in a browser to play it. It's also tagged `v1-standin-art` in git.
+- `versions/slather-ring-v1.html` is a frozen copy of the game with the stand-in pixel art, saved before the real art references came in. Open it in a browser to play it. In git it's commit `bb40042` on this branch.
 - `legacy-3d.html` is the earlier 3D prototype, kept for reference.
