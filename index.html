@@ -43,10 +43,12 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(-
 #loadScreen .fog{position:absolute;left:-30%;width:160%;height:34%;bottom:-8%;border-radius:50%;background:radial-gradient(ellipse at 50% 60%,rgba(120,108,96,.28),rgba(0,0,0,0) 62%);animation:lsFog 22s ease-in-out infinite alternate}
 #loadScreen .fog.b{bottom:-14%;height:28%;opacity:.8;animation-duration:30s;animation-direction:alternate-reverse}
 @keyframes lsFog{from{transform:translateX(-6%)}to{transform:translateX(6%)}}
-#loadScreen .how{position:absolute;right:4%;top:15%;width:44%;text-align:right;font-size:calc(var(--u)*7.2);line-height:1.38;letter-spacing:.03em}
+#loadScreen .how{position:absolute;right:4%;top:15%;width:50%;text-align:right;font-size:calc(var(--u)*7.2);line-height:1.85;letter-spacing:.03em}
 #loadScreen .how h2{margin:0 0 .35em;font-size:1.25em;font-weight:600;letter-spacing:.18em;color:#f3ead8}
 #loadScreen .how .k{color:#a89f90}
 #loadScreen .how .gap{height:.6em}
+#loadScreen .how .it{display:inline-flex;gap:.25em;align-items:flex-end;margin-right:.45em;vertical-align:-.55em}
+#loadScreen .how .it img{height:1.9em;width:auto;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(255,236,190,.55))}
 #loadScreen .tip{position:absolute;right:4%;bottom:12%;width:46%;text-align:right;font-size:calc(var(--u)*8.6);line-height:1.32;letter-spacing:.02em}
 #loadScreen .tip.fade{animation:lsTip 1s ease-out}
 @keyframes lsTip{from{opacity:0}to{opacity:1}}
@@ -2397,11 +2399,19 @@ function startLoading() {
   $('#lsHow').innerHTML = '<h2>HOW TO PLAY</h2>' + (isTouch
     ? [['MOVE', 'LEFT THUMB'], ['SQUIRT', 'TAP SQUIRT'], ['ROLL', 'TAP ROLL'], ['PAUSE', 'PAUSE BUTTON']]
     : [['MOVE', 'WASD / ARROWS'], ['SQUIRT', 'CLICK OR J'], ['ROLL', 'SPACE'], ['PAUSE', 'ESC OR P']]).map(([a, b]) => `${a} <span class="k">&mdash; ${b}</span>`).join('<br>')
-    + '<div class="gap"></div>' + [['SPF50+ TUBE', 'UV SHIELD. HITS BOUNCE BACK.'], ['TWIN TUBES', 'DUAL WIELD.'], ['BUCKET HAT', 'UNTOUCHABLE, AND LOOKING GOOD.'],
-      ['POTATO CAKE, DIM SIM', 'HEALTH.'], ['UMBRELLA', 'SHADE FROM THE SOLAR FLARE.']].map(([a, b]) => `${a} <span class="k">&mdash; ${b}</span>`).join('<br>');
+    + '<div class="gap"></div>' + [[['slather'], 'SPF50+ TUBE', 'UV SHIELD. HITS BOUNCE BACK.'], [['slather2'], 'TWIN TUBES', 'DUAL WIELD.'], [['hat'], 'BUCKET HAT', 'UNTOUCHABLE, AND LOOKING GOOD.'],
+      [['potato', 'dimsim'], 'POTATO CAKE, DIM SIM', 'HEALTH.'], [['umbrella'], 'UMBRELLA', 'SHADE FROM THE SOLAR FLARE.']]
+      .map(([ic, a, b]) => `<span class="it">${ic.map(n => `<img src="${spriteIcon(n)}" alt="">`).join('')}</span>${a} <span class="k">&mdash; ${b}</span>`).join('<br>');
   art.style.animation = 'none'; void art.offsetWidth; art.style.animation = '';            // restart the slow push-in
   $('#lsGo').classList.remove('on'); $('#lsBar').style.width = '0';
   showTip(); L.hidden = false;
+}
+const ICONS = {};
+function spriteIcon(name) { // frame 0 of an in-game sprite, scaled up with hard pixels, as an image for the loading text
+  if (ICONS[name]) return ICONS[name];
+  const s = SPR[name], c = document.createElement('canvas'), k = 4; c.width = s.fw * k; c.height = s.fh * k;
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(s.img, 0, 0, s.fw, s.fh, 0, 0, c.width, c.height);
+  return (ICONS[name] = c.toDataURL());
 }
 function showTip() { const el = $('#lsTip'); el.innerHTML = '<b>TIP:</b> ' + LOADING_TIPS[S.load.tip]; el.classList.remove('fade'); void el.offsetWidth; el.classList.add('fade'); }
 function loadingUpdate(dt) {
