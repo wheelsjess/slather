@@ -15,7 +15,7 @@ Open `index.html` in any modern browser. On a computer, use the keyboard and mou
 
 ## Title and loading screens
 
-The game opens on an arcade attract screen. Waves roll in and the bogan wanders onto the beach having a smoke. Then **SLATHER** slams onto the screen, and a metallic glint runs across it every few seconds. The Sun rises out of the sea behind fanning light rays, and *Sun Fighter* brushes itself on. Then it says **HIT ENTER TO INSERT COIN** (or TAP on a phone), with the top five times underneath. Press Enter (or tap) to skip straight to that.
+The game opens on an arcade attract screen. It's a standalone illustrated frame, separate from the game view, with a teal sky, big painted clouds, a curving golden beach and surf rolling in. The bogan wanders in having a smoke. **SLATHER** slams onto the screen in sunset chrome, and a ripple of light runs across the metal every few seconds. The Sun rises out of the sea in a blaze of flame, *Sun Fighter* brushes itself on, and the bogan flips the Sun the bird (it looks suitably shocked). Then it says **HIT ENTER TO INSERT COIN** (or TAP on a phone), with the top five times underneath. Press Enter (or tap) to skip straight to that.
 
 Inserting a coin goes to an Elder Scrolls-style **loading screen**: the bogan runs on the spot in the dark, with the controls and kit laid out beside him. A loading bar fills in the corner and sunscreen facts rotate in the other corner. When it's loaded, press Enter (or tap) to start. The facts are placeholders for now: edit the `LOADING_TIPS` list near the loading screen code in `index.html`.
 
