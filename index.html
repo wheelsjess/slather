@@ -458,7 +458,10 @@ function drawPerson(g, o, f) { // side view, facing right, feet on the bottom ro
   if (o.sideStripe) { R(o.sideStripe, 13, ty, 1, 11); R(o.sideStripe, 13, 24 + bob, 1, 12 - bob); }
   if (o.hairChest) { R(skinD, 17, ty + 3, 1, 1); R(skinD, 18, ty + 5, 1, 1); R(skinD, 16, ty + 6, 1, 1); }
   if (o.tat) R('#2b3d6e', 12, ty + 1, 2, 2);
-  if (o.bumbag) { for (let i = 0; i < 9; i++) R('#2a2a30', 11 + i, ty + i, 1, 1); R('#3a3f48', 17, ty + 7, 4, 3); R('#8a9aa8', 18, ty + 8, 2, 1); }
+  if (o.bumbag) { // strap across the chest, bag sitting proud on the front
+    const bc = o.bumbagCol || '#3a3f48', strap = o.bumbagCol ? '#e8e8e8' : '#2a2a30';
+    for (let i = 0; i < 9; i++) R(strap, 11 + i, ty + i, 1, 1);
+    R(C.ink, 16, ty + 6, 7, 5); R(bc, 17, ty + 7, 5, 3); R(shadeHex(bc, 0.35), 17, ty + 7, 5, 1); R('#ffffff', 18, ty + 8, 3, 1); }
   if (o.tote) { R('#e9dcb8', 12, ty, 1, 7); R('#e9dcb8', 9, ty + 7, 6, 7); R('#c9b48a', 9, ty + 11, 6, 3); R('#b8a070', 9, ty + 7, 1, 7); }
   // --- head ----------------------------------------------------------------------------------------------
   const hy = 3 + bob;
@@ -480,7 +483,7 @@ function drawPerson(g, o, f) { // side view, facing right, feet on the bottom ro
   else if (st === 'bald') { R(H, 10, hy + 4, 2, 4); R(HD, 10, hy + 7, 2, 1); R(skinL, 13, hy, 4, 1); }
   else if (st === 'spiky') { R(H, 10, hy - 1, 10, 3); for (const x of [10, 13, 16, 19]) R(H, x, hy - 3, 2, 2); R(H, 10, hy + 1, 3, 7); R(HL, 13, hy - 1, 5, 1); }
   else if (st !== 'none') { R(H, 10, hy - 1, 10, 3); R(H, 10, hy + 1, 3, 6); R(HL, 13, hy - 1, 5, 1); }
-  if (st === 'cap' || o.cap) { R(o.cap1, 10, hy - 2, 10, 4); R(o.cap2 || o.cap1, 13, hy - 2, 5, 2); R(o.cap1, 19, hy + 1, 4, 1); R(shadeHex(o.cap1, -0.3), 10, hy + 1, 9, 1); if (o.pony) { R(H, 7, hy + 2, 3, 3); R(H, 6, hy + 4, 2, 5); } else R(H, 10, hy + 2, 2, 4); }
+  if (st === 'cap' || o.cap) { R(o.cap1, 10, hy - 2, 10, 4); R(o.cap2 || o.cap1, 13, hy - 2, 5, 2); R(o.cap1, 19, hy + 1, 4, 1); R(shadeHex(o.cap1, -0.3), 10, hy + 1, 9, 1); if (o.pony) { R(H, 7, hy + 2, 3, 3); R(H, 6, hy + 4, 2, 5); } else if (o.shortBack) R(H, 11, hy + 2, 1, 2); else R(H, 10, hy + 2, 2, 4); }
   if (st === 'visor') { R(o.cap1, 11, hy + 1, 9, 1); R(o.cap1, 19, hy + 1, 4, 1); R(C.ink, 13, hy - 1, 6, 1); R('#2fb8b0', 14, hy - 1, 2, 1); R('#2fb8b0', 17, hy - 1, 1, 1); }
   if (st === 'sunhat') { R(o.hat, 11, hy - 3, 9, 3); R(o.hat, 7, hy, 17, 2); R(o.hatBand, 11, hy - 1, 9, 1); R(H, 10, hy + 2, 3, 9); }
   if (o.sunnies) { R(C.ink, 15, hy + 4, 6, 2); R(o.lens || '#5fe0a0', 18, hy + 4, 2, 1); }
@@ -503,10 +506,10 @@ const NPC_TYPES = {
   bodyboardgirl: { fem: 1, skin: SKINS.dark, hair: '#151515', hairStyle: 'ponytail', bikini: '#3cc46c', topPat: 'palm', bottom: '#ff8a2a', botPat: 'sunset', bottomLen: 6, item: 'bodyboard', boardCol: '#ff4f9a', shoes: 'thongs', seed: 21 },
   walkerf: { fem: 1, skin: SKINS.light, hair: '#b5652a', hairStyle: 'sunhat', hat: '#f3e3b0', hatBand: '#e2361f', top: '#ff4fa0', topPat: 'trop', sleeve: '#ff4fa0', bottom: '#fffdf2', bottomLen: 7, tote: 1, shoes: 'sneakers', seed: 23 },
   lifesaverf: { fem: 1, skin: SKINS.tan, hair: '#e8c35a', hairStyle: 'cap', cap: 1, pony: true, cap1: '#e2361f', cap2: '#ffd21f', top: '#ffd21f', bottom: '#e2361f', bottomLen: 5, shoes: 'bare', seed: 25 },
-  eshay: { skin: SKINS.light, hair: '#3a2a1c', hairStyle: 'cap', cap1: '#1b1b22', cap2: '#ffffff', ratTail: true, top: '#1b1b22', sleeve: '#1b1b22', sleeveLong: 1, bottom: '#9aa0a8', bottomLen: 13, legs: '#9aa0a8',
+  eshay: { skin: SKINS.light, hair: '#3a2a1c', hairStyle: 'cap', shortBack: 1, mo: 1, bumbagCol: '#e2361f', cap1: '#1b1b22', cap2: '#ffffff', top: '#1b1b22', sleeve: '#1b1b22', sleeveLong: 1, bottom: '#9aa0a8', bottomLen: 13, legs: '#9aa0a8',
     shoes: 'sneakers', shoeCol: '#e2361f', sideStripe: '#ffffff', bumbag: true, seed: 27, extra: ['danceA', 'danceB', 'danceC', 'danceD'] },
   influencer: { fem: 1, skin: SKINS.tan, hair: '#7a4a22', hairStyle: 'visor', cap1: '#ffb02a', top: '#2fb8b0', topPat: 'trop', topH: 5, bottom: '#2fb8b0', botPat: 'trop', bottomLen: 7, drawstring: 1, tote: 1, shoes: 'thongs', seed: 29, extra: ['hip', 'peace', 'flip'] },
-  boyfriend: { skin: SKINS.olive, hair: '#e8c35a', hairStyle: 'mullet', bottom: '#9a5ad8', botPat: 'camo', bottomLen: 8, drawstring: 1, sunnies: 1, bumbag: true, shoes: 'sneakers', seed: 31, extra: ['photo', 'photo2'] },
+  boyfriend: { skin: SKINS.olive, hair: '#e8c35a', hairStyle: 'mullet', bottom: '#9a5ad8', botPat: 'camo', bottomLen: 8, drawstring: 1, sunnies: 1, bumbag: true, bumbagCol: '#2fb8b0', shoes: 'sneakers', seed: 31, extra: ['photo', 'photo2'] },
   lifesaver: { skin: SKINS.brown, hair: '#222222', hairStyle: 'cap', cap: 1, cap1: '#e2361f', cap2: '#ffd21f', top: '#ffd21f', bottom: '#e2361f', bottomLen: 5, shoes: 'bare', seed: 33 },
   oldie: { skin: SKINS.leather, hair: '#e8e8e8', hairStyle: 'bald', bottom: '#1b2fb0', bottomLen: 3, belly: 1, wrinkles: 1, sunnies: 1, lens: '#3a3a3a', shoes: 'thongs', seed: 35 },
   italian: { skin: SKINS.olive, hair: '#111111', hairStyle: 'curly', bottom: '#ffffff', bottomLen: 3, sunnies: 1, lens: '#3a3a3a', hairChest: 1, shoes: 'thongs', thongCol: '#2f6fd1', seed: 37 },
@@ -1981,7 +1984,54 @@ function bubble(t, x, y, keep) {
   ctx.fillStyle = C.ink; ctx.fillRect(bx - 1, by - 1, w + 2, h + 2); ctx.fillStyle = C.white; ctx.fillRect(bx, by, w, h);
   ctx.fillStyle = C.ink; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; L.forEach((l, i) => ctx.fillText(l, bx + 3, by + 2 + i * 10));
 }
+/* A big Bass Strait ferry poking in from the right on the horizon. Passengers wander the sun deck, and now and then one
+   goes to the rail and spews over the side. */
+let SHIP = null;
+const SHIP_X = 352, SHIP_Y = 66;
+function makeShip() {
+  const c = document.createElement('canvas'); c.width = 170; c.height = 48; const g = c.getContext('2d');
+  const R = (col, x, y, w, h) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+  g.fillStyle = '#1d2f5e'; g.beginPath(); g.moveTo(0, 30); g.lineTo(170, 30); g.lineTo(170, 46); g.lineTo(10, 46); g.closePath(); g.fill();   // hull, bow to the left
+  g.fillStyle = '#f4f4ee'; g.beginPath(); g.moveTo(0, 30); g.lineTo(170, 30); g.lineTo(170, 38); g.lineTo(5, 38); g.closePath(); g.fill();
+  R('#c4281a', 4, 35, 166, 2); R('#2f6fd1', 7, 38, 163, 1); R('#2a3f78', 10, 44, 160, 2);
+  R('#f4f4ee', 14, 18, 156, 12); R('#d8dcd8', 14, 28, 156, 2);                                                                          // deck 1
+  R('#f4f4ee', 30, 9, 140, 9); R('#d8dcd8', 30, 16, 140, 2);                                                                            // deck 2
+  R('#f4f4ee', 34, 2, 30, 7); R('#1b2238', 35, 4, 28, 2);                                                                              // bridge
+  for (let x = 18; x < 168; x += 4) R('#2a3f78', x, 22, 2, 2);                                                                          // portholes
+  for (let x = 34; x < 168; x += 4) R('#2a3f78', x, 12, 2, 2);
+  for (let x = 40; x < 160; x += 20) { R('#ff8a2a', x, 26, 9, 3); R('#c46010', x, 28, 9, 1); }                                          // lifeboats
+  R('#f4f4ee', 104, 0, 12, 9); R('#c4281a', 104, 0, 12, 3); R('#1b2238', 104, 0, 12, 1);                                                // funnel
+  R('#9aa0a8', 30, 7, 140, 1); for (let x = 30; x < 170; x += 5) R('#9aa0a8', x, 7, 1, 2);                                              // sun deck rail
+  // outline
+  const d = g.getImageData(0, 0, c.width, c.height), a = d.data, o = new Uint8ClampedArray(a), op = (x, y) => x >= 0 && y >= 0 && x < c.width && y < c.height && a[(y * c.width + x) * 4 + 3] > 0;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) { const i = (y * c.width + x) * 4; if (!a[i + 3] && (op(x - 1, y) || op(x + 1, y) || op(x, y - 1) || op(x, y + 1))) { o[i] = 22; o[i + 1] = 18; o[i + 2] = 15; o[i + 3] = 255; } }
+  g.putImageData(new ImageData(o, c.width, c.height), 0, 0);
+  const cols = ['#e2361f', '#2fb8b0', '#ffd21f', '#ff4fa0', '#7fc6a4', '#9a5ad8'];
+  SHIP = { img: c, people: Array.from({ length: 6 }, (_, i) => ({ x: 38 + i * 21, dir: i % 2 ? 1 : -1, col: cols[i], wait: rand(0, 3), spew: 0 })), sick: [], spewT: 4 };
+}
+function drawShip(dt) {
+  if (!SHIP) makeShip();
+  const bob = Math.round(Math.sin(S.time * 0.8) * 0.7), ox = SHIP_X, oy = SHIP_Y + bob;
+  ctx.drawImage(SHIP.img, ox, oy);
+  SHIP.spewT -= dt;
+  if (SHIP.spewT <= 0) { SHIP.spewT = rand(6, 11); const p = pick(SHIP.people.filter(q => !q.spew)); if (p) { p.spew = 2.6; p.wait = 0; } }
+  for (const p of SHIP.people) {
+    if (p.spew > 0) { // lurches to the rail and lets go over the side
+      p.spew -= dt;
+      if (p.spew < 2.1 && Math.random() < 0.85) SHIP.sick.push({ x: ox + p.x + 1, y: oy + 6, vy: rand(8, 20), vx: rand(-3, 3), life: 1.6 });
+    } else if ((p.wait -= dt) <= 0) { p.x += p.dir * dt * 4; if (p.x < 34 || p.x > 164 || Math.random() < dt * 0.3) { p.dir *= -1; p.wait = rand(0.5, 2.5); } }
+    const lean = p.spew > 0 ? 1 : 0, x = Math.round(ox + p.x), y = oy + 3;
+    ctx.fillStyle = p.col; ctx.fillRect(x, y + 1 + lean, 2, 3); ctx.fillStyle = '#f0b896'; ctx.fillRect(x - lean, y + lean, 2, 1);
+  }
+  for (let i = SHIP.sick.length - 1; i >= 0; i--) {
+    const v = SHIP.sick[i]; v.life -= dt; v.vy += 60 * dt; v.x += v.vx * dt; v.y += v.vy * dt;
+    const sea = SHIP_Y + 46;
+    if (v.y >= sea) { if (Math.random() < 0.3) { ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(v.x) - 1, sea, 3, 1); } SHIP.sick.splice(i, 1); continue; }
+    ctx.fillStyle = i % 3 ? '#a8c43a' : '#d8d86a'; ctx.fillRect(Math.round(v.x), Math.round(v.y), 1, 2);
+  }
+}
 function drawSea(front) {
+  if (!front) { drawShip(clamp(S.time - (S._shipLast ?? S.time), 0, 0.05)); S._shipLast = S.time; }
   for (const s of sea) {
     const flip = s.dir < 0, x = Math.round(s.x);
     if (!front && s.kind === 'boat') spr('boat', 0, x, s.y + Math.round(Math.sin(s.t * 2)), { flip });
@@ -2385,7 +2435,7 @@ function drawTitle() { // the lettering, sparks, and the coin prompt over the sc
    Elder Scrolls-style: the hero on a dark field running on the spot, controls and items laid out, a loading bar, and a
    rotating "did you know" in the corner. */
 const LOADING_TIPS = [ // rotated in the bottom right of the loading screen; add more here
-  'AUSTRALIA IS NO.1 IN THE WORLD FOR SKIN CANCER. THAT IS A FUCKING SHIT STATISTIC.',
+  'AUSTRALIA IS NO.1 IN THE WORLD FOR SKIN CANCER. THAT IS A SHIT STATISTIC.',
   '2/3 AUSSIES WILL BE DIAGNOSED WITH SKIN CANCER BEFORE 70. SLATHER UP FOR THE LOVE OF FUCK.',
   'MEN ARE MORE LIKELY TO DIE FROM SKIN CANCER. WEAR SOME SUNSCREEN FFS.',
 ];
@@ -2598,7 +2648,7 @@ function fit() {
 addEventListener('resize', fit); fit();
 // debugging handle for playtesting from the console
 if (isTouch) document.body.classList.add('touch');
-window.__slather = { startLoading, NPC_TYPES, SPR, hurt, spawnItalian, makeNPC, BOARD, saveRun, startInitials, spawnEshay, spawnInfluencer, crowdAround, firePatch, spawnJeep, castles, spawnFrisbee, vehicles, crabs, groups, finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
+window.__slather = { shipDbg: () => SHIP, startLoading, NPC_TYPES, SPR, hurt, spawnItalian, makeNPC, BOARD, saveRun, startInitials, spawnEshay, spawnInfluencer, crowdAround, firePatch, spawnJeep, castles, spawnFrisbee, vehicles, crabs, groups, finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
 reset();
 if (document.fonts) document.fonts.load(`8px ${PIX}`).catch(() => {});
 if (document.fonts) document.fonts.load('44px Anton').catch(() => {});
