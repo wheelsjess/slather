@@ -45,7 +45,7 @@ When the game is played from its claude.ai page, the board is shared. Everyone w
 
 ## Death and victory
 
-Both are styled after Elden Ring. If you die, a dark band fades in across the screen with **YOU GOT BURNT** in big blood-red Roman capitals, slowly growing, then a parting line and "press Enter to try again". If you kill the Sun, **GREAT ENEMY FELLED** appears in gold as it sinks, with a fading ghost of the words swelling behind it and a low chord. Then the stats, the initials and the leaderboard follow.
+Both are styled after Elden Ring. If you die, a dark band fades in across the screen with **YOU GOT BURNT** in big blood-red Roman capitals, slowly growing, then a parting line and "press Enter to try again". If you kill the Sun, **GREAT ENEMY SLATHERED** appears in gold as it sinks, with a fading ghost of the words swelling behind it and a low chord. Then the stats, the initials and the leaderboard follow.
 
 ## The Sun's personality
 

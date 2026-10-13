@@ -2620,8 +2620,8 @@ function frame(now) {
       updatePlayer(dt); updateBoss(dt);
       for (let i = hazards.length - 1; i >= 0; i--) if (hazards[i] && !hazards[i].update(dt)) hazards.splice(i, 1);
       updateDrops(dt); updatePickups(dt); updateGuard(dt);
-      if (S.felledT > 0 && (S.felledT -= dt) <= 0 && !player.dead) { // the Sun goes down: GREAT ENEMY FELLED while it sinks
-        erBanner('felled', 'GREAT ENEMY FELLED'); tone(98, 98, 2.4, 0.14, 'triangle'); tone(147, 147, 2.4, 0.1, 'triangle', 0.05); tone(196, 196, 2.2, 0.07, 'sine', 0.1);
+      if (S.felledT > 0 && (S.felledT -= dt) <= 0 && !player.dead) { // the Sun goes down: GREAT ENEMY SLATHERED while it sinks
+        erBanner('felled', 'GREAT ENEMY SLATHERED'); tone(98, 98, 2.4, 0.14, 'triangle'); tone(147, 147, 2.4, 0.1, 'triangle', 0.05); tone(196, 196, 2.2, 0.07, 'sine', 0.1);
       }
       if (S.endT > 0) {
         S.endT -= dt;
