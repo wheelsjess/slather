@@ -19,8 +19,7 @@ The Sun is built from separate parts so the code can animate it. It stands in th
 | File | Frame size | Frames | Notes |
 |---|---|---|---|
 | `sun_torso.png` | 140 × 112 | 1 | Waist up, without the head. Shoulders sit about 16 px down from the top. The neck is hidden behind the head. |
-| `sun_head.png` | 150 × 140 | 1 | Spiky head **with no face**. The centre of the face circle must be at (75, 80) in the frame. |
-| `sun_face.png` | 96 × 72 | 7 | Faces drawn over the head, centred. The order is: smug, toothy grin, rage with laser eyes, hurt, defeated, shocked, grossed out (sunscreen in its mouth). The eyes sit about 18 px either side of centre and 6 px above the middle, because the lasers fire from there. |
+| `sun_head.png` | 176 × 140 | 5 | **Done, from your art.** The whole spiky head with the face drawn in, one expression per frame, centred in the frame. The order is: worried, squinting grimace, sly grin, big laugh, rage. The game uses worried when the Sun is defeated or shocked, the grimace when it's hurt or grossed out, the sly grin as its normal face, the laugh when it laughs, and rage for attacks and laser eyes. The lasers fire from 30 px either side of centre and 5 px below the middle, which is where the rage face's eyes are. |
 | `sun_hand.png` | 64 × 64 | 5 | Poses in this order: open palm, fist, flat palm-down slam, pointing finger, grabbing claw. Draw the **left** hand; the right hand is the mirror image. The wrist goes at the top centre. |
 
 The arms are drawn by code as thick yellow lines with a black outline, so they can stretch to wherever the hands go. If you want a textured arm instead, send one 16 × 16 tile that repeats along the arm.
