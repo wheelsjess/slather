@@ -63,7 +63,7 @@ When the bogan is hit, he shows your on-fire pose (frame 19), and the code adds 
 
 ## Beachgoers, lifesaver and sea life
 
-The beachgoers are seen **side-on, facing right**; the right-to-left walkers are mirrored. The feet go on the bottom row. Each person has a 4-frame walk cycle, then any special poses listed below, then one last frame pointing ahead (used when they crowd round the bogan in the bucket hat), so a plain beachgoer sheet has 5 frames. Anyone the Sun hits catches fire, turns into the skeleton and then into the ash pile. About half the beachgoers have tattoos: each `npc_*.png` also needs a `npc_*_tat.png` version with the same frames plus some ink.
+The beachgoers are seen **side-on, facing right**; the right-to-left walkers are mirrored. The stand-ins are now drawn in the style of your new refs: chunky, shaded and outlined, with a range of skin tones. They wear loud patterned boardies, crop tops and bikinis, with thongs, sneakers or bare feet, plus sunnies, caps, visors, a tote bag and bumbags. Real art in that style can replace any of them file by file. The feet go on the bottom row. Each person has a 4-frame walk cycle, then any special poses listed below, then one last frame pointing ahead (used when they crowd round the bogan in the bucket hat), so a plain beachgoer sheet has 5 frames. Anyone the Sun hits catches fire, turns into the skeleton and then into the ash pile. About half the beachgoers have tattoos: each `npc_*.png` also needs a `npc_*_tat.png` version with the same frames plus some ink.
 
 | File | Frame size | Frames | Notes |
 |---|---|---|---|
