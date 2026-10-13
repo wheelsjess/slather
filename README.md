@@ -19,7 +19,7 @@ Starting from the title screen plays a short cutscene. The bogan wanders onto a 
 
 ## The fight
 
-- **Fire:** every hit sets the bogan on fire. His eyes pop out, his mullet singes and his skin reddens. Slams, sweeps, grabs, fireballs and laser beams all leave patches of burning sand behind them.
+- **Fire:** every hit sets the bogan on fire. He throws his arms up with his mullet in flames, and his skin reddens. Slams, sweeps, grabs, fireballs and laser beams all leave patches of burning sand behind them.
 - **Sunburn:** with no SPF, the sunburn meter fills over time, faster in later phases, and fire hits add to it. Your skin reddens as it fills. When it's full, you get SUNBURNT: you take damage, catch fire and slow down for 2 seconds, then the meter resets. SPF stops it filling, and picking up Slather knocks most of it off.
 - **Lifesavers** jog onto the beach and drop a **Slather bottle**. Running over one gives 8 seconds of **SPF50+ UV shield**. While it's on, attacks bounce off you and hurt the Sun, the sunburn stops, and the fire goes out. The Solar Flare still gets through the shield, at half damage. Sometimes they drop **twin bottles**, which also give 10 seconds of **dual-wield**: two streams of sunscreen at once.
 - **Slather bucket hat:** every minute or so a black Slather bucket hat blows in across the sand. Picking it up announces **SLATHER BUCKET HAT EQUIPPED** and **UV PROTECTION + STYLE BONUS**. For 20 seconds you can't be hurt at all and your sunburn stops. The beachgoers crowd round, then stand watching, pointing and commenting ("DAMN HE LOOKS GOOD", "THIS GUY RULES ASS", "SLATHER IS MY BRAND OF PREFERENCE"). When the hat wears off, they wander away. They're still in the firing line though.

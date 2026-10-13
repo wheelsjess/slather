@@ -28,7 +28,7 @@ The arms are drawn by code so they can stretch to wherever the hands go. They're
 
 | File | Frame size | Frames | Notes |
 |---|---|---|---|
-| `bogan.png` | 32 × 56 | 28 | **Mostly done, from your art.** Seen **from behind**, facing the Sun. Built from three of your back views: waving, running and sunburnt arms-up. The run cycle mirrors the running pose to swap legs. The squirting frames use the waving arm with a Slather bottle added, and the dual-wield, victory and hurt frames use the arms-up pose. The roll (8–12) and lying-dead (20) frames are still the stand-in drawings, recoloured to match. Back views of a roll or tumble and of him lying flat would finish the set. The feet go on the bottom row. The top 8 rows are headroom for the raised bottles. |
+| `bogan.png` | 32 × 56 | 28 | **Mostly done, from your art.** Seen **from behind**, facing the Sun. Built from three of your back views: waving, running and sunburnt arms-up. The run cycle mirrors the running pose to swap legs. The squirting frames use the waving arm with a Slather bottle added, and the dual-wield, victory and hurt frames use the arms-up pose. The roll (8–12) is your curled-up ball, turned a fifth of a circle each frame, and the hit frame (19) is your on-fire ref. Only the lying-dead frame (20) is still a stand-in drawing, recoloured to match. A back view of him lying flat would finish the set. The feet go on the bottom row. The top 8 rows are headroom for the raised bottles. |
 | `bogan_burnt.png` | 32 × 56 | 28 | The same sheet with lobster-red skin, made from your sunburnt ref's colours. The game fades it in as his sunburn rises. |
 
 Frame order for both sheets:
@@ -48,18 +48,18 @@ Frame order for both sheets:
 
 | File | Frame size | Frames | Notes |
 |---|---|---|---|
-| `slather.png` | 16 × 24 | 1 | SPF bottle pickup |
-| `slather2.png` | 26 × 24 | 1 | Twin bottles. Picking them up turns on dual-wield mode. |
+| `slather.png` | 16 × 24 | 1 | **Done, from your art.** SPF tube pickup, pixelled by hand from your tube ref: crimped top, black SLATHER band, white sun and orange cap. Straight shrinking blurred the band away. |
+| `slather2.png` | 26 × 24 | 1 | **Done.** Two of the same tubes side by side. Picking them up turns on dual-wield mode. |
 | `hat.png` | 22 × 13 | 1 | Black Slather bucket hat with the white sun logo (the pickup). When worn, the code draws it on the bogan's head from behind. |
 | `potato.png` | 16 × 16 | 1 | Potato cake (heals 20) |
 | `dimsim.png` | 16 × 16 | 1 | Dim sim (heals 14) |
 | `seagull.png` | 32 × 24 | 4 | Flap cycle, **facing right** |
-| `umbrella.png` | 56 × 64 | 1 | Beach umbrella. The pole base is at the bottom centre. This is the shade from the Solar Flare. |
+| `umbrella.png` | 56 × 64 | 1 | **Done, from your art.** The blue and yellow umbrella. The pole base is at the bottom centre. This is the shade from the Solar Flare. |
 | `fireball.png` | 14 × 14 | 2 | Spat fireball, flicker |
 | `splat.png` | 16 × 16 | 3 | Sunscreen splat (currently unused; the code draws blobs) |
 | `logo.png` | 44 × 44 | 1 | The Slather line-drawn sun for the title screen |
 
-When the bogan is hit, the code adds the comedy on top of these sprites: flames, eyes popping out on stalks, singed hair and a speech bubble. When he dies, he turns into `skeleton.png` and then `ash.png`, and code draws his mullet and boots on top.
+When the bogan is hit, he shows your on-fire pose (frame 19), and the code adds flames, singed hair and a speech bubble on top. When he dies, he turns into `skeleton.png` and then `ash.png`, and code draws his mullet and boots on top.
 
 ## Beachgoers, lifesaver and sea life
 
@@ -89,7 +89,7 @@ The beachgoers are seen **side-on, facing right**; the right-to-left walkers are
 | `crab.png` | 14 × 10 | 2 | Scuttling crab |
 | `crab_cooked.png` | 14 × 10 | 1 | Bright red cooked crab |
 | `dog.png` | 18 × 12 | 2 | Walk cycle. It runs away when its owner gets torched. |
-| `skeleton.png` | 28 × 40 | 1 | Standing skeleton that the burnt beachgoers become |
+| `skeleton.png` | 28 × 40 | 1 | **Done, from your art.** The scorched skeleton that burnt beachgoers (and the bogan) become. Brightened a little so the bones still read at this size. The cigarette is just a couple of pixels here. |
 | `ash.png` | 24 × 10 | 1 | Ash pile |
 | `surfer.png` | 24 × 22 | 1 | Surfer on a board, riding a wave out at sea. The wave is drawn by code. |
 | `dolphin.png` | 22 × 14 | 2 | Frame 0 is nose up, rising. Frame 1 is nose down, diving. |
