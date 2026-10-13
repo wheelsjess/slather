@@ -2376,12 +2376,11 @@ function drawLoading() {
     const x = (i * 71 + S.time * (8 + (i % 5) * 3)) % W, y = H - ((i * 53 + S.time * (14 + (i % 7) * 4)) % (H + 20));
     ctx.fillStyle = i % 3 ? 'rgba(255,138,31,.6)' : 'rgba(255,210,58,.8)'; ctx.fillRect(Math.round(x), Math.round(y), i % 4 ? 1 : 2, i % 4 ? 1 : 2);
   }
-  // the hero running on the spot on a turntable: back, side, front, other side. At each quarter turn he squashes
-  // thin and swaps to the next view, the old 16-bit way of faking a spin.
-  const bx = 112, by = 228, deg = (S.time * 75) % 360, d = ((deg + 45) % 90) - 45, view = Math.floor(((deg + 45) % 360) / 90);
-  const sx = 0.22 + 0.78 * Math.cos(d / 45 * Math.PI / 2), stride = Math.floor(S.time * 7) % 2, bob = Math.round(Math.abs(Math.sin(S.time * 11)) * 3);
+  // the hero running on the spot, cutting between views every so often: back, side, front, other side
+  const bx = 112, by = 228, view = Math.floor(S.time / 1.4) % 4, sx = 1;
+  const stride = Math.floor(S.time * 7) % 2, bob = Math.round(Math.abs(Math.sin(S.time * 11)) * 3);
   const src = [0, 1, 2, 1][view], flip = view === 3 || ((view === 0 || view === 2) && stride === 1);
-  ctx.fillStyle = 'rgba(0,0,0,.45)'; ELL(ctx, bx, by, 14 + 22 * sx, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.45)'; ELL(ctx, bx, by, 36, 7); ctx.fill();
   if (BOGAN_TURN.complete && BOGAN_TURN.naturalWidth) {
     ctx.save(); ctx.translate(bx, by - bob); ctx.scale(sx * (flip ? -1 : 1), 1);
     ctx.drawImage(BOGAN_TURN, src * 120, 0, 120, 160, -60, -158, 120, 160); ctx.restore();
