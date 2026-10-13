@@ -46,6 +46,8 @@ Frame order for both sheets:
 
 ## Items, props and effects
 
+Everything below that isn't marked as done from your art has a stand-in redrawn in the same style. That covers the snacks, seagull, fireball, sandcastle, crabs, jeep, dog, ash, bucket hat, surfer, dolphins, boat, jet ski and towels. They all have a dark outline, three tones per colour lit from the top left, and a little dithering. The Sun's torso is redrawn the same way in your Sun's yellows, with pecs and nipples like your refs. So the whole scene holds together until real art replaces any of it.
+
 | File | Frame size | Frames | Notes |
 |---|---|---|---|
 | `slather.png` | 16 × 24 | 1 | **Done, from your art.** SPF tube pickup, pixelled by hand from your tube ref: crimped top, black SLATHER band, white sun and orange cap. Straight shrinking blurred the band away. |
