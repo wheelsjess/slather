@@ -76,6 +76,12 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(-
 @keyframes erGrow{from{transform:scale(.97)}to{transform:scale(1.06)}}
 @keyframes erGhost{0%{opacity:0;transform:translate(-50%,-50%) scale(1)}25%{opacity:.5}100%{opacity:0;transform:translate(-50%,-50%) scale(1.28)}}
 @keyframes erPulse{0%,100%{opacity:.4}50%{opacity:1}}
+/* Souls-style boss name over the health bar: off-white serif, left-aligned, with a soft shadow */
+#bossName{position:absolute;z-index:1;pointer-events:none;font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;font-weight:600;color:#ece6da;
+  letter-spacing:.05em;white-space:nowrap;text-shadow:0 0 3px #000,0 1px 2px #000,0 0 8px rgba(0,0,0,.8);transition:opacity .9s ease}
+#bossName.out{opacity:0;transition:opacity .35s ease}
+#bossName.flash{animation:bnFlash 1.6s ease-out}
+@keyframes bnFlash{0%{color:#fff3c0;text-shadow:0 0 10px #ffb02a,0 0 3px #000}100%{color:#ece6da}}
 #tRoll{width:70px;height:70px;font-size:10px;right:calc(env(safe-area-inset-right,0px) + 128px);bottom:calc(env(safe-area-inset-bottom,0px) + 18px)}
 </style>
 </head>
@@ -92,6 +98,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(-
     <div class="bar"><i id="lsBar"></i></div>
   </div>
   <div id="erBanner" hidden aria-live="assertive"><div class="band"></div><div class="ghost"></div><div class="words"></div><div class="sub"></div></div>
+  <div id="bossName" hidden></div>
   <p id="rotate">TURN YOUR PHONE SIDEWAYS<br>FOR A BIGGER BEACH</p>
   <div id="touch" hidden>
     <div id="stickZone"><div id="stickBase"><div id="stickKnob"></div></div></div>
@@ -1325,6 +1332,17 @@ function clearAttack() {
   Object.assign(boss, { face: null, eyeGlow: 0, headGlow: 0, whiteHot: 0, beams: [] });
   S.shadeGlow = false;
 }
+const BOSS_NAMES = ['', 'THE SUN, SCORCHER OF BACKS', 'THE SUN, MELTER OF THONGS', 'THE SUN, BRINGER OF MELANOMA'];
+let bossNameShown = '';
+function syncBossName() { // the name over the health bar, swapped with a fade and a flash when the phase changes
+  const el = $('#bossName'), show = ['play', 'paused', 'dead', 'won', 'initials'].includes(S.mode) && S.mode !== 'board';
+  el.hidden = !show; if (!show) return;
+  const want = BOSS_NAMES[S.phase] || BOSS_NAMES[1];
+  if (want === bossNameShown) return;
+  if (!bossNameShown) { el.textContent = want; bossNameShown = want; return; }
+  bossNameShown = want; el.classList.add('out');
+  setTimeout(() => { el.textContent = want; el.classList.remove('out'); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }, 400);
+}
 function phaseShift(n) {
   S.phase = n; clearAttack(); S.bg = BG[n]; S.whiteA = 0.7;
   boss.transition = 2.4; boss.invuln = 2.4; boss.cooldown = 0.5;
@@ -2253,7 +2271,6 @@ function drawHUD() {
   txt('BURN', 8, 32); bar(48, 33, 64, 5, P.burn / 100, P.burn > 70 && Math.floor(S.time * 6) % 2 ? '#ffd23a' : '#ff8a1f');
   if (P.dual > 0) { txt('DUAL', 8, 44, '#ffe800'); bar(48, 45, 64, 5, P.dual / DUAL_TIME, '#ffe800'); }
   if (P.hat > 0) { txt('HAT', 8, P.dual > 0 ? 56 : 44, '#ffffff'); bar(48, (P.dual > 0 ? 57 : 45), 64, 5, P.hat / HAT_TIME, '#ffffff'); }
-  txt('THE SUN, SCORCHER OF BACKS', W / 2, 250, C.white, 8, 'center');
   txt(fmtT(S.fight), W / 2, 8, boss.state === 'dead' ? '#ffe800' : C.white, 8, 'center');
   bar(90, 261, 300, 4, B.trail / BOSS_MAX, '#f3d36b', '#2a1a14');
   ctx.fillStyle = '#c4281a'; ctx.fillRect(90, 261, Math.round(300 * B.hp / BOSS_MAX), 4);
@@ -2649,7 +2666,7 @@ function frame(now) {
     updateParts(dt);
     S.shake = Math.max(0, S.shake - dt * 14); S.whiteA = Math.max(0, S.whiteA - dt * 1.4); S.hurtA = Math.max(0, S.hurtA - dt * 3);
   }
-  setMusic(wantedMusic());
+  setMusic(wantedMusic()); syncBossName();
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
   const sx = S.shake ? Math.round(rand(-S.shake, S.shake)) : 0, sy = S.shake ? Math.round(rand(-S.shake, S.shake)) : 0;
   ctx.translate(sx, sy);
@@ -2680,6 +2697,7 @@ function fit() {
   if (si >= 1 && si * W >= sw * 0.86 && si * H <= sh) s = si;
   cv.style.width = Math.floor(W * s) + 'px'; cv.style.height = Math.floor(H * s) + 'px';
   const L = $('#loadScreen'), w = Math.floor(W * s), h = Math.floor(H * s);   // the loading overlay sits exactly over the canvas
+  const bn = $('#bossName'), u = w / W; Object.assign(bn.style, { left: Math.round((sw - w) / 2 + 90 * u) + 'px', top: Math.round((sh - h) / 2 + 247 * u) + 'px', fontSize: (11 * u) + 'px' });
   for (const el of [L, $('#erBanner')]) { Object.assign(el.style, { left: Math.round((sw - w) / 2) + 'px', top: Math.round((sh - h) / 2) + 'px', width: w + 'px', height: h + 'px' }); el.style.setProperty('--u', (w / W) + 'px'); }
 }
 addEventListener('resize', fit); fit();

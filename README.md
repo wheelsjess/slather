@@ -47,6 +47,16 @@ When the game is played from its claude.ai page, the board is shared. Everyone w
 
 Both are styled after Elden Ring. If you die, a dark band fades in across the screen with **YOU GOT BURNT** in big blood-red Roman capitals, slowly growing, then a parting line and "press Enter to try again". If you kill the Sun, **GREAT ENEMY SLATHERED** appears in gold as it sinks, with a fading ghost of the words swelling behind it and a low chord. Then the stats, the initials and the leaderboard follow.
 
+## The boss name
+
+Like a Souls boss, the Sun's name sits over its health bar in an off-white serif, left-aligned. It changes at each phase shift, fading out and back in with a golden flash:
+
+| Phase | Name |
+|---|---|
+| 1, Morning | THE SUN, SCORCHER OF BACKS |
+| 2, High Noon | THE SUN, MELTER OF THONGS |
+| 3, Heat Dome | THE SUN, BRINGER OF MELANOMA |
+
 ## The Sun's personality
 
 The Sun shows its lines in yellow speech bubbles. It doesn't speak them aloud.
