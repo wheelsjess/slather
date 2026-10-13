@@ -13,6 +13,12 @@ Open `index.html` in any modern browser. On a computer, use the keyboard and mou
 | Roll (dodge, with a moment of invincibility) | Space | ROLL |
 | Pause | Esc / P | PAUSE |
 
+## Title and loading screens
+
+The game opens on an arcade attract screen. Waves roll in and the bogan wanders onto the beach having a smoke. Then **SLATHER** slams onto the screen, and a metallic glint runs across it every few seconds. The Sun rises out of the sea behind fanning light rays, and *Sun Fighter* brushes itself on. Then it says **HIT ENTER TO INSERT COIN** (or TAP on a phone), with the top five times underneath. Press Enter (or tap) to skip straight to that.
+
+Inserting a coin goes to an Elder Scrolls-style **loading screen**: the bogan runs on the spot in the dark, with the controls and kit laid out beside him. A loading bar fills in the corner and sunscreen facts rotate in the other corner. When it's loaded, press Enter (or tap) to start. The facts are placeholders for now: edit the `LOADING_TIPS` list near the loading screen code in `index.html`.
+
 ## The intro
 
 Starting from the title screen plays a short cutscene. The bogan wanders onto a busy beach and stretches. Then the Sun rises out of the sea on the horizon, laughing, with its eyes glowing red. It stomps toward the shore and wrecks everything on the way: the first stomp flips a jet ski into the air, its eye lasers blow up a fishing boat, and it plucks a dolphin out of the water and hurls it at the camera. Then it fires a warning ray across the sand, and the beachgoers scream and run. Press Enter (or tap) to skip it. Retrying after a death goes straight back into the fight.

@@ -18,7 +18,7 @@ The Sun is built from separate parts so the code can animate it. It stands in th
 
 | File | Frame size | Frames | Notes |
 |---|---|---|---|
-| `sun_torso.png` | 140 × 112 | 1 | Waist up, without the head. Shoulders sit about 16 px down from the top. The neck is hidden behind the head. |
+| `sun_torso.png` | 140 × 112 | 1 | **Done, from your art.** The weedy torso: neck, sloping shoulders, man-boobs and a belly. The arms come off the shoulders in code. The neck is hidden behind the head. |
 | `sun_head.png` | 176 × 140 | 5 | **Done, from your art.** The whole spiky head with the face drawn in, one expression per frame, centred in the frame. The order is: worried, squinting grimace, sly grin, big laugh, rage. The game uses worried when the Sun is defeated or shocked, the grimace when it's hurt or grossed out, the sly grin as its normal face, the laugh when it laughs, and rage for attacks and laser eyes. The lasers fire from 30 px either side of centre and 5 px below the middle, which is where the rage face's eyes are. |
 | `sun_hand.png` | 80 × 80 | 5 | **Done, from your art.** The **left** hand (the right is the mirror image), in this order: open claw, fist, then three claws at slightly different tilts (sweep, reaching, grab). The fist is cut from the slam pose. The claws are the raised hand from the arms-up pose, fingers up as in that pose, with the wrist at the bottom right. The bottom of each frame is the point that touches the ground. |
 
