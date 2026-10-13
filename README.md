@@ -74,4 +74,7 @@ The numbers near the top of the script in `index.html` control the difficulty:
 | `DUAL_TIME` | How long dual-wield lasts |
 | `HIT_INVULN` | How long you're protected after being hit |
 
-`legacy-3d.html` is the earlier 3D prototype, kept for reference.
+## Saved versions
+
+- `versions/slather-ring-v1.html` is a frozen copy of the game with the stand-in pixel art, saved before the real art references came in. Open it in a browser to play it. It's also tagged `v1-standin-art` in git.
+- `legacy-3d.html` is the earlier 3D prototype, kept for reference.
