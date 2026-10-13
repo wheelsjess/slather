@@ -2399,7 +2399,7 @@ function startLoading() {
   $('#lsHow').innerHTML = '<h2>HOW TO PLAY</h2>' + (isTouch
     ? [['MOVE', 'LEFT THUMB'], ['SQUIRT', 'TAP SQUIRT'], ['ROLL', 'TAP ROLL'], ['PAUSE', 'PAUSE BUTTON']]
     : [['MOVE', 'WASD / ARROWS'], ['SQUIRT', 'CLICK OR J'], ['ROLL', 'SPACE'], ['PAUSE', 'ESC OR P']]).map(([a, b]) => `${a} <span class="k">&mdash; ${b}</span>`).join('<br>')
-    + '<div class="gap"></div>' + [[['slather'], 'SPF50+ TUBE', 'UV SHIELD. HITS BOUNCE BACK.'], [['slather2'], 'TWIN TUBES', 'DUAL WIELD.'], [['hat'], 'BUCKET HAT', 'UNTOUCHABLE, AND LOOKING GOOD.'],
+    + '<div class="gap"></div>' + [[['slather'], 'SPF50+ TUBE', 'UV SHIELD. HITS BOUNCE BACK.'], [['slather2'], 'TWIN TUBES', 'DUAL WIELD.'], [['hat'], 'BUCKET HAT', 'UNTOUCHABLE + STYLE BONUS.'],
       [['potato', 'dimsim'], 'POTATO CAKE, DIM SIM', 'HEALTH.'], [['umbrella'], 'UMBRELLA', 'SHADE FROM THE SOLAR FLARE.']]
       .map(([ic, a, b]) => `<span class="it">${ic.map(n => `<img src="${spriteIcon(n)}" alt="">`).join('')}</span>${a} <span class="k">&mdash; ${b}</span>`).join('<br>');
   art.style.animation = 'none'; void art.offsetWidth; art.style.animation = '';            // restart the slow push-in
