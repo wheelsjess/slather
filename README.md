@@ -17,7 +17,7 @@ Open `index.html` in any modern browser. On a computer, use the keyboard and mou
 
 The game opens on an arcade attract screen. It's a standalone illustrated frame, separate from the game view, with a teal sky, big painted clouds, a curving golden beach and surf rolling in. The Sun rises out of the sea in a blaze of flame, smiling. **SLATHER** slams onto the screen in sunset chrome, and a ripple of light runs across the metal every few seconds. The bogan runs in, cigarette going, and flips the Sun the bird (it looks suitably shocked). Then **SUN FIGHTER** is slapped on in red brush capitals beside him. Then it says **HIT ENTER TO INSERT COIN** (or TAP on a phone), with the top five times underneath. Press Enter (or tap) to skip straight to that.
 
-Inserting a coin goes to an Elder Scrolls-style **loading screen**. The bogan runs on the spot in the dark, cutting between views of his back, side, front and other side. The controls and kit are laid out beside him. A loading bar fills in one corner, and RIDICULOUS FUCKING FACTS about skin cancer rotate in the other. When it's loaded, press Enter (or tap) to start. To add facts, edit the `LOADING_TIPS` list near the loading screen code in `index.html`.
+Inserting a coin goes to a **Skyrim-style loading screen**. The battle-ready bogan, with a tube of Slather in each fist, stands in the dark while smoke drifts along the floor and the camera slowly pushes in. HOW TO PLAY sits in the top right, and a TIP fades through some skin cancer facts in the bottom right, under a thin loading bar. The text is set in a serif over the canvas so it stays crisp. When it's loaded, press Enter (or tap) to start. To add tips, edit the `LOADING_TIPS` list in `index.html`.
 
 ## The intro
 
