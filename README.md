@@ -43,6 +43,10 @@ A timer at the top of the screen counts the fight, starting when you take contro
 
 When the game is played from its claude.ai page, the board is shared. Everyone who opens the page and is allowed to add to it lands on the same board, and each player keeps their 10 best runs. People who can only view the page see the shared board, but their own times are saved on their device. Opened anywhere else, such as straight from `index.html`, the board only keeps times on that device.
 
+## Death and victory
+
+Both are styled after Elden Ring. If you die, a dark band fades in across the screen with **YOU GOT BURNT** in big blood-red Roman capitals, slowly growing, then a parting line and "press Enter to try again". If you kill the Sun, **GREAT ENEMY FELLED** appears in gold as it sinks, with a fading ghost of the words swelling behind it and a low chord. Then the stats, the initials and the leaderboard follow.
+
 ## The Sun's personality
 
 The Sun shows its lines in yellow speech bubbles. It doesn't speak them aloud.

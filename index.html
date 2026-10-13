@@ -6,7 +6,7 @@
 <title>Slather Ring</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Cormorant+Garamond:wght@500;600&family=Knewave&family=Permanent+Marker&family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Cinzel:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Knewave&family=Permanent+Marker&family=Press+Start+2P&display=swap">
 <style>
 /* Layout: one 480x270 pixel canvas scaled up and centred; touch controls float over the letterbox. Single deliberate look. */
 :root{
@@ -58,6 +58,24 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(-
 #loadScreen .go{position:absolute;right:4%;bottom:4%;text-align:right;font-size:calc(var(--u)*7);letter-spacing:.24em;opacity:0}
 #loadScreen .go.on{animation:lsGo 1.6s ease-in-out infinite}
 @keyframes lsGo{0%,100%{opacity:.35}50%{opacity:1}}
+/* Elden Ring-style banners: a dark band across the middle and big Roman capitals. --u is one game pixel. */
+#erBanner{position:absolute;z-index:1;pointer-events:none;display:flex;align-items:center;justify-content:center;--u:2px}
+#erBanner .band{position:absolute;left:0;right:0;top:52%;height:40%;transform:translateY(-50%);opacity:0;
+  background:linear-gradient(to bottom,rgba(0,0,0,0),rgba(0,0,0,.78) 26%,rgba(0,0,0,.78) 74%,rgba(0,0,0,0))}
+#erBanner .words{position:relative;font-family:Cinzel,'Trajan Pro','Times New Roman',serif;font-weight:500;white-space:nowrap;opacity:0;text-align:center}
+#erBanner .ghost{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:Cinzel,'Times New Roman',serif;white-space:nowrap;opacity:0;filter:blur(1px)}
+#erBanner .sub{position:absolute;left:0;right:0;top:60%;text-align:center;font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:calc(var(--u)*8.5);line-height:1.5;letter-spacing:.18em;color:#ece3d4;text-shadow:0 0 4px #000,0 0 2px #000;opacity:0}
+#erBanner.died .band{animation:erFade 1.8s ease-out forwards}
+#erBanner.died .words{color:#a8160f;font-size:calc(var(--u)*30);letter-spacing:.06em;text-shadow:0 0 calc(var(--u)*4) rgba(120,0,0,.45);animation:erFade 2.4s ease-out .35s forwards,erGrow 7s ease-out .35s forwards}
+#erBanner.died .sub{animation:erFade 1.2s ease-out 2.4s forwards}
+#erBanner.died .sub .again{animation:erPulse 1.8s ease-in-out 3.6s infinite}
+#erBanner.felled .band{animation:erFade 1s ease-out forwards}
+#erBanner.felled .words{color:#e8c25a;font-size:calc(var(--u)*24);letter-spacing:.03em;text-shadow:0 0 calc(var(--u)*3) rgba(255,210,120,.35);animation:erFade 1.2s ease-out .2s forwards}
+#erBanner.felled .ghost{color:#c8a050;font-size:calc(var(--u)*24);letter-spacing:.03em;animation:erGhost 3.2s ease-out .2s forwards}
+@keyframes erFade{from{opacity:0}to{opacity:1}}
+@keyframes erGrow{from{transform:scale(.97)}to{transform:scale(1.06)}}
+@keyframes erGhost{0%{opacity:0;transform:translate(-50%,-50%) scale(1)}25%{opacity:.5}100%{opacity:0;transform:translate(-50%,-50%) scale(1.28)}}
+@keyframes erPulse{0%,100%{opacity:.4}50%{opacity:1}}
 #tRoll{width:70px;height:70px;font-size:10px;right:calc(env(safe-area-inset-right,0px) + 128px);bottom:calc(env(safe-area-inset-bottom,0px) + 18px)}
 </style>
 </head>
@@ -73,6 +91,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(-
     <div class="go" id="lsGo">PRESS ENTER TO SLATHER UP</div>
     <div class="bar"><i id="lsBar"></i></div>
   </div>
+  <div id="erBanner" hidden aria-live="assertive"><div class="band"></div><div class="ghost"></div><div class="words"></div><div class="sub"></div></div>
   <p id="rotate">TURN YOUR PHONE SIDEWAYS<br>FOR A BIGGER BEACH</p>
   <div id="touch" hidden>
     <div id="stickZone"><div id="stickBase"><div id="stickKnob"></div></div></div>
@@ -961,7 +980,7 @@ function reset() {
   Object.assign(boss, { hp: BOSS_MAX, trail: BOSS_MAX, state: 'fight', attack: null, cooldown: 2.4, last: '', next: null, invuln: 0, transition: 0,
     face: null, hurtFaceT: 0, reactFace: null, reelT: 0, angerT: 0, eyeGlow: 0, headGlow: 0, whiteHot: 0, flash: 0, beams: [], laughT: 0, sinkY: 0, headY: 42, shakeHead: false,
     hands: [-1, 1].map(s => ({ s, x: 240 + s * 118, fy: 160, z: 46, tx: 0, tfy: 0, tz: 0, rate: 5, pose: 'open', busy: false, direct: false, fire: false })) });
-  Object.assign(S, { fight: 0, modeT: 0, phase: 1, time: 0, shake: 0, flareCD: 0, shadeGlow: false, bg: BG[1], whiteA: 0, hurtA: 0, dmgAcc: 0, dmgT: 0, hurtAcc: 0,
+  Object.assign(S, { fight: 0, modeT: 0, felledT: 0, phase: 1, time: 0, shake: 0, flareCD: 0, shadeGlow: false, bg: BG[1], whiteA: 0, hurtA: 0, dmgAcc: 0, dmgT: 0, hurtAcc: 0,
     endT: 0, hits: 0, snacks: 0, gullT: 9, hatT: 35, admireT: 0, goldA: 0, held: null, jeepT: 14, sunSay: null, sayCD: 0, killCD: 0, healPop: null, call: null, blueA: 0, banner: null, toast: null, torched: 0, npcT: 1, seaT: 2, lifeT: 4, guard: null });
 }
 
@@ -1314,7 +1333,7 @@ function phaseShift(n) {
   else { banner('HEAT DOME', 'NOWHERE IS SAFE BUT THE SHADE', 3); boss.next = 'flare'; }
   SFX.roar(); shake(6);
 }
-function bossDie() { clearAttack(); boss.state = 'dead'; S.endT = 4.5; S.bg = BG[4]; S.whiteA = 0.8; shake(8); SFX.roar(); S.banner = null; }
+function bossDie() { clearAttack(); boss.state = 'dead'; S.endT = 4.8; S.felledT = 1.0; S.bg = BG[4]; S.whiteA = 0.8; shake(8); SFX.roar(); S.banner = null; S.sunSay = null; }
 
 /* ================= Input ================= */
 const KEYMAP = { KeyW: 'u', ArrowUp: 'u', KeyS: 'd', ArrowDown: 'd', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
@@ -1368,7 +1387,13 @@ cv.addEventListener('contextmenu', e => e.preventDefault());
   hold($('#tShoot'), () => input.fire = true);
   hold($('#tRoll'), () => input.roll = true);
 }
-function start() { audioOn(); reset(); player.introFrame = null; S.mode = 'play'; $('#touch').hidden = !isTouch; banner('THE SUN', 'SCORCHER OF BACKS', 2.4); }
+function erBanner(kind, words, sub) { // Elden Ring-style: 'died' for YOU GOT BURNT, 'felled' for GREAT ENEMY FELLED
+  const B = $('#erBanner'); B.className = ''; void B.offsetWidth; B.className = kind;
+  B.querySelector('.words').textContent = words; B.querySelector('.ghost').textContent = kind === 'felled' ? words : '';
+  B.querySelector('.sub').innerHTML = sub || ''; B.hidden = false;
+}
+function erHide() { const B = $('#erBanner'); B.hidden = true; B.className = ''; }
+function start() { erHide(); audioOn(); reset(); player.introFrame = null; S.mode = 'play'; $('#touch').hidden = !isTouch; banner('THE SUN', 'SCORCHER OF BACKS', 2.4); }
 function togglePause() {
   if (S.mode === 'play') { S.mode = 'paused'; input.keys = {};  $('#touch').hidden = true; }
   else if (S.mode === 'paused') { S.mode = 'play'; $('#touch').hidden = !isTouch; }
@@ -1383,7 +1408,7 @@ const INTRO_LINES = [[3.2, 5.2, 'EEEERRRGGHHHHH....'], [5.4, 7.6, 'FUCK ME, WHAT
   [20.2, 22.2, 'THIS CUNT AGAIN...'], [22.4, 24.4, 'TIME TO SLATHER UP!']];
 const STOMPS = [14.4, 14.9, 16.4, 18.4], FAR_K = 0.32, FAR_Y = HORIZON + 6, RAY_Y = 186;
 function startIntro() {
-  endLoading(); audioOn(); reset(); S.mode = 'intro';
+  endLoading(); erHide(); audioOn(); reset(); S.mode = 'intro';
   S.intro = { t: 0, k: FAR_K, baseY: FAR_Y, show: false, fired: {}, laugh: false, stepT: null };
   boss.sinkY = 130;
   Object.assign(player, { x: -20, y: 226, face: 1, introFrame: 2 });
@@ -2144,6 +2169,7 @@ function drawWorld() {
   list.sort((a, b) => a.y - b.y).forEach(o => o.draw());
   if (S.sunSay) { const far = S.intro && S.intro.k < 0.99; sunBubble(S.sunSay.t, 240, far ? S.intro.baseY - (SHORE - B.headY + 50) * S.intro.k : B.headY, far); }
   BUBBLES.length = 0;
+  if (S.mode === 'dead' || S.mode === 'won' || S.felledT < 0 && boss.state === 'dead') BUBBLES.push({ x: -999, y: 60, w: 99999, h: 160 });   // keep chatter off the banners
   if (P.shout && S.mode !== 'title') bubble(P.shout.t, P.x, P.y - 54 - (P.liftZ || 0), true);   // the bogan always gets his say
   for (const n of npcs) if (n.shout && n.state === 'burn') bubble(n.shout.t, n.x, n.y - (n.lying ? 22 : 44) - (n.liftZ || 0), true);   // last words always show
   for (const n of npcs) if (n.shout && n.state === 'admire') bubble(n.shout.t, n.x, n.y - 44);
@@ -2594,11 +2620,15 @@ function frame(now) {
       updatePlayer(dt); updateBoss(dt);
       for (let i = hazards.length - 1; i >= 0; i--) if (hazards[i] && !hazards[i].update(dt)) hazards.splice(i, 1);
       updateDrops(dt); updatePickups(dt); updateGuard(dt);
+      if (S.felledT > 0 && (S.felledT -= dt) <= 0 && !player.dead) { // the Sun goes down: GREAT ENEMY FELLED while it sinks
+        erBanner('felled', 'GREAT ENEMY FELLED'); tone(98, 98, 2.4, 0.14, 'triangle'); tone(147, 147, 2.4, 0.1, 'triangle', 0.05); tone(196, 196, 2.2, 0.07, 'sine', 0.1);
+      }
       if (S.endT > 0) {
         S.endT -= dt;
         if (S.endT <= 0) {
           S.mode = player.dead ? 'dead' : 'won'; S.modeT = 0; $('#touch').hidden = true; (player.dead ? SFX.lose : SFX.win)();
           deadLine = ['SHOULD HAVE SLATHERED.', 'SLIP, SLOP, SLAP, ROLL.', 'THE SUN IS NOT YOUR FRIEND.', 'REAPPLY EVERY TWO HOURS.'][Math.floor(Math.random() * 4)];
+          if (player.dead) erBanner('died', 'YOU GOT BURNT', `${deadLine}<br><span class="again">${isTouch ? 'TAP TO TRY AGAIN' : 'PRESS ENTER TO TRY AGAIN'}</span>`); else erHide();
         }
       }
       if (S.banner && (S.banner.t -= dt) <= 0) S.banner = null;
@@ -2636,7 +2666,7 @@ function frame(now) {
   else {
     drawHUD();
     const blink = Math.floor(S.time * 2) % 2, again = isTouch ? 'TAP TO TRY AGAIN' : 'PRESS ENTER TO TRY AGAIN';
-    if (S.mode === 'dead') drawEnd('YOU GOT BURNT', '#d02a1c', [deadLine, blink ? again : '']);
+    // the death screen is the Elden Ring-style banner over the canvas (#erBanner)
     if (S.mode === 'won') drawEnd('SUN SET', '#f0c95a', ['GREAT ENEMY SLATHERED', `TIME ${fmtT(S.fight)}  HITS ${S.hits}  SNACKS ${S.snacks}`, `INNOCENTS TORCHED: ${S.torched}`, blink ? (isTouch ? 'TAP TO ENTER YOUR INITIALS' : 'PRESS ENTER FOR YOUR INITIALS') : '']);
     if (S.mode === 'initials') drawInitials();
     if (S.mode === 'board') drawBoard();
@@ -2650,7 +2680,7 @@ function fit() {
   if (si >= 1 && si * W >= sw * 0.86 && si * H <= sh) s = si;
   cv.style.width = Math.floor(W * s) + 'px'; cv.style.height = Math.floor(H * s) + 'px';
   const L = $('#loadScreen'), w = Math.floor(W * s), h = Math.floor(H * s);   // the loading overlay sits exactly over the canvas
-  Object.assign(L.style, { left: Math.round((sw - w) / 2) + 'px', top: Math.round((sh - h) / 2) + 'px', width: w + 'px', height: h + 'px' }); L.style.setProperty('--u', (w / W) + 'px');
+  for (const el of [L, $('#erBanner')]) { Object.assign(el.style, { left: Math.round((sw - w) / 2) + 'px', top: Math.round((sh - h) / 2) + 'px', width: w + 'px', height: h + 'px' }); el.style.setProperty('--u', (w / W) + 'px'); }
 }
 addEventListener('resize', fit); fit();
 // debugging handle for playtesting from the console
