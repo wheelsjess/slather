@@ -28,8 +28,8 @@ The arms are drawn by code so they can stretch to wherever the hands go. They're
 
 | File | Frame size | Frames | Notes |
 |---|---|---|---|
-| `bogan.png` | 32 × 48 | 28 | Seen **from behind**, facing the Sun. |
-| `bogan_burnt.png` | 32 × 48 | 28 | The same sheet with lobster-red skin. The game fades it in as his sunburn rises. |
+| `bogan.png` | 32 × 56 | 28 | **Mostly done, from your art.** Seen **from behind**, facing the Sun. Built from three of your back views: waving, running and sunburnt arms-up. The run cycle mirrors the running pose to swap legs. The squirting frames use the waving arm with a Slather bottle added, and the dual-wield, victory and hurt frames use the arms-up pose. The roll (8–12) and lying-dead (20) frames are still the stand-in drawings, recoloured to match. Back views of a roll or tumble and of him lying flat would finish the set. The feet go on the bottom row. The top 8 rows are headroom for the raised bottles. |
+| `bogan_burnt.png` | 32 × 56 | 28 | The same sheet with lobster-red skin, made from your sunburnt ref's colours. The game fades it in as his sunburn rises. |
 
 Frame order for both sheets:
 
@@ -59,7 +59,7 @@ Frame order for both sheets:
 | `splat.png` | 16 × 16 | 3 | Sunscreen splat (currently unused; the code draws blobs) |
 | `logo.png` | 44 × 44 | 1 | The Slather line-drawn sun for the title screen |
 
-When the bogan is hit, the code adds the comedy on top of these sprites: flames, eyes popping out on stalks, singed hair and a speech bubble. When he dies, he turns into `skeleton.png` and then `ash.png`, and code draws his mullet and thongs on top.
+When the bogan is hit, the code adds the comedy on top of these sprites: flames, eyes popping out on stalks, singed hair and a speech bubble. When he dies, he turns into `skeleton.png` and then `ash.png`, and code draws his mullet and boots on top.
 
 ## Beachgoers, lifesaver and sea life
 
