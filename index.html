@@ -403,8 +403,10 @@ function drawPerson(g, o, f) { // side view, facing right, feet on the bottom ro
   if (pose === 'hip') handF = [3, 24];
   if (pose === 'peace') handF = [3, 2];
   if (pose === 'flip') handB = [-4, 3];
-  if (pose === 'danceA') handF = [8, 15];
-  if (pose === 'danceB' || pose === 'danceD') { handF = [2, 1]; (pose === 'danceB' ? near : back).kneeUp = true; }
+  // gabber hakken: crouch and stomp, then a knee drives up with the opposite fist punching the sky
+  if (pose === 'danceA' || pose === 'danceC') { bob = 3; handF = pose === 'danceA' ? [7, 19] : [8, 13]; handB = pose === 'danceA' ? [5, 20] : [6, 14]; near.knee = 3; back.knee = -3; near.foot = 2; back.foot = -2; }
+  if (pose === 'danceB') { bob = -1; handB = [-10, 3]; handF = [6, 20]; near.kneeUp = true; back.foot = -1; }   // far fist pumped up and back, clear of the head
+  if (pose === 'danceD') { bob = -1; handF = [10, 7]; handB = [-3, 20]; back.kneeUp = true; near.foot = 1; }    // near fist punching forward and up
   if (crouch) { handF = [8, 19]; handB = [6, 21]; near = { foot: -1, knee: 5, crouch: true }; back = { foot: -3, knee: 3, crouch: true }; }
   const HX = 14, HY = 27 + bob;   // hip
   // --- carried board behind the body ----------------------------------------------------------------------
@@ -418,7 +420,7 @@ function drawPerson(g, o, f) { // side view, facing right, feet on the bottom ro
     for (let y = HY; y <= ay; y++) {
       const t = y <= ky ? (y - HY) / Math.max(1, ky - HY) : (y - ky) / Math.max(1, ay - ky);
       const x = y <= ky ? HX + (kx - HX) * t : kx + (ax - kx) * t, w = y <= ky ? 5 : 4;
-      R(legC, x - w / 2, y, w, 1); R(isBack ? null : colD, x - w / 2, y, 1, 1);
+      R(legC, x - w / 2, y, w, 1); R(isBack ? null : o.legs ? shadeHex(o.legs, -0.2) : colD, x - w / 2, y, 1, 1);
     }
     if (o.tat && !isBack && !o.legs) R('#2b3d6e', kx, ky + 2, 2, 2);
     const fx = Math.round(ax - 1), fy = Math.round(ay) + 1;
@@ -1841,7 +1843,7 @@ function updateNPCs(dt) {
     else if (n.state === 'admire') updateAdmirer(n, dt);
     else if (n.state === 'walk' && n.routine && !n.done && (n.dir > 0 ? n.x >= n.spot : n.x <= n.spot)) { n.state = n.routine; n.t = 0; n.done = true; n.anim = 0; }
     else if (n.state === 'dance' || n.state === 'pose' || n.state === 'photo') {
-      n.anim += dt * (n.state === 'dance' ? 9 : n.state === 'pose' ? 0.8 : 1.4);
+      n.anim += dt * (n.state === 'dance' ? 12 : n.state === 'pose' ? 0.8 : 1.4);
       if (n.state === 'dance' && Math.random() < dt * 3) parts.push({ x: n.x + rand(-8, 8), y: n.y - 42, vx: rand(-8, 8), vy: -22, life: 1, max: 1, col: C.ink, g: 0, s: 1, note: true });
       if (n.state === 'photo') {
         n.dir = Math.sign(n.mate.x - n.x) || n.dir; if (Math.floor(n.anim) % 2 && Math.random() < dt * 2) n.flash = 0.12;
@@ -2121,7 +2123,11 @@ function drawWorld() {
   const list = [];
   list.push({ y: P.y, draw: drawPlayer });
   if (handsOut) for (const h of B.hands) list.push({ y: h.fy + 0.5, draw: () => { armBehindHead(h); drawHand(h); } });
-  if (S.mode !== 'title') for (const u of UMBRELLAS) list.push({ y: u.y, draw: () => spr('umbrella', 0, u.x, u.y + 2) });
+  if (S.mode !== 'title') for (const u of UMBRELLAS) {
+    const um = SPR.umbrella, top = u.y + 2 - um.fh, split = 41;   // canopy is rows 0-40 of the art, the pole below
+    list.push({ y: u.y, draw: () => ctx.drawImage(um.img, 0, split, um.fw, um.fh - split, u.x - um.fw / 2, top + split, um.fw, um.fh - split) });
+    list.push({ y: u.y + 12, draw: () => ctx.drawImage(um.img, 0, 0, um.fw, split, u.x - um.fw / 2, top, um.fw, split) });
+  }
   for (const x of FLAGS) list.push({ y: 168, draw: () => drawFlag(x) });
   for (const p of pickups) list.push({ y: p.y, draw: () => { if (p.life < 3 && Math.floor(p.life * 8) % 2) return; spr(p.kind, 0, p.x, p.y - p.z + (p.kind.startsWith('slather') ? Math.round(Math.sin(S.time * 4) * 1) : 0)); } });
   for (const n of npcs) list.push({ y: n.y, draw: () => drawNPC(n) });
@@ -2207,11 +2213,12 @@ function drawPlayer() {
   if (f >= 8 && f <= 12) return;
   if (P.hairBurn > 0.05) { ctx.fillStyle = `rgba(30,18,10,${P.hairBurn * 0.85})`; ctx.fillRect(ox + 10, oy + 2, 12, 14); }
   if (P.fireT > 0) for (let i = 0; i < 5; i++) { const h = 3 + ((S.time * 30 + i * 7) | 0) % 6; ctx.fillStyle = i % 2 ? '#ffd23a' : '#ff8a1f'; ctx.fillRect(ox + 10 + Math.round(i * 2.5), oy + 2 - h, 2, h); }
-  if (P.hat > 0 && (P.hat > 3 || Math.floor(S.time * 8) % 2)) { // the bucket hat, from behind
-    ctx.fillStyle = '#141414'; ctx.fillRect(ox + 10, oy - 1, 12, 7); ctx.fillRect(ox + 7, oy + 5, 18, 3);
-    ctx.fillStyle = '#3a3a3a'; ctx.fillRect(ox + 8, oy + 7, 16, 1); ctx.fillStyle = '#ffffff'; ctx.fillRect(ox + 15, oy + 1, 2, 2);
-    if (Math.floor(S.time * 6) % 3 === 0) { ctx.fillStyle = '#fff3b0'; ctx.fillRect(ox + 26, oy + 2 + Math.round(Math.sin(S.time * 9) * 3), 2, 2); }
+  if (P.hat > 0 && (P.hat > 3 || Math.floor(S.time * 8) % 2)) { // the Slather bucket hat, the same one as the pickup, pulled down on his head
+    const bob = f <= 1 ? f : f >= 2 && f <= 7 ? (f % 3 === 2 ? 1 : 0) : 0;
+    spr('hat', 0, px, oy + 9 + bob);
+    if (Math.floor(S.time * 6) % 3 === 0) { ctx.fillStyle = '#fff3b0'; ctx.fillRect(ox + 28, oy + 2 + Math.round(Math.sin(S.time * 9) * 3), 2, 2); }
   }
+
 }
 function drawHUD() {
   const P = player, B = boss;
