@@ -519,7 +519,11 @@ function drawPerson(g, o, f) { // side view, facing right, feet on the bottom ro
   if (o.sunnies) { R(C.ink, 15, hy + 4, 6, 2); R(o.lens || '#5fe0a0', 18, hy + 4, 2, 1); }
   if (o.ratTail) R(H, 9, hy + 9, 2, 6);
   // --- bodyboard held at the side, then the near arm --------------------------------------------------------
-  if (o.item === 'backpack') { R(C.ink, 3, ty - 2, 9, 16); R('#2f6fd1', 4, ty - 1, 7, 14); R('#5a8ff0', 4, ty - 1, 2, 14); R('#1d4a9a', 4, ty + 9, 7, 2); R('#e2361f', 5, ty + 3, 5, 1); R('#ffffff', 5, ty + 4, 5, 1); R('#3a3f48', 9, ty - 3, 2, 3); }   // big hiking pack
+  if (o.item === 'backpack') { R(C.ink, 3, ty - 2, 9, 16); R('#2f6fd1', 4, ty - 1, 7, 14); R('#5a8ff0', 4, ty - 1, 2, 14); R('#1d4a9a', 4, ty + 9, 7, 2); R('#3a3f48', 9, ty - 3, 2, 3);
+    const fx = 4, fy = ty + 2;                                                                     // a Union Jack sewn on the pack
+    R('#1d3a8a', fx, fy, 7, 5); R('#ffffff', fx, fy, 1, 1); R('#ffffff', fx + 6, fy, 1, 1); R('#ffffff', fx, fy + 4, 1, 1); R('#ffffff', fx + 6, fy + 4, 1, 1);
+    R('#ffffff', fx + 1, fy + 1, 1, 1); R('#ffffff', fx + 5, fy + 1, 1, 1); R('#ffffff', fx + 1, fy + 3, 1, 1); R('#ffffff', fx + 5, fy + 3, 1, 1);
+    R('#ffffff', fx, fy + 2, 7, 1); R('#ffffff', fx + 3, fy, 1, 5); R('#c8102e', fx, fy + 2, 7, 1); R('#c8102e', fx + 3, fy, 1, 5); R('#ffffff', fx + 2, fy + 2, 1, 1); R('#ffffff', fx + 4, fy + 2, 1, 1); }   // big hiking pack
   if (o.item === 'bodyboard') { R(C.ink, 16, ty + 1, 7, 15); R(o.boardCol || '#2a6fd6', 17, ty + 2, 5, 13); R('#ffffff', 18, ty + 3, 1, 11); }
   const [nhx, nhy] = arm(handF, false);
   if (pose === 'peace') { R(skin, nhx - 1, nhy - 2, 1, 2); R(skin, nhx + 1, nhy - 2, 1, 2); }
@@ -544,7 +548,7 @@ const NPC_TYPES = {
   lifesaver: { skin: SKINS.brown, hair: '#222222', hairStyle: 'cap', cap: 1, cap1: '#e2361f', cap2: '#ffd21f', top: '#ffd21f', bottom: '#e2361f', bottomLen: 5, shoes: 'bare', seed: 33 },
   oldman: { skin: '#e8b48a', hair: '#f4f4f4', hairStyle: 'bald', beard: '#f4f4f4', top: '#c4281a', sleeve: '#c4281a', sleeveLong: 1, bottom: '#c4281a', bottomLen: 13, legs: '#a01f12', shoes: 'bare', seed: 41 },
   oldie: { skin: SKINS.leather, hair: '#e8e8e8', hairStyle: 'bald', bottom: '#1b2fb0', bottomLen: 3, belly: 1, wrinkles: 1, sunnies: 1, lens: '#3a3a3a', shoes: 'thongs', seed: 35 },
-  backpacker: { skin: '#ec6a4e', legs: '#f6e4da', top: '#f8ece4', topY: 1, topH: 10, hair: '#c86a2a', hairStyle: 'short', bottom: '#b8a070', bottomLen: 9, item: 'backpack', shoes: 'socksandals', sunnies: 0, seed: 39 },
+  backpacker: { skin: '#e2452e', legs: '#f6e4da', top: '#f8ece4', topY: 1, topH: 10, hair: '#c86a2a', hairStyle: 'short', bottom: '#b8a070', bottomLen: 9, item: 'backpack', shoes: 'socksandals', sunnies: 0, seed: 39 },
   italian: { skin: SKINS.olive, hair: '#111111', hairStyle: 'curly', bottom: '#ffffff', bottomLen: 3, sunnies: 1, lens: '#3a3a3a', hairChest: 1, shoes: 'thongs', thongCol: '#2f6fd1', seed: 37 },
 };
 for (const k in NPC_TYPES) {
@@ -898,6 +902,20 @@ function voice(f0, f1, dur, vol = 0.16, delay = 0) { // a croaky, nasal old-man 
   for (const [fr, q] of [[700, 3], [1150, 5], [2400, 6]]) { const b = actx.createBiquadFilter(); b.type = 'bandpass'; b.frequency.value = fr; b.Q.value = q; o.connect(b).connect(g); }
   g.connect(OUT()); o.start(t); vib.start(t); o.stop(t + dur); vib.stop(t + dur);
 }
+function screamVoice(pitch = 1, dur = 1.1, vol = 0.2, delay = 0) { // a ragged "AAAAAGH!": a shrieking rise, a wobble, then breaking off
+  if (!actx || muted) return;
+  const t = actx.currentTime + delay, base = 520 * pitch;
+  const o = actx.createOscillator(), o2 = actx.createOscillator(), vib = actx.createOscillator(), vg = actx.createGain(), g = actx.createGain(), sh = actx.createWaveShaper();
+  const curve = new Float32Array(256); for (let i = 0; i < 256; i++) { const x = i / 128 - 1; curve[i] = Math.tanh(x * 3.2); } sh.curve = curve;   // vocal-cord rasp
+  for (const osc of [o, o2]) { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(base * 0.7, t); osc.frequency.exponentialRampToValueAtTime(base * 1.45, t + 0.12); osc.frequency.exponentialRampToValueAtTime(base * 1.25, t + dur * 0.6); osc.frequency.exponentialRampToValueAtTime(base * 0.55, t + dur); }
+  o2.detune.value = 22;
+  vib.frequency.value = 9 + Math.random() * 4; vg.gain.value = base * 0.06; vib.connect(vg); vg.connect(o.frequency); vg.connect(o2.frequency);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.05); g.gain.setValueAtTime(vol, t + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  const mix = actx.createGain(); o.connect(mix); o2.connect(mix); mix.connect(sh);
+  for (const [fr, q, gv] of [[950, 4, 1], [1450, 6, 0.7], [2900, 8, 0.35]]) { const b = actx.createBiquadFilter(), bg = actx.createGain(); b.type = 'bandpass'; b.frequency.value = fr * (0.9 + pitch * 0.1); b.Q.value = q; bg.gain.value = gv; sh.connect(b).connect(bg).connect(g); }   // "AAH" vowel
+  g.connect(OUT()); [o, o2, vib].forEach(n => { n.start(t); n.stop(t + dur + 0.05); });
+  noise(dur * 0.8, 2600, 1.5, vol * 0.25, 'bandpass', delay);   // breathy hiss under it
+}
 function startAmbience() { // waves rolling in and out
   const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(), lfo = actx.createOscillator(), lg = actx.createGain();
   src.buffer = getNoise(); src.loop = true; f.type = 'lowpass'; f.frequency.value = 450; g.gain.value = 0.035;
@@ -954,7 +972,7 @@ const SFX = {
   eat: () => { noise(0.08, 1800, 1, 0.1); noise(0.08, 1500, 1, 0.1, 'bandpass'); tone(330, 660, 0.2, 0.06, 'square', 0.1); },
   ding: () => { tone(1400, 2800, 0.12, 0.08, 'triangle'); tone(2100, 2100, 0.2, 0.05, 'square', 0.06); },
   whistle: () => { tone(2300, 2100, 0.18, 0.05); tone(2300, 2100, 0.3, 0.05, 'square', 0.22); },
-  scream: () => tone(900, 300, 0.4, 0.05, 'sawtooth'),
+  scream: (pitch) => screamVoice(pitch ?? rand(0.85, 1.45), rand(0.9, 1.3), 0.16),
   squawk: () => { tone(1300, 700, 0.12, 0.06); tone(1200, 650, 0.14, 0.06, 'square', 0.16); },
 };
 
@@ -1377,7 +1395,7 @@ function hurt(dmg, o = {}) {
   P.fireT = 1.4; P.eyesT = 0.6; P.scorch = Math.min(1, P.scorch + 0.4); P.hairBurn = Math.min(1, P.hairBurn + 0.3);
   P.shout = { t: pick(SHOUTS), life: 1.1 }; boss.laughT = 0.8;
   if (o.from) { const dx = P.x - o.from.x, dy = P.y - o.from.y, l = Math.hypot(dx, dy) || 1; P.kbx = dx / l * 180; P.kby = dy / l * 120; }
-  if (P.hp <= 0) { P.hp = 0; P.dead = true; P.deathT = 0; dropLoot(); S.endT = 3.6; clearAttack(); boss.laughT = 99; P.shout = { t: 'NOT ME MULLET!', life: 1.4 }; SFX.scream(); SFX.laugh(); }
+  if (P.hp <= 0) { P.hp = 0; P.dead = true; P.deathT = 0; dropLoot(); S.endT = 3.6; clearAttack(); boss.laughT = 99; P.shout = { t: 'NOT ME MULLET!', life: 1.4 }; screamVoice(0.8, 1.6, 0.2); SFX.laugh(); }
   return true;
 }
 function sunReact(lines, force) { // pulls a face, reels back, then gets cranky
@@ -2026,7 +2044,7 @@ function ignite(n) {
   const last = LAST_WORDS[n.kind];
   n.state = 'burn'; n.t = 0; n.shout = { t: last || pick(SCREAMS), life: last ? 2 : 1.2 }; S.torched++;
   if (n.dog) n.dog.flee = true;
-  if (S.mode === 'play' || S.mode === 'intro') SFX.scream();
+  if (S.mode === 'play' || S.mode === 'intro') SFX.scream(NPC_TYPES[n.kind] && NPC_TYPES[n.kind].fem ? rand(1.35, 1.6) : rand(0.8, 1.05));
   if (S.mode === 'play' && boss.state === 'fight' && !player.dead) {
     boss.hp = Math.min(BOSS_MAX, boss.hp + KILL_HEAL); S.healPop = { v: (S.healPop && S.healPop.life > 0 ? S.healPop.v : 0) + KILL_HEAL, life: 1.6 }; boss.laughT = 1.6;
     if (S.killCD <= 0) { S.killCD = 2.5; S.sayCD = 2.5; SFX.laugh(); sunSay(pick(KILL_LINES)); }

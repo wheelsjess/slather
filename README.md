@@ -49,7 +49,7 @@ When the game is played from its claude.ai page, the board is shared. Everyone w
 - **A wild ESHAY appeared!** When an eshay turns up mid-fight, the screen strobes and the blinds open like a Pokémon encounter, then the text box types it out. While he's on the beach the music switches to hard gabber (distorted four-on-the-floor kick and a hoover lead at 184 BPM). It drops back to the normal fight music when he leaves or gets torched.
 - **Loot:** when the bogan dies, his pockets spray out Diablo-style: VELCRO WALLET, CRACKED PHONE, COMMON KEYS, DARTS (HALF PACK), and a legendary-orange SLATHER SPF50+ with a light beam. Each lands with a rarity-coloured name plate.
 - **Bin chickens:** leave a pickup on the sand for more than about 5 seconds and an ibis strolls in, grabs it and makes off. "BIN CHICKEN STOLE THE POTATO CAKE" shows up small in the top right.
-- **The British backpacker:** milk-pale except for a lobster face, neck and arms, with a singlet tan line, socks and sandals and a huge pack. He wanders through saying "BIT HOT HERE, INNIT?" and if he's torched: "IT'S NOT COMING HOME!"
+- **The British backpacker:** milk-pale except for a lobster face, neck and arms, with a singlet tan line, socks and sandals and a huge pack with a Union Jack on it. He wanders through saying "BIT HOT HERE, INNIT?" and if he's torched: "IT'S NOT COMING HOME!"
 
 ## Death and victory
 
@@ -79,7 +79,7 @@ The Sun shows its lines in yellow speech bubbles. It doesn't speak them aloud.
 ## Sound
 
 - **Music:** SNES-style chiptune. There's a sunny beach tune for the intro, then the boss theme, which gets faster and busier in each phase.
-- **Sound effects:** a rising whoosh as a fist or hand winds up, heavy slams, a roaring wall of fire for the sweep and the laser trail, electric buzzing for the lasers, a charging hum and zaps for the sun rays, falling whistles for the fireballs, crackling fire, a croaky laugh and grunts from the Sun, waves in the background, screams, and jingles for winning and losing.
+- **Sound effects:** synthesised screams (higher for women, lower for men, and a long one when the bogan goes down) whenever someone catches fire, a rising whoosh as a fist or hand winds up, heavy slams, a roaring wall of fire for the sweep and the laser trail, electric buzzing for the lasers, a charging hum and zaps for the sun rays, falling whistles for the fireballs, crackling fire, a croaky laugh and grunts from the Sun, waves in the background, screams, and jingles for winning and losing.
 
 ## Art
 
