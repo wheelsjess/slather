@@ -1677,7 +1677,9 @@ function updatePlayer(dt) {
     P.x += P.rdx * 250 * dt; P.y += P.rdy * 170 * dt;
     // tumbling through the sand: a spray kicked up behind him, and a furrow pressed in that slowly fills back in
     for (let i = 0; i < 5; i++) parts.push({ x: P.x - P.rdx * 6 + rand(-5, 5), y: P.y - rand(0, 4), vx: -P.rdx * rand(40, 110) + rand(-30, 30), vy: -rand(40, 110), life: rand(0.35, 0.6), max: 0.6, col: pick(['#b8863e', '#9a6e30', '#fff4c8', '#c9a35f']), g: 300, s: Math.random() < 0.3 ? 2 : 1 });
-    if ((P.trackT = (P.trackT || 0) - dt) <= 0) { P.trackT = 0.02; tracks.push({ x: P.x, y: P.y, a: Math.atan2(P.rdy * 0.6, P.rdx), t: 0 }); }
+    if (!P.groove || P.groove.done) { P.groove = { pts: [], t: 0, done: false }; tracks.push(P.groove); }
+    P.groove.pts.push([P.x, P.y]); P.groove.t = 0;
+    if (P.rollT <= 0) P.groove.done = true;
     if (P.rollT <= 0) { puff(P.x + P.rdx * 6, P.y, 8, '#e6cd90', 50, 40, 0.5); for (let i = 0; i < 10; i++) parts.push({ x: P.x + P.rdx * 8, y: P.y - 2, vx: P.rdx * rand(30, 90) + rand(-40, 40), vy: -rand(30, 90), life: rand(0.3, 0.55), max: 0.55, col: pick(['#b8863e', '#9a6e30', '#fff4c8', '#c9a35f']), g: 300, s: 1 }); }
   } else {
     P.iframe = false;
@@ -2297,10 +2299,14 @@ function drawWorld() {
   const handsOut = B.state !== 'dead' && S.mode !== 'intro' && S.mode !== 'title';
   // floor: umbrella shade, shadows, telegraphs
   if (S.mode !== 'title') for (const u of UMBRELLAS) { shadow(u.x, u.y + 2, 26, 9, 0.22); if (S.shadeGlow) { ctx.strokeStyle = Math.floor(S.time * 8) % 2 ? '#5fe08a' : '#fff'; ctx.lineWidth = 1; ELL(ctx, u.x, u.y + 2, 26, 9); ctx.stroke(); } }
-  for (let i = tracks.length - 1; i >= 0; i--) { // roll furrows in the sand, filling back in over a couple of seconds
-    const r = tracks[i], k = 1 - r.t / 2.4; if ((r.t += 1 / 60) > 2.4) { tracks.splice(i, 1); continue; }
-    ctx.fillStyle = `rgba(150,108,52,${(0.4 * k).toFixed(2)})`; ELL(ctx, r.x, r.y, 9, 3.2, r.a * 0.25); ctx.fill();
-    ctx.fillStyle = `rgba(255,244,210,${(0.35 * k).toFixed(2)})`; ctx.fillRect(Math.round(r.x - 7), Math.round(r.y + 3), 14, 1);
+  for (let i = tracks.length - 1; i >= 0; i--) { // the groove a roll ploughs through the sand, filling back in over a couple of seconds
+    const r = tracks[i]; if (r.done && (r.t += 1 / 60) > 2.4) { tracks.splice(i, 1); continue; }
+    if (r.pts.length < 2) continue;
+    const k = 1 - r.t / 2.4, path = dy => { ctx.beginPath(); r.pts.forEach(([x, y], j) => j ? ctx.lineTo(x, y + dy) : ctx.moveTo(x, y + dy)); };
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    path(2.5); ctx.strokeStyle = `rgba(255,244,210,${(0.4 * k).toFixed(2)})`; ctx.lineWidth = 3; ctx.stroke();   // ridge of pushed-up sand on the near side
+    path(0); ctx.strokeStyle = `rgba(150,108,52,${(0.42 * k).toFixed(2)})`; ctx.lineWidth = 6; ctx.stroke();      // the groove
+    path(-0.5); ctx.strokeStyle = `rgba(120,84,38,${(0.3 * k).toFixed(2)})`; ctx.lineWidth = 2; ctx.stroke();     // its deepest line
   }
   for (const h of hazards) if (h.layer === 'floor') h.draw();
   if (handsOut) for (const h of B.hands) { const k = clamp(1 - h.z / 140, 0.35, 1); shadow(h.x, h.fy, 24 * k, 9 * k, 0.3); }

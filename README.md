@@ -10,7 +10,7 @@ Open `index.html` in any modern browser. On a computer, use the keyboard and mou
 |---|---|---|
 | Move | W A S D / arrows | Drag on the left side |
 | Squirt sunscreen (one squirt per click) | Click, or press J | Tap SQUIRT |
-| Roll (dodge, with a moment of invincibility; kicks up sand and leaves a furrow) | Space | ROLL |
+| Roll (dodge, with a moment of invincibility; kicks up sand and leaves a groove) | Space | ROLL |
 | Pause | Esc / P | PAUSE |
 
 ## Title and loading screens
