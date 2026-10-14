@@ -1028,13 +1028,13 @@ const S = { mode: 'title', ttl: { t: 0 }, load: null, phase: 1, time: 0, shake: 
   dmgAcc: 0, dmgT: 0, hurtAcc: 0, endT: 0, hits: 0, snacks: 0, bottleT: 0, gullT: 0, banner: null, toast: null, blink: 0 };
 const input = { keys: {}, stick: { x: 0, y: 0 }, fire: false, roll: false };
 const player = {}, boss = {};
-const loot = [], ibises = [], hazards = [], drops = [], parts = [], splats = [], pickups = [], gulls = [], npcs = [], sea = [], groups = [], vehicles = [], crabs = [], castles = [];
+const tracks = [], loot = [], ibises = [], hazards = [], drops = [], parts = [], splats = [], pickups = [], gulls = [], npcs = [], sea = [], groups = [], vehicles = [], crabs = [], castles = [];
 const UMBRELLAS = [{ x: 92, y: 236 }, { x: 388, y: 236 }, { x: 240, y: 192 }];
 const inEll = (px, py, x, y, rx, ry) => ((px - x) / rx) ** 2 + ((py - y) / ry) ** 2 < 1;
 const inShade = () => UMBRELLAS.some(u => inEll(player.x, player.y, u.x, u.y + 2, 26, 11));
 
 function reset() {
-  loot.length = ibises.length = 0; S.note = null; S.wild = null;
+  tracks.length = loot.length = ibises.length = 0; S.note = null; S.wild = null;
   hazards.length = drops.length = parts.length = splats.length = pickups.length = gulls.length = npcs.length = sea.length = groups.length = vehicles.length = 0;
   crabs.length = 0; for (let i = 0; i < 3; i++) crabs.push(newCrab(rand(30, 450)));
   castles.length = 0; for (let i = 0; i < 2; i++) castles.push(newCastle());
@@ -1675,6 +1675,10 @@ function updatePlayer(dt) {
   if (P.rollT > 0) {
     P.rollT -= dt; P.iframe = P.rollT > 0.06;
     P.x += P.rdx * 250 * dt; P.y += P.rdy * 170 * dt;
+    // tumbling through the sand: a spray kicked up behind him, and a furrow pressed in that slowly fills back in
+    for (let i = 0; i < 5; i++) parts.push({ x: P.x - P.rdx * 6 + rand(-5, 5), y: P.y - rand(0, 4), vx: -P.rdx * rand(40, 110) + rand(-30, 30), vy: -rand(40, 110), life: rand(0.35, 0.6), max: 0.6, col: pick(['#b8863e', '#9a6e30', '#fff4c8', '#c9a35f']), g: 300, s: Math.random() < 0.3 ? 2 : 1 });
+    if ((P.trackT = (P.trackT || 0) - dt) <= 0) { P.trackT = 0.02; tracks.push({ x: P.x, y: P.y, a: Math.atan2(P.rdy * 0.6, P.rdx), t: 0 }); }
+    if (P.rollT <= 0) { puff(P.x + P.rdx * 6, P.y, 8, '#e6cd90', 50, 40, 0.5); for (let i = 0; i < 10; i++) parts.push({ x: P.x + P.rdx * 8, y: P.y - 2, vx: P.rdx * rand(30, 90) + rand(-40, 40), vy: -rand(30, 90), life: rand(0.3, 0.55), max: 0.55, col: pick(['#b8863e', '#9a6e30', '#fff4c8', '#c9a35f']), g: 300, s: 1 }); }
   } else {
     P.iframe = false;
     if (input.roll && P.rollCD <= 0) {
@@ -2293,6 +2297,11 @@ function drawWorld() {
   const handsOut = B.state !== 'dead' && S.mode !== 'intro' && S.mode !== 'title';
   // floor: umbrella shade, shadows, telegraphs
   if (S.mode !== 'title') for (const u of UMBRELLAS) { shadow(u.x, u.y + 2, 26, 9, 0.22); if (S.shadeGlow) { ctx.strokeStyle = Math.floor(S.time * 8) % 2 ? '#5fe08a' : '#fff'; ctx.lineWidth = 1; ELL(ctx, u.x, u.y + 2, 26, 9); ctx.stroke(); } }
+  for (let i = tracks.length - 1; i >= 0; i--) { // roll furrows in the sand, filling back in over a couple of seconds
+    const r = tracks[i], k = 1 - r.t / 2.4; if ((r.t += 1 / 60) > 2.4) { tracks.splice(i, 1); continue; }
+    ctx.fillStyle = `rgba(150,108,52,${(0.4 * k).toFixed(2)})`; ELL(ctx, r.x, r.y, 9, 3.2, r.a * 0.25); ctx.fill();
+    ctx.fillStyle = `rgba(255,244,210,${(0.35 * k).toFixed(2)})`; ctx.fillRect(Math.round(r.x - 7), Math.round(r.y + 3), 14, 1);
+  }
   for (const h of hazards) if (h.layer === 'floor') h.draw();
   if (handsOut) for (const h of B.hands) { const k = clamp(1 - h.z / 140, 0.35, 1); shadow(h.x, h.fy, 24 * k, 9 * k, 0.3); }
   for (const p of pickups) if (p.z > 0) shadow(p.x, p.y, 6, 2);
