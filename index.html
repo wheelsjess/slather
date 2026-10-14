@@ -902,33 +902,6 @@ function voice(f0, f1, dur, vol = 0.16, delay = 0) { // a croaky, nasal old-man 
   for (const [fr, q] of [[700, 3], [1150, 5], [2400, 6]]) { const b = actx.createBiquadFilter(); b.type = 'bandpass'; b.frequency.value = fr; b.Q.value = q; o.connect(b).connect(g); }
   g.connect(OUT()); o.start(t); vib.start(t); o.stop(t + dur); vib.stop(t + dur);
 }
-function screamVoice(pitch = 1, dur = 1.1, vol = 0.2, delay = 0) { // a Wilhelm-style "WAAAAAHHH-ugh": a leap up, then a long, falling, darkening wail
-  if (!actx || muted) return;
-  const t = actx.currentTime + delay, p = pitch, d = dur;
-  const o = actx.createOscillator(), o2 = actx.createOscillator(), vib = actx.createOscillator(), vg = actx.createGain(), g = actx.createGain(), mix = actx.createGain();
-  for (const osc of [o, o2]) {
-    osc.type = 'sawtooth'; const f = osc.frequency;
-    f.setValueAtTime(330 * p, t);                       // the "W" onset
-    f.exponentialRampToValueAtTime(780 * p, t + 0.07);  // the leap up
-    f.exponentialRampToValueAtTime(700 * p, t + d * 0.32);
-    f.exponentialRampToValueAtTime(560 * p, t + d * 0.62);
-    f.exponentialRampToValueAtTime(470 * p, t + d * 0.82);
-    f.exponentialRampToValueAtTime(300 * p, t + d);     // the "-ugh" as it breaks off
-  }
-  o2.detune.value = 9;
-  vib.frequency.value = 5.5; vg.gain.value = 14 * p; vib.connect(vg); vg.connect(o.frequency); vg.connect(o2.frequency);
-  vg.gain.setValueAtTime(3 * p, t); vg.gain.linearRampToValueAtTime(18 * p, t + d * 0.7);   // the wobble grows as it falls
-  o.connect(mix); o2.connect(mix); mix.gain.value = 0.5;
-  // vowel: an open "AAH" that darkens towards "AW" as the scream drops
-  for (const [f0, f1, q, gv] of [[900, 640, 5, 1], [1350, 1000, 7, 0.75], [2600, 2300, 9, 0.3]]) {
-    const b = actx.createBiquadFilter(), bg = actx.createGain(); b.type = 'bandpass'; b.Q.value = q; bg.gain.value = gv;
-    b.frequency.setValueAtTime(f0 * (0.85 + p * 0.15), t); b.frequency.exponentialRampToValueAtTime(f1 * (0.85 + p * 0.15), t + d);
-    mix.connect(b).connect(bg).connect(g);
-  }
-  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.04); g.gain.setValueAtTime(vol, t + d * 0.55);
-  g.gain.exponentialRampToValueAtTime(vol * 0.6, t + d * 0.85); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-  g.connect(OUT()); [o, o2, vib].forEach(n => { n.start(t); n.stop(t + d + 0.05); });
-}
 function startAmbience() { // waves rolling in and out
   const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(), lfo = actx.createOscillator(), lg = actx.createGain();
   src.buffer = getNoise(); src.loop = true; f.type = 'lowpass'; f.frequency.value = 450; g.gain.value = 0.035;
@@ -985,7 +958,6 @@ const SFX = {
   eat: () => { noise(0.08, 1800, 1, 0.1); noise(0.08, 1500, 1, 0.1, 'bandpass'); tone(330, 660, 0.2, 0.06, 'square', 0.1); },
   ding: () => { tone(1400, 2800, 0.12, 0.08, 'triangle'); tone(2100, 2100, 0.2, 0.05, 'square', 0.06); },
   whistle: () => { tone(2300, 2100, 0.18, 0.05); tone(2300, 2100, 0.3, 0.05, 'square', 0.22); },
-  scream: (pitch) => screamVoice(pitch ?? rand(0.9, 1.1), rand(1.0, 1.2), 0.17),
   squawk: () => { tone(1300, 700, 0.12, 0.06); tone(1200, 650, 0.14, 0.06, 'square', 0.16); },
 };
 
@@ -1045,7 +1017,7 @@ setInterval(() => {
   while (MUS.next < actx.currentTime + 0.15) { playStep(T, MUS.step % 64, MUS.next, sp); MUS.next += sp; MUS.step++; }
 }, 25);
 function wantedMusic() {
-  if (S.mode === 'title') return S.ttl.t > TITLE_T.slam ? 'beach' : null;
+  if (S.mode === 'title') return null;
   if (S.mode === 'loading') return 'beach';
   if (S.mode === 'intro') { const t = S.intro.t; return t < 10.2 ? 'beach' : t < 18.6 ? null : 'fight1'; }
   if ((S.mode === 'play' || S.mode === 'paused') && boss.state !== 'dead' && !player.dead && npcs.some(n => n.kind === 'eshay' && ALIVE[n.state])) return 'gabber';   // an eshay's about
@@ -1061,7 +1033,7 @@ const REFLECT_LINES = ["NOOO! THE SPF... IT'S TOO STRONG!!!", 'THE SPECIALLY FOR
 function sunSay(text) { S.sunSay = { t: text, life: clamp(text.length * 0.07, 2, 3.6) }; }
 
 /* ================= State ================= */
-const S = { mode: 'title', ttl: { t: 0 }, load: null, phase: 1, time: 0, shake: 0, flareCD: 0, shadeGlow: false, bg: BG[1], whiteA: 0, hurtA: 0,
+const S = { mode: 'title', ttl: { t: 0, gate: true }, load: null, phase: 1, time: 0, shake: 0, flareCD: 0, shadeGlow: false, bg: BG[1], whiteA: 0, hurtA: 0,
   dmgAcc: 0, dmgT: 0, hurtAcc: 0, endT: 0, hits: 0, snacks: 0, bottleT: 0, gullT: 0, banner: null, toast: null, blink: 0 };
 const input = { keys: {}, stick: { x: 0, y: 0 }, fire: false, roll: false };
 const player = {}, boss = {};
@@ -1408,7 +1380,7 @@ function hurt(dmg, o = {}) {
   P.fireT = 1.4; P.eyesT = 0.6; P.scorch = Math.min(1, P.scorch + 0.4); P.hairBurn = Math.min(1, P.hairBurn + 0.3);
   P.shout = { t: pick(SHOUTS), life: 1.1 }; boss.laughT = 0.8;
   if (o.from) { const dx = P.x - o.from.x, dy = P.y - o.from.y, l = Math.hypot(dx, dy) || 1; P.kbx = dx / l * 180; P.kby = dy / l * 120; }
-  if (P.hp <= 0) { P.hp = 0; P.dead = true; P.deathT = 0; dropLoot(); S.endT = 3.6; clearAttack(); boss.laughT = 99; P.shout = { t: 'NOT ME MULLET!', life: 1.4 }; screamVoice(1, 1.15, 0.2); SFX.laugh(); }
+  if (P.hp <= 0) { P.hp = 0; P.dead = true; P.deathT = 0; dropLoot(); S.endT = 3.6; clearAttack(); boss.laughT = 99; P.shout = { t: 'NOT ME MULLET!', life: 1.4 }; SFX.laugh(); }
   return true;
 }
 function sunReact(lines, force) { // pulls a face, reels back, then gets cranky
@@ -1510,6 +1482,7 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyJ' || e.code === 'KeyK') input.fire = true;
   if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
   if ((e.code === 'Enter' || e.code === 'Space') && S.mode === 'intro') finishIntro();
+  else if (S.mode === 'title' && S.ttl.gate) openTitle();
   else if ((e.code === 'Enter' || e.code === 'Space') && S.mode === 'title') { audioOn(); if (S.ttl.t < TITLE_T.coin) skipTitle(); else startLoading(); }
   else if ((e.code === 'Enter' || e.code === 'Space') && S.mode === 'loading' && S.load.t >= LOAD_TIME) startIntro();
   else if ((e.code === 'Enter' || e.code === 'Space') && S.mode === 'won' && S.modeT > 0.6) startInitials();
@@ -1519,7 +1492,7 @@ addEventListener('keyup', e => { if (KEYMAP[e.code]) input.keys[KEYMAP[e.code]] 
 addEventListener('blur', () => { input.keys = {}; if (S.mode === 'play') togglePause(); });
 cv.addEventListener('pointerdown', e => {
   audioOn();
-  if (S.mode === 'title') { if (S.ttl.t < TITLE_T.coin) skipTitle(); else startLoading(); return; }
+  if (S.mode === 'title') { if (S.ttl.gate) openTitle(); else if (S.ttl.t < TITLE_T.coin) skipTitle(); else startLoading(); return; }
   if (S.mode === 'loading') { if (S.load.t >= LOAD_TIME) startIntro(); return; }
   if (S.mode === 'intro') { finishIntro(); return; }
   if (S.mode === 'initials') { initialsTap(e); return; }
@@ -2057,7 +2030,6 @@ function ignite(n) {
   const last = LAST_WORDS[n.kind];
   n.state = 'burn'; n.t = 0; n.shout = { t: last || pick(SCREAMS), life: last ? 2 : 1.2 }; S.torched++;
   if (n.dog) n.dog.flee = true;
-  if (S.mode === 'play' || S.mode === 'intro') SFX.scream(NPC_TYPES[n.kind] && NPC_TYPES[n.kind].fem ? rand(1.3, 1.45) : rand(0.92, 1.08));
   if (S.mode === 'play' && boss.state === 'fight' && !player.dead) {
     boss.hp = Math.min(BOSS_MAX, boss.hp + KILL_HEAL); S.healPop = { v: (S.healPop && S.healPop.life > 0 ? S.healPop.v : 0) + KILL_HEAL, life: 1.6 }; boss.laughT = 1.6;
     if (S.killCD <= 0) { S.killCD = 2.5; S.sayCD = 2.5; SFX.laugh(); sunSay(pick(KILL_LINES)); }
@@ -2536,7 +2508,7 @@ function drawHUD() {
    dart, SLATHER slams down with a metallic glint, the Sun emerges, "Sun Fighter" writes itself on, and he flips it the
    bird. Then INSERT COIN and the top five. Painted at the game's resolution, then dithered to a palette so it reads
    as pixel art. */
-const TITLE_T = { rise: 1.0, risen: 3.0, slam: 3.2, run: 4.0, arrive: 5.3, flip: 5.5, write: 6.0, written: 7.2, coin: 7.6, oldIn: 8.4, oldStop: 10.2, say: 10.3, toss: 13.0, catch: 13.7 };
+const TITLE_T = { gull: 0.4, shine: 3.6, rise: 1.0, risen: 3.0, slam: 3.2, run: 4.0, arrive: 5.3, flip: 5.5, write: 6.0, written: 7.2, coin: 7.6, oldIn: 8.4, oldStop: 10.2, say: 10.3, toss: 13.0, catch: 13.7 };
 const T_HORIZON = 164, T_SUN = { x: 404, k: 0.8 };
 const shoreY = x => 168 + 48 * Math.pow(clamp(x / W, 0, 1), 1.2);
 let TITLE_ART = null;
@@ -2621,15 +2593,12 @@ function makeTitleArt() {
 }
 if (document.fonts) Promise.all([document.fonts.load('96px Anton'), document.fonts.load('46px Knewave')]).then(() => { TITLE_ART = null; }).catch(() => {});
 function titleUpdate(dt) {
-  const T = S.ttl; if (!T) return; const was = T.t; T.t += dt; const t = T.t, crossed = k => was < TITLE_T[k] && t >= TITLE_T[k];
+  const T = S.ttl; if (!T || T.gate) return; const was = T.t; T.t += dt; const t = T.t, crossed = k => was < TITLE_T[k] && t >= TITLE_T[k];
   if (crossed('slam')) { shake(7); S.whiteA = 0.6; SFX.slam(); if (TITLE_ART) for (let i = 0; i < 40; i++) TITLE_ART.embers.push({ x: rand(60, 330), y: rand(40, 140), vx: rand(-90, 90), vy: rand(-120, 0), life: rand(0.5, 1.1) }); }
-  if (crossed('rise')) SFX.roar();
+  titleSounds(T, was, t, crossed);
   if (crossed('risen')) SFX.laugh();
-  if (crossed('write')) tone(300, 900, 0.9, 0.05, 'sawtooth');
-  if (crossed('toss')) tone(500, 900, 0.25, 0.05, 'square');
   if (crossed('catch')) [[392, 0], [440, 0.12], [494, 0.24], [523, 0.36]].forEach(([f, d], i) => tone(f, f, i === 3 ? 0.9 : 0.12, 0.08, 'square', d));   // da-na-na-naaa
-  if (crossed('arrive')) tone(220, 160, 0.08, 0.05, 'square');
-  if (crossed('flip')) { tone(660, 330, 0.18, 0.08, 'square'); tone(330, 660, 0.18, 0.08, 'square', 0.18); }
+
   boss.face = t > TITLE_T.flip + 0.3 ? 'shock' : t > TITLE_T.risen - 0.6 ? 'grin' : 'smug'; boss.eyeGlow = 0;   // smiling as it rises, until it gets the finger
   boss.sinkY = t < TITLE_T.rise ? 170 : t < TITLE_T.risen ? 170 * (1 - (t - TITLE_T.rise) / (TITLE_T.risen - TITLE_T.rise)) : 0;
   for (const hh of boss.hands) { hh.busy = true; hh.pose = 'open'; hh.tx = 240 + hh.s * 112; hh.tfy = 160; hh.tz = 96 + Math.sin(S.time * 2 + hh.s) * 4; hh.rate = 4; }
@@ -2661,6 +2630,30 @@ function drawOldMan(t) { // "IT'S DANGEROUS TO GO ALONE! TAKE THIS." walks in fr
     for (let i = 0; i < 8; i++) { const a = i / 8 * TAU + k * 1.5, r = 10 + Math.sin(k * 6 + i) * 3; if ((i + Math.floor(k * 10)) % 3 === 0) continue;
       ctx.fillStyle = i % 2 ? '#fff6c0' : '#ffffff'; ctx.fillRect(Math.round(cx + Math.cos(a) * r), Math.round(cy + Math.sin(a) * r), 2, 2); }
   }
+}
+function titleSounds(T, was, t, crossed) { // the attract screen's sound design: no music, just drama
+  const every = (from, to, gap, key, fn) => { if (t >= from && t < to && (T[key] = (T[key] ?? from) ) <= t) { T[key] = t + gap; fn(); } };
+  if (crossed('gull')) SFX.squawk();
+  // the Sun rises: a deep rumble building, the sea churning, a roar as it breaks the surface
+  if (crossed('rise')) { tone(42, 34, 2.2, 0.3, 'sine'); tone(63, 50, 2.2, 0.12, 'triangle'); noise(2.2, 220, 0.6, 0.22, 'lowpass'); noise(1.8, 900, 0.4, 0.08, 'bandpass', 0.3); }
+  every(TITLE_T.rise, TITLE_T.risen, 0.32, 'splashT', () => noise(0.35, rand(500, 900), 0.8, 0.09, 'bandpass'));
+  if (crossed('risen')) { SFX.roar(); noise(0.9, 400, 0.5, 0.18, 'lowpass'); }
+  // SLATHER slams down: impact, a metal clang, then the shine
+  if (crossed('slam')) { tone(1240, 1180, 0.9, 0.06, 'square', 0.02); tone(1860, 1800, 0.7, 0.04, 'triangle', 0.02); tone(620, 600, 1.1, 0.05, 'triangle', 0.02); noise(0.25, 5200, 1.5, 0.08, 'highpass', 0.02); }
+  if (crossed('shine')) [2093, 2637, 3136, 4186].forEach((f, i) => tone(f, f, 0.25, 0.025, 'sine', i * 0.05));
+  // the bogan legs it in: crunchy footsteps in the sand, then a drag on the dart
+  every(TITLE_T.run, TITLE_T.arrive, 0.16, 'stepT', () => { noise(0.07, rand(1500, 2400), 1.2, 0.09, 'bandpass'); noise(0.05, 300, 0.8, 0.06, 'lowpass'); });
+  if (crossed('arrive')) { noise(0.5, 1800, 0.6, 0.03, 'bandpass', 0.1); }
+  // the bird: a record scratch, and the Sun's gasp
+  if (crossed('flip')) { tone(1400, 200, 0.22, 0.07, 'sawtooth'); noise(0.22, 2500, 2, 0.1, 'bandpass'); tone(300, 600, 0.35, 0.05, 'triangle', 0.3); }
+  // SUN FIGHTER sprayed on: brush swishes as it writes
+  every(TITLE_T.write, TITLE_T.written, 0.17, 'brushT', () => noise(0.16, rand(2800, 4200), 0.9, 0.07, 'bandpass'));
+  if (crossed('written')) { tone(98, 49, 0.6, 0.2, 'sine'); noise(0.4, 300, 0.6, 0.1, 'lowpass'); }
+  if (crossed('coin')) { tone(988, 988, 0.08, 0.06, 'square'); tone(1319, 1319, 0.3, 0.06, 'square', 0.08); }
+  // the old man: a slow shuffle in, chatty Zelda text blips, a whoosh as he lobs the tube
+  every(TITLE_T.oldIn, TITLE_T.oldStop, 0.42, 'oldT', () => noise(0.12, 900, 0.7, 0.05, 'bandpass'));
+  every(TITLE_T.say, TITLE_T.say + 1.4, 0.06, 'blipT', () => tone(rand(560, 640), 560, 0.03, 0.035, 'square'));
+  if (crossed('toss')) { noise(0.35, 1200, 0.6, 0.08, 'bandpass'); tone(400, 900, 0.3, 0.03, 'triangle'); }
 }
 function skipTitle() { if (S.ttl && S.ttl.t < TITLE_T.coin) { S.ttl.t = TITLE_T.coin; boss.sinkY = 0; } }
 function drawTitleScene() { // everything behind the title lettering
@@ -2712,6 +2705,13 @@ function drawTitleScene() { // everything behind the title lettering
   if (t >= TITLE_T.run && t < TITLE_T.flip) { ctx.fillStyle = '#fffdf2'; ctx.fillRect(px + 7, py - 63, 4, 1); ctx.fillStyle = Math.floor(S.time * 4) % 2 ? '#ff8a1f' : '#ffd23a'; ctx.fillRect(px + 11, py - 63, 1, 1); }   // the dart
   for (const e of A.embers) if (e.smoke) { const a = Math.max(0, e.life / 1.6) * 0.6; ctx.fillStyle = `rgba(235,235,230,${a.toFixed(2)})`; ctx.fillRect(Math.round(e.x), Math.round(e.y), 2, 2); }
 }
+function drawTitleGate() { // browsers won't play sound until someone presses something, so the arcade cabinet "boots" first
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  txt('SLATHER ENTERTAINMENT SYSTEM', W / 2, 96, '#bba98a', 8, 'center');
+  if (Math.floor(S.time * 2) % 2) outlined(isTouch ? 'TAP TO BEGIN' : 'PRESS ANY KEY', W / 2, 128, '#ffe800', 16);
+  txt('SOUND ON FOR MAXIMUM DRAMA', W / 2, 168, '#6b5a45', 8, 'center');
+}
+function openTitle() { if (S.ttl && S.ttl.gate) { audioOn(); S.ttl.gate = false; S.ttl.t = 0; } }
 function drawTitle() { // the lettering, sparks, and the coin prompt over the scene
   if (!TITLE_ART) return;
   const A = TITLE_ART, t = S.ttl ? S.ttl.t : 99;
@@ -2945,7 +2945,7 @@ function frame(now) {
   if (S.blueA > 0) { ctx.fillStyle = `rgba(191,234,255,${S.blueA * (Math.floor(S.time * 16) % 2 ? 1 : 0.5)})`; ctx.fillRect(0, 0, W, H); }
   if (S.goldA > 0) { ctx.fillStyle = `rgba(255,232,0,${S.goldA * (Math.floor(S.time * 16) % 2 ? 0.5 : 0.25)})`; ctx.fillRect(0, 0, W, H); }
   if (S.whiteA > 0) { ctx.fillStyle = `rgba(255,251,224,${S.whiteA})`; ctx.fillRect(0, 0, W, H); }
-  if (S.mode === 'title') drawTitle();
+  if (S.mode === 'title') { if (S.ttl.gate) drawTitleGate(); else drawTitle(); }
   else if (S.mode === 'loading') { /* the loading screen is the whole picture */ }
   else if (S.mode === 'intro') drawIntroOverlay();
   else {

@@ -15,6 +15,8 @@ Open `index.html` in any modern browser. On a computer, use the keyboard and mou
 
 ## Title and loading screens
 
+Because browsers won't play sound until someone presses something, the game boots to a black "SLATHER ENTERTAINMENT SYSTEM / PRESS ANY KEY" screen first. The title then plays with sound effects instead of music: waves, a gull, a deep rumble and churning sea as the Sun rises, its roar, a slam and metal clang with a shimmer for SLATHER, crunchy footsteps in the sand, a record scratch for the bird, brush swishes as SUN FIGHTER writes on, a coin chime, the old man's shuffle and text blips, the whoosh of the tube, and the Zelda item jingle.
+
 The game opens on an arcade attract screen. It's a standalone illustrated frame, separate from the game view, with a teal sky, big painted clouds, a curving golden beach and surf rolling in. The Sun rises out of the sea in a blaze of flame, smiling. **SLATHER** slams onto the screen in sunset chrome, and a ripple of light runs across the metal every few seconds. The bogan runs in, cigarette going, and flips the Sun the bird (it looks suitably shocked). Then **SUN FIGHTER** is slapped on in red brush capitals beside him. Then it says **HIT ENTER TO INSERT COIN** (or TAP on a phone), with the top five times underneath. Press Enter (or tap) to skip straight to that.
 
 Inserting a coin goes to a **Skyrim-style loading screen**. The battle-ready bogan, with a tube of Slather in each fist, stands in the dark while smoke drifts along the floor and the camera slowly pushes in. HOW TO PLAY sits in the top right, with the in-game sprites beside each item, and a TIP fades through some skin cancer facts in the bottom right, under a thin loading bar. The text is set in a serif over the canvas so it stays crisp. When it's loaded, press Enter (or tap) to start. To add tips, edit the `LOADING_TIPS` list in `index.html`.
@@ -79,7 +81,7 @@ The Sun shows its lines in yellow speech bubbles. It doesn't speak them aloud.
 ## Sound
 
 - **Music:** SNES-style chiptune. There's a sunny beach tune for the intro, then the boss theme, which gets faster and busier in each phase.
-- **Sound effects:** synthesised Wilhelm-style screams (higher for women, lower for men) whenever someone catches fire, a rising whoosh as a fist or hand winds up, heavy slams, a roaring wall of fire for the sweep and the laser trail, electric buzzing for the lasers, a charging hum and zaps for the sun rays, falling whistles for the fireballs, crackling fire, a croaky laugh and grunts from the Sun, waves in the background, screams, and jingles for winning and losing.
+- **Sound effects:** a rising whoosh as a fist or hand winds up, heavy slams, a roaring wall of fire for the sweep and the laser trail, electric buzzing for the lasers, a charging hum and zaps for the sun rays, falling whistles for the fireballs, crackling fire, a croaky laugh and grunts from the Sun, waves in the background, screams, and jingles for winning and losing.
 
 ## Art
 
