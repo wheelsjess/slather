@@ -2567,9 +2567,7 @@ function drawOldMan(t) { // "IT'S DANGEROUS TO GO ALONE! TAKE THIS." walks in fr
   ctx.fillStyle = 'rgba(90,50,10,.3)'; ELL(ctx, x, py, 14, 3); ctx.fill();
   const fr = walking ? f : t >= TITLE_T.toss && t < TITLE_T.toss + 0.4 ? 5 : 4;
   ctx.drawImage(s.img, fr * s.fw, 0, s.fw, s.fh, Math.round(x - s.fw / 2), py - s.fh + 1, s.fw, s.fh);
-  if (t >= TITLE_T.say && t < TITLE_T.toss + 0.3) {
-    BUBBLES.length = 0; bubble("IT'S DANGEROUS TO GO\nALONE! TAKE THIS.", x - 6, py - 84, true);
-  }
+  S.oldSay = t >= TITLE_T.say && t < TITLE_T.toss + 0.3 ? x : null;   // the line is drawn last, low down over his robe
   if (t >= TITLE_T.toss && t < TITLE_T.catch) { // the tube arcs across, tumbling
     const k = (t - TITLE_T.toss) / (TITLE_T.catch - TITLE_T.toss), sx = x - 21, sy = py - 48, ex = player.x + 15, ey = py - 70;
     const tx = sx + (ex - sx) * k, ty = sy + (ey - sy) * k - Math.sin(k * Math.PI) * 40, sp = SPR.slather;
@@ -2663,6 +2661,7 @@ function drawTitle() { // the lettering, sparks, and the coin prompt over the sc
       list.forEach((r, i) => { const y = y0 + 12 + i * 10, col = i === 0 ? '#ffe800' : C.white; txt(`${i + 1}.`, 228, y, col); txt(r.i, 250, y, col); txt(fmtT(r.t), 372, y, col, 8, 'right'); });
     }
   } else if (Math.floor(S.time * 2) % 2) txt(isTouch ? 'TAP TO SKIP' : 'ENTER TO SKIP', W - 8, H - 12, '#fff2b0', 8, 'right');
+  if (S.oldSay != null) { BUBBLES.length = 0; bubble("IT'S DANGEROUS\nTO GO ALONE!\nTAKE THIS.", S.oldSay - 11, 236, true); }
 }
 
 /* ================= Loading screen =================
