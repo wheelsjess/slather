@@ -79,7 +79,7 @@ The Sun shows its lines in yellow speech bubbles. It doesn't speak them aloud.
 ## Sound
 
 - **Music:** SNES-style chiptune. There's a sunny beach tune for the intro, then the boss theme, which gets faster and busier in each phase.
-- **Sound effects:** synthesised screams (higher for women, lower for men, and a long one when the bogan goes down) whenever someone catches fire, a rising whoosh as a fist or hand winds up, heavy slams, a roaring wall of fire for the sweep and the laser trail, electric buzzing for the lasers, a charging hum and zaps for the sun rays, falling whistles for the fireballs, crackling fire, a croaky laugh and grunts from the Sun, waves in the background, screams, and jingles for winning and losing.
+- **Sound effects:** synthesised Wilhelm-style screams (higher for women, lower for men) whenever someone catches fire, a rising whoosh as a fist or hand winds up, heavy slams, a roaring wall of fire for the sweep and the laser trail, electric buzzing for the lasers, a charging hum and zaps for the sun rays, falling whistles for the fireballs, crackling fire, a croaky laugh and grunts from the Sun, waves in the background, screams, and jingles for winning and losing.
 
 ## Art
 
