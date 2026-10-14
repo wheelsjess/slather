@@ -704,6 +704,34 @@ sheet('jetski', 26, 14, 1, g => { // red jet ski with a rider in a life vest
   R('#1b1b22', 10, 4, 4, 5); R('#ff8a2a', 10, 4, 4, 3); R('#ffb06a', 10, 4, 1, 3); R('#f0b896', 10, 0, 4, 4); R('#7a4a22', 10, 0, 4, 1);
   R('#1b1b22', 14, 5, 4, 1); R('#3a3f48', 18, 5, 2, 2);
 }, { outline: true });
+sheet('oldman_t', 48, 84, 6, (g, f) => { // the title's old man at the bogan's scale, facing left: walk x4, stand, toss
+  const { R, D, E } = pix(g), sway = f < 4 ? [1, 0, -1, 0][f] : 0, toss = f === 5;
+  const SK = '#e8b48a', SKD = '#c48660', SKL = '#f8d0ae', RB = '#c4281a', RBD = '#8a1a10', RBL = '#e2503a', BW = '#f4f4f4', BWD = '#c8ccd0';
+  // sandals peeping out under the robe
+  for (const [x, up] of [[15 + sway, f === 1], [27 - sway, f === 3]]) { R('#7a4a22', x, 80, 8, 2); R(SK, x + 1, 77 - (up ? 1 : 0), 6, 3); R(SKD, x + 1, 79, 6, 1); }
+  // the robe: an A-line from the shoulders to the sand, lit from the top left
+  g.fillStyle = RB; g.beginPath(); g.moveTo(17, 31); g.lineTo(33, 31); g.lineTo(38, 42); g.lineTo(41 - sway, 80); g.lineTo(8 - sway, 80); g.lineTo(12, 42); g.closePath(); g.fill();
+  g.save(); g.clip(); D(RBD, 30, 30, 14, 52); R(RBD, 35, 30, 10, 52); R(RBL, 8, 30, 4, 52); D(RBL, 12, 30, 3, 52, 1);
+  for (const x of [17, 24, 31]) { R(RBD, x - sway * (x / 30), 56, 1, 24); R(RBL, x + 1 - sway * (x / 30), 58, 1, 20); }   // folds
+  R(RBD, 0, 78, 48, 2); g.restore();
+  R('#c8a060', 12, 54, 26, 2); R('#a07a40', 12, 55, 26, 1); R('#c8a060', 15, 56, 2, 8); R('#c8a060', 18, 56, 2, 6);    // rope belt
+  // back arm: the far sleeve, hanging behind
+  if (!toss) { g.fillStyle = RBD; g.beginPath(); g.moveTo(31, 33); g.lineTo(38, 36); g.lineTo(40, 54); g.lineTo(33, 54); g.closePath(); g.fill(); }
+  // head: bald dome, white tufts round the back, big nose, bushy brows
+  E(SK, 23, 19, 8, 9); E(SKL, 20, 14, 4, 3); E(SKD, 28, 21, 3, 5);
+  R(BW, 27, 15, 5, 9); R(BW, 29, 13, 3, 4); R(BWD, 30, 18, 2, 7); R(BW, 25, 24, 4, 3);                                     // hair tufts
+  R(SKD, 27, 19, 2, 3);                                                                                                  // ear
+  R(SK, 12, 19, 4, 4); R(SKD, 12, 22, 3, 1); R(SKL, 13, 19, 1, 1);                                                       // nose
+  R(BW, 14, 15, 7, 2); R(BW, 13, 16, 2, 1); R(BWD, 15, 17, 6, 1);                                                         // eyebrow
+  R('#16120f', 16, 18, 2, 2); R('#ffffff', 16, 18, 1, 1);                                                                // eye
+  // the beard, flowing down over the robe
+  g.fillStyle = BW; g.beginPath(); g.moveTo(13, 23); g.lineTo(27, 24); g.lineTo(26, 36); g.lineTo(22, 50); g.lineTo(18, 52); g.lineTo(14, 44); g.lineTo(12, 32); g.closePath(); g.fill();
+  R(BWD, 23, 26, 2, 22); D(BWD, 21, 30, 3, 18); for (const x of [15, 18, 21]) R(BWD, x, 34 + (x % 3), 1, 12);
+  R('#a33a2a', 14, 25, 4, 1);                                                                                            // mouth in the moustache
+  // near arm: sleeve, then the hand; tossing, it swings out in front
+  if (toss) { g.fillStyle = RB; g.beginPath(); g.moveTo(17, 33); g.lineTo(26, 34); g.lineTo(10, 40); g.lineTo(2, 37); g.lineTo(4, 33); g.closePath(); g.fill(); R(RBL, 4, 34, 10, 1); E(SK, 3, 35, 3, 3); E(SKL, 2, 34, 1.5, 1.5); }
+  else { g.fillStyle = RB; g.beginPath(); g.moveTo(16, 33); g.lineTo(24, 34); g.lineTo(23 + sway, 50); g.lineTo(14 + sway, 52); g.closePath(); g.fill(); R(RBL, 16, 35, 2, 14); R(RBD, 22, 36, 2, 14); E(SK, 17 + sway, 54, 3, 3); R(SKD, 16 + sway, 56, 4, 1); }
+}, { outline: true });
 sheet('wallet', 12, 9, 1, g => { const { R, D } = pix(g); R('#6b3a1a', 0, 1, 12, 8); R('#8a5228', 0, 1, 12, 2); D('#55301a', 0, 4, 12, 4); R('#c49a5a', 1, 4, 10, 1); R('#3cc46c', 8, 0, 3, 2); }, { outline: true });
 sheet('phone', 7, 12, 1, g => { const { R } = pix(g); R('#1b1b22', 0, 0, 7, 12); R('#2f6fd1', 1, 1, 5, 9); R('#7fd0ff', 1, 1, 2, 3); R('#ffffff', 4, 6, 1, 1); R('#5a5f68', 3, 11, 1, 1); }, { outline: true });
 sheet('keys', 12, 9, 1, g => { const { R } = pix(g); R('#c8ccd2', 1, 1, 4, 4); R('#1b1b22', 2, 2, 2, 2); R('#e8c35a', 4, 4, 7, 2); R('#e8c35a', 9, 6, 1, 2); R('#e8c35a', 7, 6, 1, 1); R('#e2361f', 0, 5, 3, 3); }, { outline: true });
@@ -939,6 +967,9 @@ const TRACKS = {
   beach: { bpm: 104, lead: LEAD_BEACH, roots: ['C3', 'F2', 'G2', 'C3'].map(nm), bassPat: [0, null, 7, null, 12, null, 7, null], drums: 'k...h...s...h...', leadVol: 0.045 },
   fight1: { bpm: 126, lead: LEAD_A, ...MINOR, bassPat: [0, null, 12, null], drums: 'k.h.s.h.k.k.s.h.', leadVol: 0.05 },
   fight2: { bpm: 146, lead: LEAD_B, ...MINOR, bassPat: [0, 0, 12, 0], drums: 'k.hhs.hhk.khs.hh', leadVol: 0.05, arp: true },
+  gabber: { bpm: 184, lead: seq(`A4 . A4 . . . A4 . C5 . A4 . . . E5 D5   A4 . A4 . . . A4 . G4 . A4 . . . C5 B4
+                               F4 . F4 . . . F4 . A4 . F4 . . . C5 A4   E4 . E4 . . . G#4 . B4 . E5 . . . G#4 B4`), ...MINOR,
+    bassPat: [null, null, 0, null], drums: 'G.h.G.h.G.h.G.hG', leadVol: 0.05, leadType: 'sawtooth', hoover: true },
   fight3: { bpm: 170, lead: LEAD_B, ...MINOR, bassPat: [0, 12, 0, 12], drums: 'khkhskhkkhkhskss', leadVol: 0.05, arp: true, transpose: 1 },
 };
 const MUS = { name: null, step: 0, next: 0, bus: null, echo: null, pulse: null };
@@ -960,11 +991,12 @@ function mnote(m, t, dur, vol, type, echo) {
 }
 function playStep(T, i, t, sp) {
   const tr = T.transpose || 0, bar = Math.floor(i / 16), st = i % 16, dl = Math.max(0, t - actx.currentTime);
-  if (T.lead[i] != null) mnote(T.lead[i] + tr, t, sp * 1.9, T.leadVol, 'pulse', true);
+  if (T.lead[i] != null) { mnote(T.lead[i] + tr, t, sp * 1.9, T.leadVol, T.leadType || 'pulse', true); if (T.hoover) mnote(T.lead[i] + tr - 12.15, t, sp * 1.9, T.leadVol * 0.8, 'sawtooth'); }
   const bp = T.bassPat[st % T.bassPat.length]; if (bp != null) mnote(T.roots[bar] + tr + bp, t, sp * 0.9, 0.11, 'triangle');
   if (T.arp) { const ch = T.chords[bar]; mnote(ch[st % 3] + tr + 12, t, sp * 0.55, 0.022, 'square'); }
   const dr = T.drums[st];
   if (dr === 'k') tone(150, 42, 0.13, 0.32, 'sine', dl);
+  else if (dr === 'G') { tone(190, 48, 0.2, 0.34, 'square', dl); tone(95, 40, 0.24, 0.3, 'sine', dl); noise(0.05, 3000, 1, 0.08, 'highpass', dl); }   // distorted gabber kick
   else if (dr === 's') { noise(0.12, 1800, 0.8, 0.12, 'bandpass', dl); tone(230, 120, 0.07, 0.06, 'triangle', dl); }
   else if (dr === 'h') noise(0.03, 8000, 1, 0.035, 'highpass', dl);
 }
@@ -979,6 +1011,7 @@ function wantedMusic() {
   if (S.mode === 'title') return S.ttl.t > TITLE_T.slam ? 'beach' : null;
   if (S.mode === 'loading') return 'beach';
   if (S.mode === 'intro') { const t = S.intro.t; return t < 10.2 ? 'beach' : t < 18.6 ? null : 'fight1'; }
+  if ((S.mode === 'play' || S.mode === 'paused') && boss.state !== 'dead' && !player.dead && npcs.some(n => n.kind === 'eshay' && ALIVE[n.state])) return 'gabber';   // an eshay's about
   if (S.mode === 'play' || S.mode === 'paused') return boss.state === 'dead' || player.dead ? null : 'fight' + S.phase;
   return null;
 }
@@ -1376,7 +1409,7 @@ function phaseShift(n) {
   SFX.roar(); shake(6);
 }
 // Diablo-style: everything in his pockets sprays out when he goes down, with the rarity colours and a beam on the good stuff
-const LOOT = [['wallet', 'BOGAN WALLET', '#ffffff'], ['phone', 'CRACKED PHONE', '#6a8cff'], ['keys', 'KEYS TO THE COMMODORE', '#ffffff'],
+const LOOT = [['wallet', 'VELCRO WALLET', '#ffffff'], ['phone', 'CRACKED PHONE', '#6a8cff'], ['keys', 'COMMON KEYS', '#ffffff'],
   ['ciggies', 'DARTS (HALF PACK)', '#ffd23a'], ['slather', 'SLATHER SPF50+', '#ff8a1f']];
 function dropLoot() {
   const P = player;
@@ -2529,15 +2562,16 @@ function titleUpdate(dt) {
 }
 function drawOldMan(t) { // "IT'S DANGEROUS TO GO ALONE! TAKE THIS." walks in from the right and tosses him a tube
   if (t < TITLE_T.oldIn) return;
-  const s = SPR.npc_oldman, py = 252, stopX = 168, x = t < TITLE_T.oldStop ? W + 30 - (W + 30 - stopX) * ((t - TITLE_T.oldIn) / (TITLE_T.oldStop - TITLE_T.oldIn)) : stopX;
+  const s = SPR.oldman_t, py = 252, stopX = 168, x = t < TITLE_T.oldStop ? W + 30 - (W + 30 - stopX) * ((t - TITLE_T.oldIn) / (TITLE_T.oldStop - TITLE_T.oldIn)) : stopX;
   const walking = t < TITLE_T.oldStop, f = walking ? Math.floor(t * 7) % 4 : t >= TITLE_T.toss && t < TITLE_T.toss + 0.4 ? 4 : 0;
   ctx.fillStyle = 'rgba(90,50,10,.3)'; ELL(ctx, x, py, 14, 3); ctx.fill();
-  ctx.save(); ctx.translate(Math.round(x), py); ctx.scale(-2, 2); ctx.drawImage(s.img, f * s.fw, 0, s.fw, s.fh, -s.fw / 2, -s.fh + 1, s.fw, s.fh); ctx.restore();
+  const fr = walking ? f : t >= TITLE_T.toss && t < TITLE_T.toss + 0.4 ? 5 : 4;
+  ctx.drawImage(s.img, fr * s.fw, 0, s.fw, s.fh, Math.round(x - s.fw / 2), py - s.fh + 1, s.fw, s.fh);
   if (t >= TITLE_T.say && t < TITLE_T.toss + 0.3) {
     BUBBLES.length = 0; bubble("IT'S DANGEROUS TO GO\nALONE! TAKE THIS.", x - 6, py - 84, true);
   }
   if (t >= TITLE_T.toss && t < TITLE_T.catch) { // the tube arcs across, tumbling
-    const k = (t - TITLE_T.toss) / (TITLE_T.catch - TITLE_T.toss), sx = x - 14, sy = py - 46, ex = player.x + 15, ey = py - 70;
+    const k = (t - TITLE_T.toss) / (TITLE_T.catch - TITLE_T.toss), sx = x - 21, sy = py - 48, ex = player.x + 15, ey = py - 70;
     const tx = sx + (ex - sx) * k, ty = sy + (ey - sy) * k - Math.sin(k * Math.PI) * 40, sp = SPR.slather;
     ctx.save(); ctx.translate(Math.round(tx), Math.round(ty)); ctx.rotate(k * 9); ctx.drawImage(sp.img, 0, 0, sp.fw, sp.fh, -sp.fw / 2, -sp.fh / 2, sp.fw, sp.fh); ctx.restore();
   }

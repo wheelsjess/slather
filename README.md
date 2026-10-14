@@ -46,8 +46,8 @@ When the game is played from its claude.ai page, the board is shared. Everyone w
 ## Easter eggs
 
 - **The old man:** on the title screen, after the bogan flips off the Sun, a Zelda-style old man in a red robe shuffles in. He says "IT'S DANGEROUS TO GO ALONE! TAKE THIS." and lobs him a tube of Slather. The bogan catches it and holds it aloft, with sparkles and the item-get jingle.
-- **A wild ESHAY appeared!** When an eshay turns up mid-fight, the screen strobes and the blinds open like a Pokémon encounter, then the text box types it out.
-- **Loot:** when the bogan dies, his pockets spray out Diablo-style: BOGAN WALLET, CRACKED PHONE, KEYS TO THE COMMODORE, DARTS (HALF PACK), and a legendary-orange SLATHER SPF50+ with a light beam. Each lands with a rarity-coloured name plate.
+- **A wild ESHAY appeared!** When an eshay turns up mid-fight, the screen strobes and the blinds open like a Pokémon encounter, then the text box types it out. While he's on the beach the music switches to hard gabber (distorted four-on-the-floor kick and a hoover lead at 184 BPM). It drops back to the normal fight music when he leaves or gets torched.
+- **Loot:** when the bogan dies, his pockets spray out Diablo-style: VELCRO WALLET, CRACKED PHONE, COMMON KEYS, DARTS (HALF PACK), and a legendary-orange SLATHER SPF50+ with a light beam. Each lands with a rarity-coloured name plate.
 - **Bin chickens:** leave a pickup on the sand for more than about 5 seconds and an ibis strolls in, grabs it and makes off. "BIN CHICKEN STOLE THE POTATO CAKE" shows up small in the top right.
 - **The British backpacker:** milk-pale except for a lobster face, neck and arms, with a singlet tan line, socks and sandals and a huge pack. He wanders through saying "BIT HOT HERE, INNIT?" and if he's torched: "IT'S NOT COMING HOME!"
 
