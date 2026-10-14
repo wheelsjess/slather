@@ -613,9 +613,15 @@ sheet('seagull', 32, 24, 4, (g, i) => { // flap cycle, facing right
   R('#f5b324', 28, 10, 4, 2); R('#e2361f', 30, 11, 1, 1); R(C.ink, 25, 9, 1, 1); R('#ffffff', 26, 9, 1, 1);
   R('#f08a3a', 15, 17, 1, 3); R('#f08a3a', 18, 17, 1, 3);
 }, { outline: true });
-sheet('fireball', 14, 14, 2, (g, i) => { // spat fireball with a flickering core
-  const { R, E } = pix(g);
-  E('#c4281a', 7, 7, 6, 6); E('#ff5a1f', 7, 7, 5, 5); E('#ffb02e', 7 + (i ? 0 : -1), 7, i ? 4 : 3, i ? 3 : 4); E('#fff3b0', 6, 6, 2, 2); R('#ffffff', 5, 5, 1, 1);
+sheet('fireball', 28, 28, 4, (g, f) => { // a spat-out mini sun: spiky, furious, wrapped in licking flame
+  const { R, E } = pix(g), cx = 14, cy = 14;
+  const tongue = (a, len, w, col) => { g.fillStyle = col; g.beginPath(); g.moveTo(cx + Math.cos(a - w) * 7, cy + Math.sin(a - w) * 7); g.lineTo(cx + Math.cos(a) * len, cy + Math.sin(a) * len); g.lineTo(cx + Math.cos(a + w) * 7, cy + Math.sin(a + w) * 7); g.fill(); };
+  for (let i = 0; i < 10; i++) { const a = i / 10 * TAU + f * 0.31, len = 11 + ((i * 7 + f * 3) % 4) * 0.9; tongue(a, len, 0.32, i % 2 ? '#e2361f' : '#ff6a1f'); }   // outer flames
+  for (let i = 0; i < 10; i++) { const a = (i + 0.5) / 10 * TAU + f * 0.31, len = 9 + ((i * 5 + f) % 3); tongue(a, len, 0.26, '#ffb02a'); }            // inner flames
+  E('#ffd23a', cx, cy, 7.5, 7.5); E('#fff3a0', cx - 1, cy - 1, 5, 5); E('#ffffff', cx - 2, cy - 3, 2, 1.5);                                         // white-hot body
+  R('#16120f', 9, 11, 4, 1); R('#16120f', 15, 11, 4, 1); R('#16120f', 12, 12, 1, 1); R('#16120f', 15, 12, 1, 1);                                    // furious brows
+  R('#c4281a', 10, 13, 2, 2); R('#c4281a', 16, 13, 2, 2); R('#fff3a0', 10, 13, 1, 1); R('#fff3a0', 16, 13, 1, 1);                                  // glowing eyes
+  R('#16120f', 10, 17, 8, 2); for (const x of [11, 13, 15]) R('#ffffff', x, 17, 1, 1);                                                               // gritted teeth
 }, { outline: true });
 sheet('sandcastle', 26, 24, 2, (g, f) => { // frame 1: knocked flat
   const { R, D, E } = pix(g), L = '#f6dfa4', S1 = '#e6c88a', S2 = '#c9a35f', S3 = '#9e7a40';
@@ -1036,7 +1042,7 @@ const inShade = () => UMBRELLAS.some(u => inEll(player.x, player.y, u.x, u.y + 2
 function reset() {
   tracks.length = loot.length = ibises.length = 0; S.note = null; S.wild = null;
   hazards.length = drops.length = parts.length = splats.length = pickups.length = gulls.length = npcs.length = sea.length = groups.length = vehicles.length = 0;
-  crabs.length = 0; for (let i = 0; i < 3; i++) crabs.push(newCrab(rand(30, 450)));
+  crabs.length = 0;   // crabs only turn up when a roll disturbs one
   castles.length = 0; for (let i = 0; i < 2; i++) castles.push(newCastle());
   Object.assign(player, { x: 240, y: 226, vx: 0, vy: 0, kbx: 0, kby: 0, hp: PLAYER_HP, spf: 0, burn: 0, rollT: 0, rollCD: 0, rdx: 0, rdy: 0,
     iframe: false, hurtT: 0, slowT: 0, shotT: 0, squirtCD: 0, shootPose: 0, burst: 0, queued: false, shotN: 0, face: 1, anim: 0, moving: false, dead: false,
@@ -1111,9 +1117,20 @@ function wave(x, y) { // shockwave ring along the sand
 function orb(x0, y0, tx, ty, dur) {
   let t = 0; mark(tx, ty, 18, 8, dur);
   return addHz({ layer: 'air', update(dt) { t += dt;
-      if (t >= dur) { puff(tx, ty, 10, '#ff8a2a', 60, 70, 0.4); SFX.splat(); firePatch(tx, ty, 1.0, 12, 5); scorchNPCs((px, py) => inEll(px, py, tx, ty, 19, 9)); if (inEll(player.x, player.y, tx, ty, 19, 9)) hurt(DMG.orb, { from: { x: tx, y: ty }, burn: 12, reflect: 20 }); return false; }
+      if (t >= dur) { puff(tx, ty, 10, '#ff8a2a', 60, 70, 0.4); puff(tx, ty - 4, 8, '#5a4a3a', 30, 50, 0.7, -30); for (let i = 0; i < 14; i++) parts.push({ x: tx, y: ty - 3, vx: rand(-90, 90), vy: rand(-120, -30), life: 0.6, max: 0.6, col: pick(['#ffd23a', '#ff8a1f', '#fff3a0']), g: 260, s: 1 }); SFX.splat(); firePatch(tx, ty, 1.0, 12, 5); scorchNPCs((px, py) => inEll(px, py, tx, ty, 19, 9)); if (inEll(player.x, player.y, tx, ty, 19, 9)) hurt(DMG.orb, { from: { x: tx, y: ty }, burn: 12, reflect: 20 }); return false; }
       return true; },
-    draw() { const k = t / dur, x = x0 + (tx - x0) * k, y = y0 + (ty - y0) * k - Math.sin(k * Math.PI) * 70; spr('fireball', S.time * 10, x, y, { ay: 0.5 }); } });
+    draw() {
+      const pos = k => [x0 + (tx - x0) * k, y0 + (ty - y0) * k - Math.sin(k * Math.PI) * 70], k = t / dur, [x, y] = pos(k);
+      for (let i = 7; i >= 1; i--) { // a comet tail of fire streaming back along its path
+        const kk = Math.max(0, k - i * 0.025), [px, py] = pos(kk), r = 7 - i * 0.7;
+        ctx.fillStyle = i > 4 ? `rgba(120,40,20,${(0.25 - i * 0.02).toFixed(2)})` : i > 2 ? 'rgba(226,54,31,.65)' : 'rgba(255,138,31,.8)';
+        ELL(ctx, px + rand(-1, 1), py + rand(-1, 1), r, r); ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(255,200,80,.25)'; ELL(ctx, x, y, 16, 16); ctx.fill();   // heat glow
+      ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(Math.sin(S.time * 9) * 0.25);
+      const s = SPR.fireball, fr = Math.floor(S.time * 14) % s.n; ctx.drawImage(s.img, fr * s.fw, 0, s.fw, s.fh, -s.fw / 2, -s.fh / 2, s.fw, s.fh); ctx.restore();
+      if (Math.random() < 0.6) parts.push({ x: x + rand(-4, 4), y: y + rand(-4, 4), vx: rand(-20, 20), vy: rand(-30, 5), life: 0.5, max: 0.5, col: pick(['#ffd23a', '#ff8a1f', '#e2361f']), g: 30, s: 1 });
+    } });
 }
 function glob(x0, y0, tx, ty, dur) { // a flung glob of sunscreen: harmless, and a free top-up if it lands on you
   let t = 0;
@@ -1681,7 +1698,7 @@ function updatePlayer(dt) {
     P.groove.pts.push([P.x, P.y]); P.groove.t = 0;
     if (P.rollT <= 0) {
       P.groove.done = true;
-      if (Math.random() < (S.crabOdds ?? 0.22) && crabs.length < 7) { const pt = pick(P.groove.pts); crabs.push({ x: pt[0], y: pt[1], vx: 0, t: 0, anim: 0, cooked: 0, emerge: 0.9, temp: true, leaveT: rand(8, 14) }); }
+      if (Math.random() < (S.crabOdds ?? 0.14) && crabs.length < 7) { const pt = pick(P.groove.pts); crabs.push({ x: pt[0], y: pt[1], vx: 0, t: 0, anim: 0, cooked: 0, emerge: 0.9, temp: true, leaveT: rand(8, 14) }); }
     }
     if (P.rollT <= 0) { puff(P.x + P.rdx * 6, P.y, 8, '#e6cd90', 50, 40, 0.5); for (let i = 0; i < 10; i++) parts.push({ x: P.x + P.rdx * 8, y: P.y - 2, vx: P.rdx * rand(30, 90) + rand(-40, 40), vy: -rand(30, 90), life: rand(0.3, 0.55), max: 0.55, col: pick(['#b8863e', '#9a6e30', '#fff4c8', '#c9a35f']), g: 300, s: 1 }); }
   } else {
@@ -1978,7 +1995,7 @@ function newCrab(x) { return { x, y: rand(SHORE + 8, FLOOR.y0 + 30), vx: 0, t: r
 function updateCrabs(dt) { // they sidle about, freeze, and scuttle off when you get close
   for (let i = 0; i < crabs.length; i++) {
     const c = crabs[i];
-    if (c.cooked) { c.cooked += dt; if (Math.random() < 0.05) puff(c.x, c.y - 6, 1, '#dddddd', 4, 15, 0.8, -20); if (c.cooked > 4) crabs[i] = newCrab(Math.random() < 0.5 ? -10 : W + 10); continue; }
+    if (c.cooked) { c.cooked += dt; if (Math.random() < 0.05) puff(c.x, c.y - 6, 1, '#dddddd', 4, 15, 0.8, -20); if (c.cooked > 4) { crabs.splice(i, 1); i--; } continue; }
     if (c.emerge > 0) { // digging itself out, then bolting off in a huff
       c.emerge -= dt; if (Math.random() < 0.4) puff(c.x + rand(-4, 4), c.y - 2, 1, '#c9a35f', 20, 25, 0.3);
       if (c.emerge <= 0) { c.vx = (Math.random() < 0.5 ? -1 : 1) * 95; c.t = 0.9; }

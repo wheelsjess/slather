@@ -57,7 +57,7 @@ Everything below that isn't marked as done from your art has a stand-in redrawn 
 | `dimsim.png` | 16 × 16 | 1 | Dim sim (heals 14) |
 | `seagull.png` | 32 × 24 | 4 | Flap cycle, **facing right** |
 | `umbrella.png` | 56 × 64 | 1 | **Done, from your art.** The blue and yellow umbrella. The pole base is at the bottom centre. This is the shade from the Solar Flare. |
-| `fireball.png` | 14 × 14 | 2 | Spat fireball, flicker |
+| `fireball.png` | 28 × 28 | 4 | A spat-out mini Sun: white-hot body, furious brows, glowing red eyes and gritted teeth, wrapped in flickering flame tongues. Four frames of flicker. The code adds a comet tail, heat glow and embers in flight. |
 | `splat.png` | 16 × 16 | 3 | Sunscreen splat (currently unused; the code draws blobs) |
 | `logo.png` | 44 × 44 | 1 | The Slather line-drawn sun for the title screen |
 
