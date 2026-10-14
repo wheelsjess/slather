@@ -43,6 +43,14 @@ A timer at the top of the screen counts the fight, starting when you take contro
 
 When the game is played from its claude.ai page, the board is shared. Everyone who opens the page and is allowed to add to it lands on the same board, and each player keeps their 10 best runs. People who can only view the page see the shared board, but their own times are saved on their device. Opened anywhere else, such as straight from `index.html`, the board only keeps times on that device.
 
+## Easter eggs
+
+- **The old man:** on the title screen, after the bogan flips off the Sun, a Zelda-style old man in a red robe shuffles in. He says "IT'S DANGEROUS TO GO ALONE! TAKE THIS." and lobs him a tube of Slather. The bogan catches it and holds it aloft, with sparkles and the item-get jingle.
+- **A wild ESHAY appeared!** When an eshay turns up mid-fight, the screen strobes and the blinds open like a Pokémon encounter, then the text box types it out.
+- **Loot:** when the bogan dies, his pockets spray out Diablo-style: BOGAN WALLET, CRACKED PHONE, KEYS TO THE COMMODORE, DARTS (HALF PACK), and a legendary-orange SLATHER SPF50+ with a light beam. Each lands with a rarity-coloured name plate.
+- **Bin chickens:** leave a pickup on the sand for more than about 5 seconds and an ibis strolls in, grabs it and makes off. "BIN CHICKEN STOLE THE POTATO CAKE" shows up small in the top right.
+- **The British backpacker:** milk-pale except for a lobster face, neck and arms, with a singlet tan line, socks and sandals and a huge pack. He wanders through saying "BIT HOT HERE, INNIT?" and if he's torched: "IT'S NOT COMING HOME!"
+
 ## Death and victory
 
 Both are styled after Elden Ring. If you die, a dark band fades in across the screen with **YOU GOT BURNT** in big blood-red Roman capitals, slowly growing, then a parting line and "press Enter to try again". If you kill the Sun, **GREAT ENEMY SLATHERED** appears in gold as it sinks, with a fading ghost of the words swelling behind it and a low chord. Then the stats, the initials and the leaderboard follow.

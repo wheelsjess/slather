@@ -88,6 +88,10 @@ The beachgoers are seen **side-on, facing right**; the right-to-left walkers are
 | `npc_lifesaverf.png` | 28 × 40 | 5 | Lifesaver with a ponytail under the cap |
 | `sandcastle.png` | 26 × 24 | 2 | Frame 0 standing, frame 1 knocked flat |
 | `jeep.png` | 54 × 30 | 3 | Lifeguard jeep facing right. Frames 0–1 are driving (wheels turning); frame 2 has an empty driver's seat, used once it's on fire. |
+| `npc_backpacker.png` | 28 × 40 | 5 | Sunburnt British backpacker: pale legs and singlet tan line, red face, neck and arms, khaki shorts, socks and sandals, big blue pack |
+| `npc_oldman.png` | 28 × 40 | 5 | The Zelda-style old man in a red robe with a white beard (title screen only, drawn at 2x) |
+| `ibis.png` | 26 × 22 | 3 | Bin chicken, facing right: two walk frames, then beak-down grabbing |
+| `wallet.png`, `phone.png`, `keys.png`, `ciggies.png` | about 12 × 10 | 1 each | The bogan's pocket loot, which sprays out when he dies |
 | `crab.png` | 14 × 10 | 2 | Scuttling crab |
 | `crab_cooked.png` | 14 × 10 | 1 | Bright red cooked crab |
 | `dog.png` | 18 × 12 | 2 | Walk cycle. It runs away when its owner gets torched. |
