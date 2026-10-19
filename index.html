@@ -36,26 +36,26 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(-
 #rotate{display:none;position:absolute;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 56px);text-align:center;font-family:var(--pix);font-size:11px;line-height:1.6;color:var(--sun)}
 @media (orientation:portrait){body.touch #rotate{display:block}}
 /* Loading screen, Skyrim-style: real text over the canvas so the serif stays crisp. --u is one game pixel. */
-#loadScreen{position:absolute;z-index:1;pointer-events:none;overflow:hidden;color:#e6dfd2;font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;font-weight:500;font-variant-numeric:lining-nums;--u:2px}
+#loadScreen{position:absolute;z-index:1;pointer-events:none;overflow:hidden;color:#fffdf2;font-family:var(--pix);font-weight:400;-webkit-font-smoothing:none;font-smooth:never;--u:2px;text-shadow:var(--u) var(--u) 0 #16120f}
 #loadScreen .art{position:absolute;left:3%;bottom:0;height:100%;transform-origin:45% 85%;animation:lsZoom 16s ease-out forwards}
 #loadScreen .art img{height:100%;display:block;image-rendering:pixelated;-webkit-mask-image:linear-gradient(to right,#000 70%,transparent 98%);mask-image:linear-gradient(to right,#000 70%,transparent 98%)}
 @keyframes lsZoom{from{transform:scale(1)}to{transform:scale(1.08)}}
 #loadScreen .fog{position:absolute;left:-30%;width:160%;height:34%;bottom:-8%;border-radius:50%;background:radial-gradient(ellipse at 50% 60%,rgba(120,108,96,.28),rgba(0,0,0,0) 62%);animation:lsFog 22s ease-in-out infinite alternate}
 #loadScreen .fog.b{bottom:-14%;height:28%;opacity:.8;animation-duration:30s;animation-direction:alternate-reverse}
 @keyframes lsFog{from{transform:translateX(-6%)}to{transform:translateX(6%)}}
-#loadScreen .how{position:absolute;right:4%;top:15%;width:50%;text-align:right;font-size:calc(var(--u)*7.2);line-height:1.85;letter-spacing:.03em}
-#loadScreen .how h2{margin:0 0 .35em;font-size:1.25em;font-weight:600;letter-spacing:.18em;color:#f3ead8}
-#loadScreen .how .k{color:#a89f90}
+#loadScreen .how{position:absolute;right:4%;top:13%;width:56%;text-align:right;font-size:calc(var(--u)*5.5);line-height:2.25}
+#loadScreen .how h2{margin:0 0 .6em;font-size:calc(var(--u)*10);font-weight:400;color:#ffe800;line-height:1.2}
+#loadScreen .how .k{color:#bba98a}
 #loadScreen .how .gap{height:.6em}
 #loadScreen .how .it{display:inline-flex;gap:.25em;align-items:flex-end;margin-right:.45em;vertical-align:-.55em}
 #loadScreen .how .it img{height:1.9em;width:auto;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(255,236,190,.55))}
-#loadScreen .tip{position:absolute;right:4%;bottom:12%;width:46%;text-align:right;font-size:calc(var(--u)*8.6);line-height:1.32;letter-spacing:.02em}
+#loadScreen .tip{position:absolute;right:4%;bottom:13%;width:52%;text-align:right;font-size:calc(var(--u)*7);line-height:1.7}
 #loadScreen .tip.fade{animation:lsTip 1s ease-out}
 @keyframes lsTip{from{opacity:0}to{opacity:1}}
-#loadScreen .tip b{font-weight:600;letter-spacing:.12em;color:#f3ead8}
-#loadScreen .bar{position:absolute;left:34%;right:34%;bottom:2.5%;height:calc(var(--u)*.6);background:rgba(230,223,210,.14)}
-#loadScreen .bar i{display:block;height:100%;width:0;background:#e6dfd2;box-shadow:0 0 6px rgba(255,240,200,.6)}
-#loadScreen .go{position:absolute;right:4%;bottom:4%;text-align:right;font-size:calc(var(--u)*7);letter-spacing:.24em;opacity:0}
+#loadScreen .tip b{font-weight:400;color:#ffe800}
+#loadScreen .bar{position:absolute;left:34%;right:34%;bottom:2.5%;height:calc(var(--u)*2);background:#3a2a1c;box-shadow:0 0 0 var(--u) #16120f}
+#loadScreen .bar i{display:block;height:100%;width:0;background:#ffe800}
+#loadScreen .go{position:absolute;right:4%;bottom:5%;text-align:right;font-size:calc(var(--u)*7);color:#ffe800;opacity:0}
 #loadScreen .go.on{animation:lsGo 1.6s ease-in-out infinite}
 @keyframes lsGo{0%,100%{opacity:.35}50%{opacity:1}}
 /* Elden Ring-style banners: a dark band across the middle and big Roman capitals. --u is one game pixel. */
