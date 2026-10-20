@@ -1036,7 +1036,7 @@ setInterval(() => {
 }, 25);
 function wantedMusic() {
   if (S.mode === 'title') return null;
-  if (S.mode === 'loading') return 'beach';
+  if (S.mode === 'loading' || S.mode === 'credits') return 'beach';
   if (S.mode === 'intro') { const t = S.intro.t; return t < 10.2 ? 'beach' : t < 18.6 ? null : 'fight1'; }
   if ((S.mode === 'play' || S.mode === 'paused') && boss.state !== 'dead' && !player.dead && vehicles.some(v => v.state === 'drive' && v.x > -36 && v.x < W + 36)) return 'greensleeves';   // the ice cream van's in view
   if ((S.mode === 'play' || S.mode === 'paused') && boss.state !== 'dead' && !player.dead && npcs.some(n => n.kind === 'eshay' && ALIVE[n.state])) return 'gabber';   // an eshay's about
@@ -1506,9 +1506,11 @@ addEventListener('keydown', e => {
   else if ((e.code === 'Enter' || e.code === 'Space') && S.mode === 'title') { audioOn(); if (S.ttl.t < TITLE_T.coin) skipTitle(); else startLoading(); }
   else if ((e.code === 'Enter' || e.code === 'Space') && S.mode === 'loading' && S.load.t >= LOAD_TIME) startIntro();
   else if ((e.code === 'Enter' || e.code === 'Space') && S.mode === 'won' && S.modeT > 0.6) startInitials();
-  else if ((e.code === 'Enter' || e.code === 'Space') && ['dead', 'board'].includes(S.mode) && S.modeT > 0.4) start();
+  else if ((e.code === 'Enter' || e.code === 'Space') && ['dead', 'board'].includes(S.mode) && S.modeT > 0.4) startCredits();
+  else if ((e.code === 'Enter' || e.code === 'Space') && S.mode === 'credits' && S.modeT > 0.6) creditsPress();
 });
-addEventListener('keyup', e => { if (KEYMAP[e.code]) input.keys[KEYMAP[e.code]] = false; });
+addEventListener('keyup', e => { if (KEYMAP[e.code]) input.keys[KEYMAP[e.code]] = false; if ((e.code === 'Enter' || e.code === 'Space') && S.cred) S.cred.fast = false; });
+addEventListener('pointerup', () => { if (S.cred) S.cred.fast = false; });
 addEventListener('blur', () => { input.keys = {}; if (S.mode === 'play') togglePause(); });
 cv.addEventListener('pointerdown', e => {
   audioOn();
@@ -1517,7 +1519,8 @@ cv.addEventListener('pointerdown', e => {
   if (S.mode === 'intro') { finishIntro(); return; }
   if (S.mode === 'initials') { initialsTap(e); return; }
   if (S.mode === 'won') { if (S.modeT > 0.6) startInitials(); return; }
-  if (['dead', 'board'].includes(S.mode)) { if (S.modeT > 0.4) start(); return; }
+  if (['dead', 'board'].includes(S.mode)) { if (S.modeT > 0.4) startCredits(); return; }
+  if (S.mode === 'credits') { if (S.modeT > 0.6) creditsPress(); return; }
   if (S.mode === 'paused') { togglePause(); return; }
   if (e.pointerType === 'mouse' && e.button === 0) input.fire = true;
 });
@@ -2934,7 +2937,58 @@ function drawBoard() {
     txt(String(i + 1).padStart(2, ' ') + '.', 160, y, col); txt(r.i, 214, y, col); txt(fmtT(r.t), 320, y, col, 8, 'right');
   });
   if (me >= 10) txt(`YOU: #${me + 1}  ${S.lastIni}  ${fmtT(S.fight)}`, W / 2, 212, '#ffe800', 8, 'center');
-  if (Math.floor(S.time * 2) % 2) txt(isTouch ? 'TAP TO FIGHT AGAIN' : 'PRESS ENTER TO FIGHT AGAIN', W / 2, 240, C.white, 8, 'center');
+  if (Math.floor(S.time * 2) % 2) txt(isTouch ? 'TAP TO CONTINUE' : 'PRESS ENTER TO CONTINUE', W / 2, 240, C.white, 8, 'center');
+}
+
+/* ================= Credits: SNES-ending style, black screen, slow white scroll, then a cast roll ================= */
+const CREDITS_MSG = [
+  ["YOU PROBABLY NORMALLY SKIP THE CREDITS SCREEN, BUT PLEASE READ THIS ONE.", '#ffe800'],
+  ["AUSTRALIA IS NO.1 IN THE WORLD FOR SKIN CANCER.", C.white],
+  ["NUMBER ONE.", '#ff5a1f'], ["IN THE WORLD.", '#ff5a1f'],
+  ["2 OUT OF 3 OF US WILL BE DIAGNOSED BEFORE WE'RE 70.", C.white],
+  ["AND, DUDES, IT'S MOSTLY MEN WHO GET SKIN CANCER AND DIE FROM IT. TURNS OUT LIVING ON A BIG DESERT ISLAND AND BEING SHITHOUSE AT PUTTING ON SUNSCREEN IS NOT A GOOD COMBO.", C.white],
+  ["SLATHER IS A 100% AUSTRALIAN-MADE AND OWNED SPF 50+ SUNSCREEN AND MOISTURISER.", C.white],
+  ["WE MADE IT BECAUSE WE SHOULDN'T BE LOSING ANY MORE MATES TO SKIN CANCER. AND THE ONLY THING WORSE THAN THE SUN'S RADIOACTIVE RAYS IS OUR COLLECTIVE ATTITUDE TO SKIN PROTECTION.", C.white],
+  ["SO REMEMBER TO LOOK AFTER YOURSELVES WHEN YOU'RE OUT AND ABOUT AND SLATHER UP.", '#ffe800'],
+];
+const CAST = [['bogan', 'THE BOGAN', 4], ['sun_head', 'THE SUN', 1], ['npc_eshay', 'THE ESHAY', 4], ['npc_backpacker', 'THE BRITISH BACKPACKER', 4], ['npc_italian', 'THE ITALIAN', 4],
+  ['npc_influencer', 'THE INFLUENCER', 4], ['npc_icecream', 'THE ICE CREAM MAN', 4], ['ibis', 'THE BIN CHICKEN', 2], ['crab', 'THE CRAB', 2], ['npc_oldman', 'THE OLD MAN', 4]];
+function wrapText(str, n) { const out = []; let line = ''; for (const w of str.split(' ')) { if (line && (line + ' ' + w).length > n) { out.push(line); line = w; } else line = line ? line + ' ' + w : w; } if (line) out.push(line); return out; }
+function creditsLayout() { // a list of rows, each {h, draw(y)}
+  const rows = [], gap = h => rows.push({ h, draw() {} });
+  for (const [para, col] of CREDITS_MSG) { for (const l of wrapText(para, 40)) rows.push({ h: 14, draw: y => txt(l, W / 2, y, col, 8, 'center') }); gap(18); }
+  gap(60); rows.push({ h: 34, draw: y => txt('CAST', W / 2, y, '#ffe800', 16, 'center') });
+  for (const [name, label, nf] of CAST) rows.push({ h: name === 'sun_head' ? 96 : 58, draw: y => {
+    const sp = SPR[name]; if (!sp) return; const big = name === 'sun_head', f = Math.floor(S.time * 6) % nf;
+    if (big) ctx.drawImage(sp.img, 0, 0, sp.fw, sp.fh, W / 2 - 150 - sp.fw * 0.3, y, sp.fw * 0.6, sp.fh * 0.6);
+    else spr(name, f, W / 2 - 150, y + 44);
+    txt(label, W / 2 - 100, y + (big ? 36 : 22), C.white, 8);
+  } });
+  gap(70); rows.push({ h: 120, draw: y => { const A = TITLE_ART; if (A) ctx.drawImage(A.slat, W / 2 - A.slat.width * 0.35, y, A.slat.width * 0.7, A.slat.height * 0.7); } });
+  rows.push({ h: 1, draw: y => txt('THANK YOU FOR PLAYING', W / 2, y, C.white, 8, 'center') });   // the scroll parks with this line at CRED_STOP
+  return rows;
+}
+function startCredits() {
+  erHide(); $('#touch').hidden = true;
+  S.mode = 'credits'; S.modeT = 0; S.cred = { y: H + 8, rows: creditsLayout(), fast: false, skippable: !!S.credSeen }; S.credSeen = true;
+  S.cred.total = S.cred.rows.reduce((a, r) => a + r.h, 0);
+}
+const CRED_STOP = 160;
+function creditsDone() { return S.cred && S.cred.y + S.cred.total - 1 <= CRED_STOP; }
+function creditsUpdate(dt) { const C2 = S.cred; C2.y = Math.max(CRED_STOP + 1 - C2.total, C2.y - dt * (C2.fast ? 90 : 16)); }
+function creditsPress() { // tap/Enter: speeds things up the first time, skips once you've sat through it
+  if (creditsDone() || S.cred.skippable) start(); else S.cred.fast = true;
+}
+function drawCredits() {
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  const C2 = S.cred; let y = C2.y;
+  for (const r of C2.rows) { if (y > -130 && y < H + 10) r.draw(Math.round(y)); y += r.h; }
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, 20); ctx.fillRect(0, H - 24, W, 24);   // clean edges, like a TV-safe frame
+  if (creditsDone()) {
+    txt('THE END', W / 2, 192, C.white, 16, 'center');
+    if (Math.floor(S.time * 2) % 2) txt(isTouch ? 'TAP TO PLAY AGAIN' : 'PRESS ENTER TO PLAY AGAIN', W / 2, 236, '#ffe800', 8, 'center');
+  } else if (C2.skippable) txt(isTouch ? 'TAP TO SKIP' : 'ENTER TO SKIP', W - 8, H - 14, '#6b5a45', 8, 'right');
+  else if (!C2.fast && S.modeT > 3) txt(isTouch ? 'HOLD TO SPEED UP' : 'HOLD ENTER TO SPEED UP', W - 8, H - 14, '#6b5a45', 8, 'right');
 }
 
 /* ================= Loop ================= */
@@ -2958,7 +3012,7 @@ function frame(now) {
         if (S.endT <= 0) {
           S.mode = player.dead ? 'dead' : 'won'; S.modeT = 0; $('#touch').hidden = true; (player.dead ? SFX.lose : SFX.win)();
           deadLine = ['SHOULD HAVE SLATHERED.', 'SLIP, SLOP, SLAP, ROLL.', 'THE SUN IS NOT YOUR FRIEND.', 'REAPPLY EVERY TWO HOURS.'][Math.floor(Math.random() * 4)];
-          if (player.dead) erBanner('died', 'YOU GOT BURNT', `${deadLine}<br><span class="again">${isTouch ? 'TAP TO TRY AGAIN' : 'PRESS ENTER TO TRY AGAIN'}</span>`); else erHide();
+          if (player.dead) erBanner('died', 'YOU GOT BURNT', `${deadLine}<br><span class="again">${isTouch ? 'TAP TO CONTINUE' : 'PRESS ENTER TO CONTINUE'}</span>`); else erHide();
         }
       }
       if (S.banner && (S.banner.t -= dt) <= 0) S.banner = null;
@@ -2971,6 +3025,7 @@ function frame(now) {
       for (let i = hazards.length - 1; i >= 0; i--) if (hazards[i] && !hazards[i].update(dt)) hazards.splice(i, 1);
     } else if (S.mode === 'title') { titleUpdate(dt); updateBoss(dt); }
     else if (S.mode === 'loading') loadingUpdate(dt);
+    else if (S.mode === 'credits') creditsUpdate(dt);
     else updateBoss(dt);
     input.roll = false; input.fire = false;
     updateNPCs(dt); updateSea(dt); updateGroups(dt); updateVehicles(dt); updateCrabs(dt); updateCastles(dt);
@@ -2984,7 +3039,7 @@ function frame(now) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
   const sx = S.shake ? Math.round(rand(-S.shake, S.shake)) : 0, sy = S.shake ? Math.round(rand(-S.shake, S.shake)) : 0;
   ctx.translate(sx, sy);
-  if (S.mode === 'loading') drawLoading(); else if (S.mode === 'title') drawTitleScene(); else drawWorld();
+  if (S.mode === 'loading') drawLoading(); else if (S.mode === 'title') drawTitleScene(); else if (S.mode === 'credits') drawCredits(); else drawWorld();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (S.hurtA > 0) { ctx.strokeStyle = `rgba(226,54,31,${S.hurtA * 0.8})`; ctx.lineWidth = 14; ctx.strokeRect(0, 0, W, H); }
   if (player.hp < 30 && S.mode === 'play' && !player.dead) { ctx.strokeStyle = `rgba(226,54,31,${0.4 + 0.3 * Math.sin(S.time * 6)})`; ctx.lineWidth = 6; ctx.strokeRect(0, 0, W, H); }
@@ -2994,7 +3049,7 @@ function frame(now) {
   if (S.mode === 'title') { if (S.ttl.gate) drawTitleGate(); else drawTitle(); }
   else if (S.mode === 'loading') { /* the loading screen is the whole picture */ }
   else if (S.mode === 'intro') drawIntroOverlay();
-  else {
+  else if (S.mode !== 'credits') {
     drawHUD();
     const blink = Math.floor(S.time * 2) % 2, again = isTouch ? 'TAP TO TRY AGAIN' : 'PRESS ENTER TO TRY AGAIN';
     // the death screen is the Elden Ring-style banner over the canvas (#erBanner)
@@ -3017,7 +3072,7 @@ function fit() {
 addEventListener('resize', fit); fit();
 // debugging handle for playtesting from the console
 if (isTouch) document.body.classList.add('touch');
-window.__slather = { igniteVan, spawnBackpacker, sendIbis, dropLoot, loot, ibises, shipDbg: () => SHIP, startLoading, NPC_TYPES, SPR, hurt, spawnItalian, makeNPC, BOARD, saveRun, startInitials, spawnEshay, spawnInfluencer, crowdAround, firePatch, spawnVan, castles, spawnFrisbee, vehicles, crabs, groups, finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
+window.__slather = { startCredits, igniteVan, spawnBackpacker, sendIbis, dropLoot, loot, ibises, shipDbg: () => SHIP, startLoading, NPC_TYPES, SPR, hurt, spawnItalian, makeNPC, BOARD, saveRun, startInitials, spawnEshay, spawnInfluencer, crowdAround, firePatch, spawnVan, castles, spawnFrisbee, vehicles, crabs, groups, finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
 reset();
 if (document.fonts) document.fonts.load(`8px ${PIX}`).catch(() => {});
 if (document.fonts) document.fonts.load('44px Anton').catch(() => {});
