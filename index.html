@@ -2578,8 +2578,8 @@ function makeTitleArt() {
   // --- SUN FIGHTER, slapped on with a fat brush ---
   const [fight, f] = mk(300, 80);
   const brush = (txt, x, y, size) => {
-    f.font = `${size}px Knewave, "Permanent Marker", Impact, sans-serif`; f.textAlign = 'left'; f.textBaseline = 'alphabetic'; f.lineJoin = 'round';
-    f.save(); f.translate(x, y); f.rotate(-0.09); f.transform(1, 0, -0.18, 1, 0, 0);
+    f.font = `${size}px Knewave, "Permanent Marker", Impact, sans-serif`; f.textAlign = 'left'; f.textBaseline = 'alphabetic'; f.lineJoin = 'miter'; f.miterLimit = 4;   // square-cut corners, not puffy ones
+    f.save(); f.translate(x, y); f.rotate(-0.11); f.transform(1, 0, -0.3, 1, 0, 0);
     f.fillStyle = '#3a0806'; f.fillText(txt, 3, 4);                                                   // drop shadow
     f.strokeStyle = '#16120f'; f.lineWidth = 7; f.strokeText(txt, 0, 0);
     const gr2 = f.createLinearGradient(0, -size * 0.8, 0, 0); gr2.addColorStop(0, '#ffb02a'); gr2.addColorStop(0.35, '#ff5a1f'); gr2.addColorStop(0.75, '#e2361f'); gr2.addColorStop(1, '#a01208');
@@ -2592,7 +2592,18 @@ function makeTitleArt() {
   f.globalCompositeOperation = 'destination-out';
   for (let i = 0; i < 14; i++) { const y = 20 + r() * 50, x = r() * 300; f.fillRect(x, y, 4 + r() * 10, 1); }
   f.globalCompositeOperation = 'source-over';
-  pixelize(fight, ['#ffd25a', '#ffb02a', '#ff8a1f', '#ff5a1f', '#e2361f', '#a01208', '#3a0806', '#16120f']);
+  const slash = (x0, y0, x1, y1, gx0, gx1) => { // a sword cut clean through the paint: top half knocked askew, a hairline gap, a glint along the blade
+    const m = (y1 - y0) / (x1 - x0), Y = x => y0 + (x - x0) * m, above = () => { f.beginPath(); f.moveTo(0, Y(0)); f.lineTo(300, Y(300)); f.lineTo(300, -20); f.lineTo(0, -20); f.closePath(); };
+    const [cp, c2] = mk(300, 80); c2.drawImage(fight, 0, 0);
+    f.save(); f.globalCompositeOperation = 'destination-out'; above(); f.fill(); f.restore();
+    f.save(); above(); f.clip(); f.drawImage(cp, 3, -2); f.restore();
+    f.save(); f.globalCompositeOperation = 'destination-out'; f.lineWidth = 2.4; f.beginPath(); f.moveTo(0, Y(0)); f.lineTo(300, Y(300)); f.stroke(); f.restore();
+    const xm = gx0 + (gx1 - gx0) * 0.6; f.fillStyle = '#fff6c0';
+    f.beginPath(); f.moveTo(gx0, Y(gx0)); f.lineTo(xm, Y(xm) - 2.2); f.lineTo(gx1, Y(gx1)); f.lineTo(xm, Y(xm) + 1.4); f.closePath(); f.fill();
+  };
+  slash(0, 36, 100, 48, 6, 88);                // through SUN
+  slash(90, 60, 300, 32, 96, 288);             // the long one through FIGHTER
+  pixelize(fight, ['#fff6c0', '#ffd25a', '#ffb02a', '#ff8a1f', '#ff5a1f', '#e2361f', '#a01208', '#3a0806', '#16120f']);
   const [sheen] = mk(slat.width, slat.height), [aura] = mk(280, 260);
   TITLE_ART = { sky, land, slat, fight, sheen, aura, embers: [] };
 }
@@ -2733,7 +2744,7 @@ function drawTitle() { // the lettering, sparks, and the coin prompt over the sc
     ctx.save(); ctx.globalAlpha = e < 1 ? 0.4 + 0.6 * e : 1; ctx.translate(cx, cy); ctx.scale(sc, sc); ctx.drawImage(s, -s.width / 2, -s.height / 2); ctx.restore();
   }
   if (t >= TITLE_T.write) {
-    const p = clamp((t - TITLE_T.write) / (TITLE_T.written - TITLE_T.write), 0, 1), f = A.fight, w = Math.round(f.width * p), x0 = 268 - f.width / 2, y0 = 118;
+    const p = clamp((t - TITLE_T.write) / (TITLE_T.written - TITLE_T.write), 0, 1), f = A.fight, w = Math.round(f.width * p), x0 = 268 - f.width / 2, y0 = 123;
     ctx.drawImage(f, 0, 0, w, f.height, x0, y0, w, f.height);
     if (p < 1) for (let i = 0; i < 2; i++) A.embers.push({ x: x0 + w, y: y0 + 36 + rand(-12, 12) - p * 8, vx: rand(-20, 40), vy: rand(-50, 10), life: 0.4 });
   }
