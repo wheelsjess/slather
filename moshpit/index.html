@@ -73,7 +73,14 @@ const W = 860, D = 620, BACK_Y = 40, STAGE_Y = 160, STAGE_H = 30, K = 0.62;
 const R = 12, GRAV = 0.42, SURF_Z = 72, SET_LEN = 180*60;
 const STAGE = {x0:0, x1:W, y0:BACK_Y, y1:STAGE_Y, h:STAGE_H};
 const BAR = {x0:440, x1:W, y0:D-66, y1:D-42, h:40};
-const BLOCKS = [STAGE, BAR];
+const STACK_LO = STAGE_H+40, STACK_HI = STAGE_H+80;
+// each stack: a wide bottom cab with a step on the side facing centre stage, and a top cab on the outer side
+const STACKS = [[22,1],[W-96,-1]].map(([x0,dir])=>{
+  const lo={x0, x1:x0+74, y0:STAGE_Y-58, y1:STAGE_Y-6, h:STACK_LO};
+  const hi = dir>0 ? {x0:lo.x0, x1:lo.x0+42, y0:lo.y0, y1:lo.y1, h:STACK_HI} : {x0:lo.x1-42, x1:lo.x1, y0:lo.y0, y1:lo.y1, h:STACK_HI};
+  return {lo, hi, cx:(hi.x0+hi.x1)/2};
+});
+const BLOCKS = [STAGE, BAR, ...STACKS.flatMap(k=>[k.lo,k.hi])];
 const PIT = {x:W/2, y:350, r:125};
 const CIRCLE_DIR = -1;
 const rand = (a,b)=>a+Math.random()*(b-a), pick = a=>a[Math.random()*a.length|0];
@@ -159,7 +166,7 @@ function near(x,y,rad,fn){
 // ---------- the room ----------
 const BAND = [], GUARDS = [];
 let drumKit = null, bartender = null;
-const MONITORS = [W/2-190, W/2, W/2+190];
+const MONITORS = [W/2-170, W/2, W/2+170];
 function inBar(x,y,m){ return x>BAR.x0-m && y>BAR.y0-m && y<BAR.y1+m; }
 function spawnAll(){
   chars = []; nextId = 0; BAND.length = 0; GUARDS.length = 0;
@@ -197,16 +204,16 @@ function spawnAll(){
   // the band
   const bandLook = (shirt,hairType,hair)=>({shirt,pants:'#111115',skin:pick(SKINS),hair,hairType,print:'#c2182b',longSleeve:false,vest:false,mohawk:'#d4152f',cap:'#18171c'});
   const gtr = makeChar(W/2-200, STAGE_Y-44, 'band', bandLook('#18171c','long','#141010'), {hs:1.05});
-  gtr.inst='guitar'; gtr.zone=[70, W/2-70];
+  gtr.inst='guitar'; gtr.zone=[125, W/2-70];
   const sing = makeChar(W/2, STAGE_Y-26, 'band', bandLook('#e2ddd2','long','#2b1d14'), {hs:1.08});
-  sing.inst='mic'; sing.zone=[70, W-70];
+  sing.inst='mic'; sing.zone=[125, W-125];
   const bass = makeChar(W/2+200, STAGE_Y-44, 'band', bandLook('#5a1a1a','long','#e6cf8a'), {hs:1.04});
-  bass.inst='bass'; bass.zone=[W/2+70, W-70];
+  bass.inst='bass'; bass.zone=[W/2+70, W-125];
   const drum = makeChar(W/2, BACK_Y+34, 'band', bandLook('#18171c','bald','#141010'), {hs:1.06});
   drum.inst='drums';
   for(const b of [gtr,sing,bass,drum]){ b.fa=b.faT=Math.PI/2; b.thr=12; b.mass=1.4; b.bangAmt=1.1; BAND.push(b); }
   drumKit = {x:W/2, y:BACK_Y+56};
-  for(const gx of [34, W-34]){
+  for(const gx of [156, W-156]){
     const g = makeChar(gx, STAGE_Y-22, 'guard',
       {shirt:'#f5c518',pants:'#111115',skin:pick(SKINS),hair:'#141010',hairType:'bald',print:'#111115',longSleeve:false,vest:false},
       {hs:1.12, mass:2});
@@ -219,7 +226,7 @@ function spawnAll(){
 const G = {mode:'boot', frame:0, t0:0, beat:0, beatI:-1, beatHit:false, bar:-1, barHit:false,
   sec:'mosh', secObj:null, plan:[], lastPick:null,
   score:0, combo:1, comboT:0, best:0, setF:0, texts:[], parts:[], banner:null, bubble:null,
-  flash:0, shake:0, onStage:0, onBar:0, hintT:0, stats:null, newBest:false, surfHint:false, crashT:99, zoom:1, wod:null, surfPts:0, uiRects:[], cam:{x:W/2, y:PIT.y*K}};
+  flash:0, shake:0, onStage:0, onBar:0, hintT:0, stats:null, newBest:false, surfHint:false, crashT:99, zoom:1, timeScale:1, surfMsg:null, wod:null, surfPts:0, uiRects:[], cam:{x:W/2, y:PIT.y*K}};
 try{ G.best = +localStorage.getItem('moshpit.best') || 0; }catch(e){}
 function resetStats(){ G.stats={leveled:0, knocked:0, air:0, surf:0, helped:0, dives:0, longSurf:0}; }
 resetStats();
@@ -301,12 +308,13 @@ function enterSurf(c, fromDive){
   c.bal=rand(-.05,.05); c.balV=0; c.surfF=0; c.surfDir=-Math.PI/2+rand(-1.2,1.2);
   if(c.isPlayer) G.surfPts=0;
   if(isP(c)){
-    if(c.diveFrom==='stage'){ G.stats.dives++; award(400,'STAGE DIVE!','#ffd23f'); }
-    else if(c.diveFrom==='bar'){ G.stats.dives++; award(300,'BAR DIVE!','#ffd23f'); }
-    else award(fromDive?200:120,'CROWD SURF!','#7fd8ff');
+    const msg = c.diveFrom==='stack'?['SPEAKER STACK DIVE!',700] : c.diveFrom==='stage'?['STAGE DIVE!',400] : c.diveFrom==='bar'?['BAR DIVE!',300] : [fromDive?'CAUGHT!':'CROWD SURF!',fromDive?200:120];
+    if(c.diveFrom) G.stats.dives++;
+    award(msg[1]); G.surfMsg={t:msg[0]+'  +'+Math.round(msg[1]*Math.floor(G.combo)), life:110};
+    G.flash=Math.max(G.flash,.35);
     roar(.5);
   }
-  c.diveFrom=null;
+  c.diveFrom=null; c.trick=null;
 }
 function endSurf(c, how){
   if(!isP(c)) return;
@@ -325,7 +333,7 @@ function supporters(c, rad){
 }
 
 function land(c, vz){
-  const wasDive=c.dive; c.dive=false; c.diveFrom=null;
+  const wasDive=c.dive; c.dive=false; c.diveFrom=null; c.trick=null;
   if(isP(c) && c.airF>28){ G.stats.air += c.airF/60; award(Math.round(c.airF*1.5), c.airF>60?'BIG AIR':'AIR', '#9effa8'); }
   c.airF=0;
   if(wasDive && vz < -8.5){
@@ -359,10 +367,28 @@ function blockPoint(p){
   }
 }
 
+const TRICKS=['superman','superman','superman','flip','starfish','backflip'];
+function diveSource(c){
+  if(c.z>=STACK_LO-2) return 'stack';
+  if(c.z>=BAR.h-2 && c.y>BAR.y0-2) return 'bar';
+  return 'stage';
+}
+// throw yourself off something high, flat out, at the crowd
+function launchDive(c, fx, fy, from, trick){
+  const l=Math.hypot(fx,fy)||1; fx/=l; fy/=l;
+  const sp = from==='stack' ? 5.6 : from==='bar' ? 4.4 : 5;
+  c.vx = fx*sp + rand(-.3,.3); c.vy = fy*sp; c.vz = from==='stack' ? 7.4 : 7.8;
+  c.grounded=false; c.dive=true; c.diveFrom=from; c.airF=0; c.act=null;
+  c.fa = c.faT = Math.atan2(c.vy,c.vx);
+  c.trick = trick || (from==='stack' ? pick(['flip','backflip','superman','starfish']) : pick(TRICKS));
+  sfxWhoosh(c===player?1:.4);
+  if(c!==player) roar(.25);
+}
+
 function rootUp(c){
   if(c.state==='getup'){ c.getT++; c.vx*=.6; c.vy*=.6; c.dvx=c.dvy=0; if(c.getT>=36) c.state='up'; }
   const ctrl = c.state==='up' ? clamp(1-c.stagger/c.thr, .08, 1) : 0;
-  const acc = (c.grounded ? .2 : .03)*ctrl;
+  const acc = (c.grounded ? .2 : c.dive ? .004 : .12)*ctrl;
   c.vx += (c.dvx-c.vx)*acc; c.vy += (c.dvy-c.vy)*acc;
   if(c.grounded){ c.vx*=.985; c.vy*=.985; }
   c.x += c.vx; c.y += c.vy;
@@ -376,7 +402,7 @@ function rootUp(c){
   else if(c.z>fl+.5){ c.grounded=false; }
   if(!c.grounded){
     c.airF++;
-    if(c.dive && c.vz<0 && c.z<SURF_Z+14 && c.z>26 && supporters(c,48)>=2) enterSurf(c,true);
+    if(c.dive && c.vz<0 && c.z<SURF_Z+6 && c.z>26 && supporters(c,50)>=2) enterSurf(c,true);
   }
 }
 
@@ -555,6 +581,34 @@ function pose(c){
     if(!c.act && !c.inst){ setT(LELB,0,-15,62); setT(LHND,2,-12,75); setT(RELB,0,15,62); setT(RHND,2,12,75); }
   }
   if(c.dizzy>0){ const w=Math.sin(fr*.2)*6; T[HEAD*3+1]+=w; T[NECK*3+1]+=w*.5; }
+  let pitch=0;
+  if(c.dive && !c.grounded && c.state==='up'){
+    const t=c.airF, flat=Math.PI*.5;
+    // arms out in front like superman, legs long behind
+    setT(LELB,1,-9,72); setT(LHND,3,-7,86); setT(RELB,1,9,72); setT(RHND,3,7,87);
+    setT(LKNE,-1,-5,15); setT(LFT,-3,-6,0); setT(RKNE,-1,5,15); setT(RFT,-3,6,1);
+    switch(c.trick){
+      case 'flip': pitch = Math.min(t*.3, Math.PI*2+flat); break;
+      case 'backflip': pitch = t<24 ? -t*.27 : -Math.PI*2+Math.min(1,(t-24)/10)*(Math.PI*2+flat-0.0); break;
+      case 'starfish':
+        setT(LELB,0,-16,66); setT(LHND,0,-28,72); setT(RELB,0,16,66); setT(RHND,0,28,72);
+        setT(LKNE,0,-10,16); setT(LFT,0,-17,3); setT(RKNE,0,10,16); setT(RFT,0,17,3);
+        pitch = Math.min(1,t/12)*flat*.95; break;
+      default: pitch = Math.min(1,t/10)*flat;
+    }
+    if(c.trick==='flip'||c.trick==='backflip'){
+      // tuck while spinning
+      const spinning = c.trick==='flip' ? t*.3<Math.PI*2 : t<24;
+      if(spinning){ setT(LKNE,10,-6,30); setT(LFT,2,-7,22); setT(RKNE,10,6,30); setT(RFT,2,7,22); setT(LHND,10,-6,40); setT(RHND,10,6,40); setT(LELB,6,-10,48); setT(RELB,6,10,48); }
+    }
+  }
+  if(pitch){
+    const cp=Math.cos(pitch), sp=Math.sin(pitch), zc=31;
+    for(let i=0;i<11;i++){
+      const f=T[i*3], z=T[i*3+2]-zc;
+      T[i*3]=f*cp+z*sp; T[i*3+2]=zc-f*sp+z*cp;
+    }
+  }
 }
 
 function skeleton(c){
@@ -576,6 +630,7 @@ function skeleton(c){
       if(spinning && (i===LHND||i===RHND)) k=.13; else if(spinning && (i===LELB||i===RELB)) k=.2;
       if(c.act==='windmill' && i>=LELB && i<=RHND) k=.35;
       if(st==='surf') k=.3;
+      if(c.dive && !c.grounded) k=.55;
       p.x+=(tx-p.x)*k; p.y+=(ty-p.y)*k; p.z+=(tz-p.z)*k;
     }
   }
@@ -786,7 +841,8 @@ function creep(c){
 }
 
 function aiNPC(c, surfers){
-  if(c.state!=='up'){ c.dvx=c.dvy=0; return; }
+  if(c.state!=='up'){ c.dvx=c.dvy=0; if(c.state==='rag') c.task=null; return; }
+  if(c.task) return aiTask(c);
   if(c.role==='band') return aiBand(c);
   if(c.role==='guard') return aiGuard(c);
   if(c.role==='bartender') return aiBartender(c);
@@ -900,6 +956,68 @@ function chooseBit(c){
   } else { c.bit='bang'; c.bitT=200; }
   if(heavy && c.bit!=='walk' && c.bit!=='spin' && Math.random()<.5) c.bit='bang';
 }
+function startTask(type){
+  let cand;
+  if(type==='bar') cand=chars.filter(c=>(c.role==='stander'||c.role==='barfly')&&c.state==='up'&&!c.task&&c.z<4&&c.x>BAR.x0+10&&c.y>BAR.y0-120);
+  else cand=chars.filter(c=>c.role==='stander'&&!c.joined&&c.state==='up'&&!c.task&&c.z<4&&c.y<STAGE_Y+150);
+  if(!cand.length) return;
+  const c=pick(cand);
+  c.task={type, step:'approach', t:0, tx: type==='bar' ? clamp(c.x+rand(-20,20),BAR.x0+24,W-24) : clamp(c.x+rand(-50,50),120,W-120)};
+}
+function aiTask(c){
+  const k=c.task; k.t++;
+  if(k.t>1000){ c.task=null; return; }
+  if(k.type==='stage'){
+    const onStage = c.y<STAGE_Y && c.z>=STAGE_H-1;
+    if(onStage) k.onT=(k.onT||0)+1;
+    if(k.step==='approach'){
+      seek(c,k.tx,STAGE_Y+R+2,2.8,4); faceMove(c);
+      if(c.grounded && c.y<STAGE_Y+R+14){ c.vz=7.6; c.grounded=false; c.vy=-2.6; k.step='climb'; }
+    } else if(k.step==='climb'){
+      c.dvx=0; c.dvy=-2.6;
+      if(c.grounded){
+        if(onStage){
+          k.step='run';
+          k.stack = Math.random()<.4 ? (c.x<W/2?STACKS[0]:STACKS[1]) : null;
+          k.rx = k.stack ? k.stack.cx : rand(130,W-130);
+          addText(c.x,c.y,c.z+95,pick(['YEEEEW!','WATCH THIS!','HOLD MY BEER!','SEND IT!']),'#f2ece0',13);
+        } else k.step='approach';
+      }
+    } else if(k.step==='run'){
+      if(k.stack){
+        // run at the stack and hop up a cab at a time
+        seek(c,k.rx,STAGE_Y-32,3,4); faceMove(c);
+        if(k.jcd>0) k.jcd--;
+        if(c.z>=STACK_HI-1){ k.step='dive'; k.wait=rand(15,40); c.dvx=c.dvy=0; }
+        else if(c.grounded && Math.abs(c.x-k.rx)<80 && !(k.jcd>0)){ c.vz=7.6; c.grounded=false; k.jcd=24; }
+      } else {
+        const arrived=seek(c,k.rx,STAGE_Y-14,3.4,10); faceMove(c);
+        if(arrived){ k.step='dive'; k.wait=rand(5,25); }
+      }
+      if(k.t>650){ k.step='dive'; k.wait=0; }
+    } else if(k.step==='dive'){
+      c.dvx=c.dvy=0; c.faT=Math.PI/2;
+      if(--k.wait<=0 && c.grounded){
+        const fx = k.stack ? (c.x<W/2?.6:-.6) : (Math.random()<.5?-1:1)*rand(.35,.7);
+        launchDive(c, fx, 1, diveSource(c)); c.task=null;
+      }
+    }
+  } else {
+    const onBar = c.z>=BAR.h-1 && c.y>BAR.y0 && c.y<BAR.y1;
+    if(k.step==='approach'){
+      seek(c,k.tx,BAR.y0-R-2,2.2,4); c.faT=Math.PI/2;
+      if(c.grounded && c.y>BAR.y0-R-14){ c.vz=7.6; c.grounded=false; c.vy=2.4; k.step='climb'; }
+    } else if(k.step==='climb'){
+      c.dvx=0; c.dvy = c.y>BAR.y0+8 ? 0 : 2.4;
+      if(c.y>BAR.y0+8 && c.vy>0) c.vy=0;
+      if(c.grounded){ if(onBar){ k.step='party'; k.wait=rand(50,110); startAct(c,'horns',k.wait); } else k.step='approach'; }
+    } else if(k.step==='party'){
+      c.dvx=c.dvy=0; c.faT=-Math.PI/2;
+      if(--k.wait<=0){ launchDive(c, (Math.random()<.5?-1:1)*rand(.3,.6), -1, 'bar'); c.task=null; }
+    }
+  }
+}
+
 function aiBand(c){
   if(c.state!=='up') return;
   if(--c.bitT<=0) chooseBit(c);
@@ -918,7 +1036,7 @@ function aiGuard(c){
   if(c.state!=='up') return;
   const p=player;
   const onStage = G.mode==='play' && p.state==='up' && p.y<STAGE_Y && p.z>=STAGE_H-2;
-  if(onStage && G.onStage>40){
+  if(onStage && G.onStage>110){
     const nearG = GUARDS.reduce((a,g)=>Math.hypot(g.x-p.x,g.y-p.y)<Math.hypot(a.x-p.x,a.y-p.y)?g:a);
     if(nearG===c){
       const reached = seek(c,p.x,p.y-6,3,26);
@@ -926,12 +1044,21 @@ function aiGuard(c){
       if(reached && c.actCD<=0){
         startAct(c,'throw',22); c.actCD=60;
         const dx=p.x-c.x, dd=Math.abs(dx)||1;
-        p.vx=dx/dd*1.2+rand(-.6,.6); p.vy=5.2; p.vz=7; p.grounded=false; p.dive=true; p.diveFrom='stage';
+        launchDive(p, dx/dd*.3, 1, 'stage', 'starfish');
         G.onStage=0;
         addText(c.x,c.y,c.z+100,pick(['GET OFF MY STAGE!','NOPE.','BACK IN THE PIT!']),'#f5c518',17);
         sfxThud(.7);
       }
       return;
+    }
+  }
+  if(c.actCD<=0){
+    let tgt=null;
+    near(c.x,c.y,30,o=>{ if(!tgt && o.task && o.task.type==='stage' && (o.task.onT||0)>240 && o.state==='up' && o.grounded && Math.abs(o.z-c.z)<6 && o.y<STAGE_Y) tgt=o; });
+    if(tgt){
+      startAct(c,'throw',22); c.actCD=90; tgt.task=null;
+      launchDive(tgt, rand(-.4,.4), 1, 'stage');
+      addText(c.x,c.y,c.z+100,pick(['OFF YOU GO!','OUT!','NOT TONIGHT!']),'#f5c518',14);
     }
   }
   seek(c,c.home.x,c.home.y,1.6,6);
@@ -981,13 +1108,18 @@ function ctrlPlayer(c){
   c.dvx=mx*spd; c.dvy=my*spd;
   if(mx||my) c.faT=Math.atan2(my,mx);
   if(In.jumpP && c.grounded){
-    const high = c.z>=20;
-    c.vz = high ? 8.2 : 7.6; c.grounded=false;
+    // off something high: jump toward the crowd (or with no direction) to dive, any other way to hop
+    const from = c.z>=20 ? diveSource(c) : null;
+    const towardCrowd = from==='bar' ? my<-.3 : my>.3;
+    const high = from && (towardCrowd || (!mx && !my));
     if(high){
-      c.dive=true;
-      if(c.z>=BAR.h-2 && c.y>BAR.y0-2){ c.diveFrom='bar'; c.vy-=1.6; }
-      else { c.diveFrom='stage'; c.vy+=1.8; }
-    }
+      let fx=mx, fy=my;
+      if(from==='bar'){ if(fy>-.3) fy=-1; } else { if(fy<.3) fy=1; if(from==='stack') fx += c.x<W/2 ? .6 : -.6; }
+      launchDive(c, fx, fy, from);
+      const names={superman:'SUPERMAN!!!', flip:'FRONT FLIP!!', backflip:'BACKFLIP!!', starfish:'STARFISH!!'};
+      G.banner={title:names[c.trick], sub:{stack:'off the speaker stack',stage:'off the stage',bar:'off the bar'}[from], life:100};
+      G.flash=Math.max(G.flash,.5); roar(.6);
+    } else { c.vz=7.6; c.grounded=false; }
     if(G.sec==='breakdown'){
       const off=Math.abs(G.beat-Math.round(G.beat));
       if(off<.14) award(60,'ON BEAT!','#9effa8');
@@ -1056,7 +1188,7 @@ function wodDrop(){
     let on;
     if(rel<16) on = rel%2===0;                                  // first four bars: every other beat
     else if(rel<36) on = rel%2===0 || (rel%4===3 && Math.random()<.5);
-    else on = rel%2===0 || Math.random()<.7;                    // last bars: nearly every beat
+    else on = rel%2===0 || Math.random()<.45;                   // last bars: busier
     if(!on) continue;
     let d=pick(DIRS); if(d===last && run>=1) d=pick(DIRS.filter(x=>x!==last));
     run = d===last ? run+1 : 0; last=d;
@@ -1143,9 +1275,9 @@ function wodUpdate(){
   if(w.phase!=='combo') return;
   if(w.fbT>0) w.fbT--;
   const bn=judgeBeat(), n=w.notes[w.i];
-  if(In.dirP && n && Math.abs(bn-n.b)<.32){
+  if(In.dirP && n && Math.abs(bn-n.b)<.46){
     if(In.dirP!==n.d) return wodFail('WRONG MOVE! THROWN OUT');
-    const perfect=Math.abs(bn-n.b)<.13;
+    const perfect=Math.abs(bn-n.b)<.18;
     n.hit=true; n.q=perfect?'p':'g'; w.i++; w.streak++; w.hits++; if(perfect) w.perfects++;
     w.fb=perfect?'PERFECT':'GOOD'; w.fbT=24;
     award(perfect?50:30);
@@ -1154,7 +1286,7 @@ function wodUpdate(){
     if(w.hits%4===0) wodWave();
   }
   const n2=w.notes[w.i];
-  if(n2 && bn-n2.b>.32) return wodFail('MISSED THE BEAT! THROWN OUT');
+  if(n2 && bn-n2.b>.46) return wodFail('MISSED THE BEAT! THROWN OUT');
   if(!n2 && bn>w.end-.5) wodEnd(true);
 }
 
@@ -1226,6 +1358,17 @@ function step(){
     wodUpdate();
   }
   In.jumpP=In.shoveP=In.kickP=In.liftP=false; In.dirP=null;
+  // the crowd gets up to things: stage dives, stack dives, bar dives
+  if(G.sec!=='wodSplit' && G.sec!=='wodCharge'){
+    const busy=t=>chars.filter(c=>c.task&&c.task.type===t).length;
+    if(G.frame%(G.sec==='surf'?180:420)===0 && busy('stage')<2) startTask('stage');
+    if(G.frame%660===330 && busy('bar')<1) startTask('bar');
+  }
+  // vapour trails behind anyone flying through the air
+  for(const c of chars) if(c.dive && !c.grounded && c.state==='up' && G.frame%2===0){
+    const q=c.pts[PELV];
+    G.parts.push({x:q.x,y:q.y,z:q.z,vx:0,vy:0,vz:0,g:0,life:c===player?28:16,col:c===player?'#ffe9a8':'#ffffff'});
+  }
   // the crowd sends people up during crowd-surf sections
   if((G.sec==='surf' && G.frame%60===0) || (G.sec==='mosh' && G.frame%500===0)){
     const cand=chars.filter(c=>c.role==='stander'&&c.state==='up'&&c.grounded&&c.y>STAGE_Y+140&&c.z<4);
@@ -1253,12 +1396,13 @@ function step(){
     G.hintT++;
   }
   // effects
-  for(const q of G.parts){ q.x+=q.vx; q.y+=q.vy; q.z+=q.vz; q.vz-=.25; q.life--; const fl=floorZ(q.x,q.y); if(q.z<fl){q.z=fl;q.vx*=.5;q.vy*=.5;q.vz=0;} }
+  for(const q of G.parts){ q.x+=q.vx; q.y+=q.vy; q.z+=q.vz; q.vz-=(q.g===undefined?.25:q.g); q.life--; const fl=floorZ(q.x,q.y); if(q.z<fl){q.z=fl;q.vx*=.5;q.vy*=.5;q.vz=0;} }
   G.parts=G.parts.filter(q=>q.life>0);
   for(const t of G.texts){ t.life--; t.z+=.6; }
   G.texts=G.texts.filter(t=>t.life>0);
   if(G.banner&&--G.banner.life<=0) G.banner=null;
   if(G.bubble&&--G.bubble.life<=0) G.bubble=null;
+  if(G.surfMsg&&--G.surfMsg.life<=0) G.surfMsg=null;
   G.flash*=.88; G.shake*=.85;
   if(G.beatHit && G.sec==='breakdown' && G.beatI%2===0) G.flash=Math.max(G.flash,.25);
   if(G.beatHit && G.sec==='wodCharge') G.flash=Math.max(G.flash,.18);
@@ -1293,7 +1437,8 @@ AU.init = function(){
   this.master=a.createGain(); this.master.gain.value=this.muted?0:.6;
   const comp=a.createDynamicsCompressor(); comp.threshold.value=-16; comp.ratio.value=5;
   this.master.connect(comp); comp.connect(a.destination);
-  this.music=a.createGain(); this.music.gain.value=.75; this.music.connect(this.master);
+  this.music=a.createGain(); this.music.gain.value=.75;
+  this.lp=a.createBiquadFilter(); this.lp.type='lowpass'; this.lp.frequency.value=18000; this.music.connect(this.lp); this.lp.connect(this.master);
   this.sfx=a.createGain(); this.sfx.gain.value=.9; this.sfx.connect(this.master);
   const len=a.sampleRate; this.noise=a.createBuffer(1,len,a.sampleRate);
   const d=this.noise.getChannelData(0); for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
@@ -1307,6 +1452,11 @@ AU.init = function(){
   this.timer=setInterval(()=>this.schedule(),25);
 };
 AU.restart=function(){ this.step=0; };
+AU.slow=function(on){
+  if(!this.ctx || this.isSlow===on) return;
+  this.isSlow=on;
+  this.lp.frequency.setTargetAtTime(on?650:18000, this.ctx.currentTime, on?.06:.25);
+};
 AU.schedule=function(){
   if(!this.ctx||this.ctx.state!=='running') return;
   const now=this.ctx.currentTime;
@@ -1412,6 +1562,13 @@ function sfxThud(v){
   const o=a.createOscillator(), g2=a.createGain(); o.frequency.setValueAtTime(110,t); o.frequency.exponentialRampToValueAtTime(45,t+.09);
   AU.env(g2,t,.5*v,.1); o.connect(g2); g2.connect(AU.sfx); o.start(t); o.stop(t+.12);
 }
+function sfxWhoosh(v){
+  if(!AU.ctx||!AU.on) return;
+  const a=AU.ctx, t=a.currentTime, n=AU.noiseSrc(t,1.1), f=a.createBiquadFilter(), g=a.createGain();
+  f.type='bandpass'; f.Q.value=1.2; f.frequency.setValueAtTime(300,t); f.frequency.exponentialRampToValueAtTime(2400,t+.5); f.frequency.exponentialRampToValueAtTime(500,t+1);
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.35*v,t+.15); g.gain.exponentialRampToValueAtTime(.001,t+1);
+  n.connect(f); f.connect(g); g.connect(AU.sfx);
+}
 function roar(v){
   if(!AU.ctx||!AU.on) return;
   const a=AU.ctx, t=a.currentTime, n=AU.noiseSrc(t,2.4);
@@ -1435,6 +1592,7 @@ function updateCamera(){
   const p=player;
   let tx=p.x, ty=p.y*K-(p.state==='surf'?40:20)-30;
   if(G.wod && G.mode==='play'){ tx=PIT.x; ty=PIT.y*K-30; }
+  if(G.mode==='play' && p.dive && !p.grounded){ ty=p.y*K-p.z*.6-20; }
   const vw=CW/S, vh=CH/S;
   const minX=vw/2-40, maxX=W-vw/2+40;
   tx = minX>maxX ? W/2 : clamp(tx,minX,maxX);
@@ -1665,6 +1823,25 @@ function drawBar(){
     ctx.fillStyle='rgba(255,255,255,.8)'; ctx.fillRect(sx(x),sy(y0+8,h+10),5*S,2*S);
   }
 }
+function cab(x0,x1,yf,z0,z1){
+  // one speaker cab: front face with two cones, tolex top
+  ctx.fillStyle='#121014'; ctx.fillRect(sx(x0),sy(yf,z1),sx(x1)-sx(x0),(z1-z0)*S);
+  ctx.fillStyle='#1d1a21'; ctx.fillRect(sx(x0+3),sy(yf,z1-3),sx(x1-3)-sx(x0+3),(z1-z0-6)*S);
+  const r=Math.min((x1-x0)/4.4,(z1-z0)/4.4)*S, cy=sy(yf,(z0+z1)/2);
+  for(const fx of [.28,.72]){
+    const cx=sx(x0+(x1-x0)*fx);
+    ctx.fillStyle='#0a090b'; ctx.beginPath(); ctx.arc(cx,cy,r*1.25,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#2b2830'; ctx.beginPath(); ctx.arc(cx,cy,r*.45,0,Math.PI*2); ctx.fill();
+  }
+  ctx.fillStyle='#b9a77a'; ctx.fillRect(sx((x0+x1)/2-7),sy(yf,z1-4),14*S,2*S);
+}
+function drawStack(k){
+  const {lo,hi}=k;
+  ctx.fillStyle='#19161c'; poly([sx(lo.x0),sy(lo.y0,lo.h), sx(lo.x1),sy(lo.y0,lo.h), sx(lo.x1),sy(lo.y1,lo.h), sx(lo.x0),sy(lo.y1,lo.h)]); ctx.fill();
+  cab(lo.x0,lo.x1,lo.y1,STAGE_H,lo.h);
+  ctx.fillStyle='#19161c'; poly([sx(hi.x0),sy(hi.y0,hi.h), sx(hi.x1),sy(hi.y0,hi.h), sx(hi.x1),sy(hi.y1,hi.h), sx(hi.x0),sy(hi.y1,hi.h)]); ctx.fill();
+  cab(hi.x0,hi.x1,hi.y1,lo.h,hi.h);
+}
 function drawKit(k){
   const x=sx(k.x), y=sy(k.y,STAGE_H);
   ctx.fillStyle='#d8d2c4';
@@ -1817,7 +1994,8 @@ function drawBalance(p){
   ctx.fillStyle='#f2ece0'; ctx.fillRect(nx-2*S,y-h/2-4*S,4*S,h+8*S);
   ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.font=`800 ${Math.round(10*S)}px ${FONT_B}`; ctx.fillStyle='#f2ece0';
-  ctx.fillText(touchCapable?'◀  BALANCE  ▶':'A  ◀  BALANCE  ▶  D', x, y-h/2-10*S);
+  if(G.surfMsg){ ctx.fillStyle='#ffd23f'; ctx.fillText(G.surfMsg.t, x, y-h/2-10*S); }
+  else ctx.fillText(touchCapable?'◀  BALANCE  ▶':'A  ◀  BALANCE  ▶  D', x, y-h/2-10*S);
   ctx.fillStyle='#7fd8ff'; ctx.fillText(secs.toFixed(1)+'s   +'+G.surfPts.toLocaleString()+'   ×'+diff.toFixed(1)+' HARDER', x, y+h/2+10*S);
   ctx.restore();
 }
@@ -1832,10 +2010,15 @@ function drawWorld(){
     ctx.beginPath(); ctx.ellipse(sx(q.x),sy(q.y,fl),20*S,9*S,0,0,Math.PI*2); ctx.stroke();
   }
   drawShadows();
-  const ents=chars.map(c=>({c,y:(c.state==='rag'?c.pts[PELV].y:c.y)+(c.state==='surf'?24:0)}));
+  const ents=chars.map(c=>{
+    let y=(c.state==='rag'?c.pts[PELV].y:c.y)+(c.state==='surf'?24:0);
+    const q=c.state==='rag'?c.pts[PELV]:c;
+    for(const k of STACKS) if(q.x>k.lo.x0-4&&q.x<k.lo.x1+4&&q.y>k.lo.y0-4&&q.y<k.lo.y1+4&&q.z>=k.lo.h-3) y=Math.max(y,k.lo.y1+.5);
+    return {c,y};
+  });
   ents.push({f:()=>drawKit(drumKit),y:drumKit.y});
   for(const m of MONITORS) ents.push({f:()=>drawMonitor(m),y:STAGE_Y-5});
-  for(const x of [16, W-16]) ents.push({f:()=>drawPA(x),y:STAGE_Y-10});
+  for(const k of STACKS) ents.push({f:()=>drawStack(k),y:k.lo.y1});
   ents.push({f:drawBar,y:BAR.y0-.5});
   ents.sort((a,b)=>a.y-b.y);
   for(const e of ents){ if(e.f) e.f(); else drawChar(e.c); }
@@ -1924,6 +2107,12 @@ function drawAtmos(){
     v.fillStyle='rgba(120,90,70,.05)'; v.fillRect(0,0,w,h); v.fillStyle=g; v.fillRect(0,0,w,h);
   }
   ctx.drawImage(vig,0,0,CW,CH);
+  if(G.timeScale<.9){
+    // slow-mo streaks across the screen
+    ctx.save(); ctx.globalAlpha=(1-G.timeScale)*.35; ctx.strokeStyle='#fff'; ctx.lineWidth=1.5;
+    for(let i=0;i<14;i++){ const y=((i*97+G.frame*23)%CH), x=((i*211+G.frame*41)%(CW+200))-100; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+120,y); ctx.stroke(); }
+    ctx.restore();
+  }
   if(G.flash>.02){ ctx.fillStyle=`rgba(255,250,240,${G.flash*.5})`; ctx.fillRect(0,0,CW,CH); }
 }
 
@@ -2135,7 +2324,8 @@ function render(){
   ctx.setTransform(DPR,0,0,DPR,0,0);
   ctx.fillStyle='#0b0a0f'; ctx.fillRect(0,0,CW,CH);
   // the camera pushes in on the wall of death
-  G.zoom += (((G.wod && G.mode==='play') ? (G.wod.phase==='combo'?1.28:1.12) : 1) - G.zoom)*.04;
+  const flyingCam = G.mode==='play' && player.dive && !player.grounded && player.state==='up';
+  G.zoom += ((flyingCam ? 1.4 : (G.wod && G.mode==='play') ? (G.wod.phase==='combo'?1.28:1.12) : 1) - G.zoom)*(flyingCam?.08:.04);
   S = S0*G.zoom;
   updateCamera();
   if(touchCapable){ const lb=document.getElementById('b-lift'), t=G.mode==='play'&&nearestFallen(player)?'HELP':'LIFT'; if(lb.textContent!==t) lb.textContent=t; }
@@ -2223,7 +2413,11 @@ spawnAll(); buildPlan(); G.t0=clockNow();
 let last=performance.now(), acc=0, frameMs=16, sinceQ=0;
 function frame(t){
   const dt=t-last;
-  acc += Math.min(100, dt); last=t;
+  // bullet time while you're in the air on a dive
+  const flying = G.mode==='play' && player.dive && !player.grounded && player.state==='up';
+  G.timeScale += ((flying?.32:1)-G.timeScale)*(flying?.25:.12);
+  AU.slow(flying);
+  acc += Math.min(100, dt)*G.timeScale; last=t;
   // running slow? draw fewer pixels
   frameMs += (Math.min(100,dt)-frameMs)*.05; sinceQ++;
   if(sinceQ>150 && frameMs>24 && Q>.55 && !document.hidden){ Q=Math.max(.5,Q-.2); sinceQ=0; resize(); }
