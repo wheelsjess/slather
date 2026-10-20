@@ -75,7 +75,7 @@ const STAGE = {x0:0, x1:W, y0:BACK_Y, y1:STAGE_Y, h:STAGE_H};
 const BAR = {x0:440, x1:W, y0:D-66, y1:D-42, h:40};
 const STACK_LO = STAGE_H+40, STACK_HI = STAGE_H+80;
 // each stack: a wide bottom cab with a step on the side facing centre stage, and a top cab on the outer side
-const STACKS = [[22,1],[W-96,-1]].map(([x0,dir])=>{
+const STACKS = [[0,1],[W-74,-1]].map(([x0,dir])=>{
   const lo={x0, x1:x0+74, y0:STAGE_Y-58, y1:STAGE_Y-6, h:STACK_LO};
   const hi = dir>0 ? {x0:lo.x0, x1:lo.x0+42, y0:lo.y0, y1:lo.y1, h:STACK_HI} : {x0:lo.x1-42, x1:lo.x1, y0:lo.y0, y1:lo.y1, h:STACK_HI};
   return {lo, hi, cx:(hi.x0+hi.x1)/2};
@@ -226,7 +226,7 @@ function spawnAll(){
 const G = {mode:'boot', frame:0, t0:0, beat:0, beatI:-1, beatHit:false, bar:-1, barHit:false,
   sec:'mosh', secObj:null, plan:[], lastPick:null,
   score:0, combo:1, comboT:0, best:0, setF:0, texts:[], parts:[], banner:null, bubble:null,
-  flash:0, shake:0, onStage:0, onBar:0, hintT:0, stats:null, newBest:false, surfHint:false, crashT:99, zoom:1, timeScale:1, surfMsg:null, wod:null, surfPts:0, uiRects:[], cam:{x:W/2, y:PIT.y*K}};
+  flash:0, shake:0, onStage:0, onBar:0, hintT:0, stats:null, newBest:false, surfHint:false, crashT:99, zoom:1, timeScale:1, surfMsg:null, caption:null, wod:null, surfPts:0, uiRects:[], cam:{x:W/2, y:PIT.y*K}};
 try{ G.best = +localStorage.getItem('moshpit.best') || 0; }catch(e){}
 function resetStats(){ G.stats={leveled:0, knocked:0, air:0, surf:0, helped:0, dives:0, longSurf:0}; }
 resetStats();
@@ -344,6 +344,7 @@ function land(c, vz){
 
 // push a body out of the stage and the bar unless it's up at their height
 function blockRoot(c){
+  c.pushB=null;
   for(const b of BLOCKS){
     if(c.z >= b.h-6) continue;
     if(c.x<=b.x0-R||c.x>=b.x1+R||c.y<=b.y0-R||c.y>=b.y1+R) continue;
@@ -355,7 +356,27 @@ function blockRoot(c){
     else if(ax===2){ c.x=b.x1+R; if(c.vx<0) c.vx*=-.3; }
     else if(ax===3){ c.y=b.y0-R; if(c.vy>0) c.vy*=-.3; }
     else if(ax===4){ c.y=b.y1+R; if(c.vy<0) c.vy*=-.3; }
+    if(ax){ c.pushB=b; c.pushAx=ax; }
   }
+}
+const isStackBlock = b => b!==STAGE && b!==BAR;
+// walk into a speaker cab (or, for you, the front of the stage) and you climb up it
+function tryClimb(c){
+  const b=c.pushB;
+  if(!b || !c.grounded || c.state!=='up' || c.climb){ c.pushT=0; return; }
+  const stack=isStackBlock(b);
+  const allowed = (c===player && G.mode==='play' && !G.wod && (stack || b===STAGE)) || (stack && c.task && c.task.type==='stage');
+  const dz=b.h-c.z, ax=c.pushAx;
+  const ix = ax===1?1:ax===2?-1:0, iy = ax===3?1:ax===4?-1:0;
+  const into = c.dvx*ix + c.dvy*iy;
+  if(!allowed || dz<=0 || dz>46 || into<.8){ c.pushT=0; return; }
+  c.pushT=(c.pushT||0)+1;
+  if(c.pushT < (stack?3:12)) return;
+  c.pushT=0;
+  const x1=clamp(c.x+ix*(R+12), b.x0+8, b.x1-8), y1=clamp(c.y+iy*(R+12), b.y0+8, b.y1-8);
+  c.climb={t:0, dur:22, x0:c.x, y0:c.y, z0:c.z, x1, y1, z1:b.h};
+  c.act=null; c.faT=Math.atan2(iy,ix);
+  if(c===player){ sfxThud(.25); if(stack && b.h===STACK_HI) addText(c.x,c.y,c.z+90,'JUMP TO DIVE!','#ffd23f',15); }
 }
 function blockPoint(p){
   for(const b of BLOCKS){
@@ -376,8 +397,8 @@ function diveSource(c){
 // throw yourself off something high, flat out, at the crowd
 function launchDive(c, fx, fy, from, trick){
   const l=Math.hypot(fx,fy)||1; fx/=l; fy/=l;
-  const sp = from==='stack' ? 5.6 : from==='bar' ? 4.4 : 5;
-  c.vx = fx*sp + rand(-.3,.3); c.vy = fy*sp; c.vz = from==='stack' ? 7.4 : 7.8;
+  const sp = from==='stack' ? 6 : from==='bar' ? 4.4 : 5;
+  c.vx = fx*sp + rand(-.3,.3); c.vy = fy*sp; c.vz = from==='stack' ? 9.6 : 7.8;
   c.grounded=false; c.dive=true; c.diveFrom=from; c.airF=0; c.act=null;
   c.fa = c.faT = Math.atan2(c.vy,c.vx);
   c.trick = trick || (from==='stack' ? pick(['flip','backflip','superman','starfish']) : pick(TRICKS));
@@ -386,6 +407,16 @@ function launchDive(c, fx, fy, from, trick){
 }
 
 function rootUp(c){
+  if(c.climb){
+    // hauling yourself up: up first, then over the edge
+    const k=c.climb; k.t++;
+    const e=Math.min(1,k.t/k.dur), s2=e*e*(3-2*e);
+    c.x=k.x0+(k.x1-k.x0)*s2; c.y=k.y0+(k.y1-k.y0)*s2;
+    c.z=k.z0+(k.z1-k.z0)*Math.min(1,e*1.7);
+    c.vx=c.vy=c.vz=0; c.grounded=false;
+    if(k.t>=k.dur){ c.climb=null; c.z=k.z1; c.grounded=true; }
+    return;
+  }
   if(c.state==='getup'){ c.getT++; c.vx*=.6; c.vy*=.6; c.dvx=c.dvy=0; if(c.getT>=36) c.state='up'; }
   const ctrl = c.state==='up' ? clamp(1-c.stagger/c.thr, .08, 1) : 0;
   const acc = (c.grounded ? .2 : c.dive ? .004 : .12)*ctrl;
@@ -393,6 +424,7 @@ function rootUp(c){
   if(c.grounded){ c.vx*=.985; c.vy*=.985; }
   c.x += c.vx; c.y += c.vy;
   blockRoot(c);
+  tryClimb(c);
   c.x = clamp(c.x, 16, W-16); c.y = clamp(c.y, BACK_Y+R, D-12);
   if(c.x<=16||c.x>=W-16) c.vx*=-.4;
   if(c.y>=D-12) c.vy*=-.4;
@@ -581,6 +613,11 @@ function pose(c){
     if(!c.act && !c.inst){ setT(LELB,0,-15,62); setT(LHND,2,-12,75); setT(RELB,0,15,62); setT(RHND,2,12,75); }
   }
   if(c.dizzy>0){ const w=Math.sin(fr*.2)*6; T[HEAD*3+1]+=w; T[NECK*3+1]+=w*.5; }
+  if(c.climb){
+    const up=Math.sin(Math.min(1,c.climb.t/c.climb.dur)*Math.PI);
+    setT(LELB,8,-10,64); setT(LHND,13,-8,78-up*10); setT(RELB,8,10,64); setT(RHND,13,8,78-up*10);
+    setT(RKNE,11,6,30); setT(RFT,9,7,20); T[NECK*3]+=5; T[HEAD*3]+=6;
+  }
   let pitch=0;
   if(c.dive && !c.grounded && c.state==='up'){
     const t=c.airF, flat=Math.PI*.5;
@@ -978,7 +1015,7 @@ function aiTask(c){
       if(c.grounded){
         if(onStage){
           k.step='run';
-          k.stack = Math.random()<.4 ? (c.x<W/2?STACKS[0]:STACKS[1]) : null;
+          k.stack = Math.random()<.5 ? (c.x<W/2?STACKS[0]:STACKS[1]) : null;
           k.rx = k.stack ? k.stack.cx : rand(130,W-130);
           addText(c.x,c.y,c.z+95,pick(['YEEEEW!','WATCH THIS!','HOLD MY BEER!','SEND IT!']),'#f2ece0',13);
         } else k.step='approach';
@@ -987,9 +1024,7 @@ function aiTask(c){
       if(k.stack){
         // run at the stack and hop up a cab at a time
         seek(c,k.rx,STAGE_Y-32,3,4); faceMove(c);
-        if(k.jcd>0) k.jcd--;
-        if(c.z>=STACK_HI-1){ k.step='dive'; k.wait=rand(15,40); c.dvx=c.dvy=0; }
-        else if(c.grounded && Math.abs(c.x-k.rx)<80 && !(k.jcd>0)){ c.vz=7.6; c.grounded=false; k.jcd=24; }
+        if(c.z>=STACK_HI-1 && !c.climb){ k.step='dive'; k.wait=rand(15,40); c.dvx=c.dvy=0; }
       } else {
         const arrived=seek(c,k.rx,STAGE_Y-14,3.4,10); faceMove(c);
         if(arrived){ k.step='dive'; k.wait=rand(5,25); }
@@ -1036,7 +1071,7 @@ function aiGuard(c){
   if(c.state!=='up') return;
   const p=player;
   const onStage = G.mode==='play' && p.state==='up' && p.y<STAGE_Y && p.z>=STAGE_H-2;
-  if(onStage && G.onStage>110){
+  if(onStage && G.onStage>200 && p.z<STAGE_H+5){
     const nearG = GUARDS.reduce((a,g)=>Math.hypot(g.x-p.x,g.y-p.y)<Math.hypot(a.x-p.x,a.y-p.y)?g:a);
     if(nearG===c){
       const reached = seek(c,p.x,p.y-6,3,26);
@@ -1117,7 +1152,7 @@ function ctrlPlayer(c){
       if(from==='bar'){ if(fy>-.3) fy=-1; } else { if(fy<.3) fy=1; if(from==='stack') fx += c.x<W/2 ? .6 : -.6; }
       launchDive(c, fx, fy, from);
       const names={superman:'SUPERMAN!!!', flip:'FRONT FLIP!!', backflip:'BACKFLIP!!', starfish:'STARFISH!!'};
-      G.banner={title:names[c.trick], sub:{stack:'off the speaker stack',stage:'off the stage',bar:'off the bar'}[from], life:100};
+      G.caption={title:names[c.trick], sub:{stack:'off the speaker stack',stage:'off the stage',bar:'off the bar'}[from], life:120};
       G.flash=Math.max(G.flash,.5); roar(.6);
     } else { c.vz=7.6; c.grounded=false; }
     if(G.sec==='breakdown'){
@@ -1240,7 +1275,7 @@ function wodEnd(perfect){
   G.wod=null; p.thr=11.5; p.stagger=0; p.vx*=.3; p.vy*=.3;
 }
 function nearestFallen(c){
-  if(!c||c.state!=='up') return null;
+  if(!c||c.state!=='up'||!c.grounded) return null;
   let best=null, bd=44;
   near(c.x,c.y,50,o=>{
     if(o.state!=='rag'||o===c) return;
@@ -1403,6 +1438,7 @@ function step(){
   if(G.banner&&--G.banner.life<=0) G.banner=null;
   if(G.bubble&&--G.bubble.life<=0) G.bubble=null;
   if(G.surfMsg&&--G.surfMsg.life<=0) G.surfMsg=null;
+  if(G.caption&&--G.caption.life<=0) G.caption=null;
   G.flash*=.88; G.shake*=.85;
   if(G.beatHit && G.sec==='breakdown' && G.beatI%2===0) G.flash=Math.max(G.flash,.25);
   if(G.beatHit && G.sec==='wodCharge') G.flash=Math.max(G.flash,.18);
@@ -2031,6 +2067,7 @@ function drawWorld(){
   G.uiRects.length=0;
   if(G.mode==='play'){
     if(player.state==='surf') G.uiRects.push(balanceRect(player));
+    if(player.dive && !player.grounded && player.state==='up'){ const x=sx(player.x), y=sy(player.y,player.z+40); G.uiRects.push([x-130*S,y-120*S,260*S,220*S]); }
     if(G.wod) G.uiRects.push(G.wod.phase==='pick' ? wodPromptRect() : wodPanelRect());
   }
   if(G.mode==='play'){
@@ -2155,7 +2192,21 @@ function drawHUD(){
   if(AU.muted) txt('MUTED (M)', rx, m+(CW>=640?62:30)*u, f, '#ff4d5e','right');
   ctx.restore();
   if(G.wod) drawWod();
-  if(G.banner && player.state!=='surf' && !(G.wod&&G.wod.phase!=='combo')){
+  if(G.caption){
+    // dive captions sit at the bottom, out of the way of the flight
+    const c=G.caption, a=Math.min(1,c.life/25), sc=1+Math.max(0,c.life-105)/15*.3;
+    const y=CH-(touchCapable?190:70)*u;
+    ctx.save(); ctx.globalAlpha=a; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.translate(HW,y); ctx.scale(sc,sc);
+    ctx.font=`${Math.round(46*u)}px ${FONT_D}`;
+    ctx.lineWidth=7*u; ctx.strokeStyle='#0b0a0f'; ctx.strokeText(c.title,0,0);
+    ctx.shadowColor='#ffd23f'; ctx.shadowBlur=18*u; ctx.fillStyle='#ffd23f'; ctx.fillText(c.title,0,0); ctx.shadowBlur=0;
+    ctx.font=`800 ${Math.round(13*u)}px ${FONT_B}`; ctx.lineWidth=4*u; ctx.strokeText(c.sub.toUpperCase(),0,32*u);
+    ctx.fillStyle='#f2ece0'; ctx.fillText(c.sub.toUpperCase(),0,32*u);
+    ctx.restore();
+  }
+  const flyingNow = player.dive && !player.grounded && player.state==='up';
+  if(G.banner && player.state!=='surf' && !flyingNow && !(G.wod&&G.wod.phase!=='combo')){
     const b=G.banner, t=1-b.life/150, a=b.life<30?b.life/30:1, sc=1+Math.max(0,.25-t)*2;
     ctx.save(); ctx.globalAlpha=a; ctx.translate(HW,CH*.36); ctx.scale(sc,sc);
     ctx.font=`${Math.round(78*u)}px ${FONT_D}`; ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -2165,7 +2216,7 @@ function drawHUD(){
     ctx.font=`800 ${Math.round(16*u)}px ${FONT_B}`; ctx.fillStyle='#f2ece0'; ctx.fillText(b.sub.toUpperCase(),0,50*u);
     ctx.restore();
   }
-  if(G.hintT<60*22 && !touchCapable && !G.wod && player.state!=='surf'){
+  if(G.hintT<60*22 && !touchCapable && !G.wod && !G.caption && player.state!=='surf'){
     const a=G.hintT>60*19?(60*22-G.hintT)/180:1;
     ctx.save(); ctx.globalAlpha=a*.85;
     txt('WASD move · SHIFT run · SPACE jump · J shove · K spin (hold) · L kick · E lift / help up · M mute · ESC pause',
