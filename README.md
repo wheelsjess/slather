@@ -15,6 +15,8 @@ Open `index.html` in any modern browser. On a computer, use the keyboard and mou
 
 ## Title and loading screens
 
+The big SLATHER on the title uses the brand's own wordmark (`assets/slather_wordmark.png`) as a stencil, filled with the sunset chrome gradient.
+
 Because browsers won't play sound until someone presses something, the game boots to a black "SLATHER ENTERTAINMENT SYSTEM / PRESS ANY KEY" screen first. The title then plays with sound effects instead of music: waves, a gull, a deep rumble and churning sea as the Sun rises, its roar, a slam and metal clang with a shimmer for SLATHER, crunchy footsteps in the sand, a record scratch for the bird, brush swishes as SUN FIGHTER writes on, a coin chime, the old man's shuffle and text blips, the whoosh of the tube, and the Zelda item jingle.
 
 The game opens on an arcade attract screen. It's a standalone illustrated frame, separate from the game view, with a teal sky, big painted clouds, a curving golden beach and surf rolling in. The Sun rises out of the sea in a blaze of flame, smiling. **SLATHER** slams onto the screen in sunset chrome, and a ripple of light runs across the metal every few seconds. The bogan runs in, cigarette going, and flips the Sun the bird (it looks suitably shocked). Then **SUN FIGHTER** is slapped on in red brush capitals beside him. Then it says **HIT ENTER TO INSERT COIN** (or TAP on a phone), with the top five times underneath. Press Enter (or tap) to skip straight to that.

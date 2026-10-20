@@ -60,6 +60,7 @@ Everything below that isn't marked as done from your art has a stand-in redrawn 
 | `fireball.png` | 28 × 28 | 4 | A spat-out mini Sun: white-hot body, furious brows, glowing red eyes and gritted teeth, wrapped in flickering flame tongues. Four frames of flicker. The code adds a comet tail, heat glow and embers in flight. |
 | `splat.png` | 16 × 16 | 3 | Sunscreen splat (currently unused; the code draws blobs) |
 | `logo.png` | 44 × 44 | 1 | The Slather line-drawn sun for the title screen |
+| `slather_wordmark.png` | 304 × 137 | 1 | Mask of the brand's SLATHER wordmark, cut from the logo. Embedded in `index.html` as `WORDMARK` and used as the stencil for the title's chrome lettering (extrude, ink outline and sunset gradient are added in code) |
 
 When the bogan is hit, he shows your on-fire pose (frame 19), and the code adds flames, singed hair and a speech bubble on top. When he dies, he turns into `skeleton.png` and then `ash.png`, and code draws his mullet and boots on top.
 
