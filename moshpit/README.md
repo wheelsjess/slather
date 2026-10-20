@@ -15,7 +15,7 @@ Open `index.html` in a modern browser. A set lasts three minutes and the band ca
 | Shove | J | SHOVE |
 | Helicopter spin (hold; too long and you get dizzy) | K | SPIN |
 | Kick | L | KICK |
-| Get lifted to crowd surf / help up someone who fell | E | LIFT |
+| Help up someone who fell (a prompt shows when someone is down next to you), or get lifted to crowd surf | E | LIFT / HELP |
 | Mute | M | |
 | Pause | Esc / P | II |
 
@@ -23,11 +23,13 @@ Open `index.html` in a modern browser. A set lasts three minutes and the band ca
 
 - **Mosh**: the floor is shoulder to shoulder. Moshers barge about in the middle, shoving, spinning and kicking, and anyone who crashes into the crowd gets shoved back. Shove someone hard and they stay where they land, so you open up space by knocking people around. When a gap opens in front of someone, they step forward into it.
 - **Circle pit**: the pit runs in a ring, with arrows on the floor showing which way. Run with it for points; run against it and you're a salmon.
-- **Wall of death**: the crowd splits down a red line into two walls, and the game asks you to **pick a side** (A for left, D for right, or flick the stick). Your character joins that wall and the camera centres on the pit. The music builds, stops, then everyone charges, and a rhythm combo starts: W/A/S/D arrows slide into a ring in time with the music, and you hit each one on the beat. Every four hits in a row sends both walls charging at each other again. Hold the wall for 20 seconds for a **PERFECT WALL OF DEATH**. Press a wrong key or miss a beat and you get thrown out of the wall.
+- **Wall of death**: the crowd splits down a red line into two walls, and the game stops to ask you to **pick a side** (A for left, D for right, or flick the stick). If you're crowd surfing, the crowd puts you down first. Once you pick, the prompt closes and your character walks to that wall. A panel confirms your side and counts down to the drop. At the drop, the camera pushes in on the pit, both walls charge, and a rhythm combo starts: W/A/S/D arrows slide into a ring in time with the music, and you hit each one on the beat. Every four hits in a row sends the walls charging at each other again, so the mayhem keeps going. Hold it for 20 seconds for a **PERFECT WALL OF DEATH**. Press a wrong key or miss a beat and you're thrown out, and the wall of death ends for everyone.
 - **Breakdown**: half-time chugs and strobes. The crowd jumps on the beat and the pit windmills. Jumping on the beat scores.
 - **Crowd surf**: people get passed overhead. Press E with at least two people next to you to get thrown up. Nearby people rush under anyone falling or diving and hold them up.
 - **The balance game**: while you're up there, a meter shows your balance, along with your time and the points you've built up. No other pop-up text covers it. The crowd keeps knocking you off centre, and you fight it with A / D (or the stick), like a grind in Tony Hawk. The longer you stay up, the more points you get and the harder it gets: you tip faster and the crowd jolts you harder. Lose it and you wipe out. Drift over an empty bit of floor and you get dropped. Reach the front and security catches you.
 - **Stage and bar dives**: jump up onto the low stage or the bar, then jump off into the crowd. Hang around and security, or the bartender, throws you back in.
+
+**Finding yourself**: you're the one in the red tee with a yellow outline, a YOU marker and a spotlight that follows you. Your outline also shows through anyone standing in front of you.
 
 **The band** runs through stage moves all set. The guitarist and bassist wander their side of the stage, headbang, throw devil horns, put a foot up on the monitors and spin round. The singer roams from one side of the stage to the other, screams, points at the crowd and calls out each pit. The drummer flails on the crashes. They all jump when a new section kicks in.
 

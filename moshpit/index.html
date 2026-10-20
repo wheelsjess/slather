@@ -59,12 +59,12 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--room);color:var(
 //  at the back, z up. Oblique projection: screen y = y*K - z.
 // ============================================================
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
-let CW, CH, DPR, S, HW, HH, Q = 1;   // Q drops the render resolution on slow devices
+let CW, CH, DPR, S, S0, HW, HH, Q = 1;   // Q drops the render resolution on slow devices
 function resize(){
   DPR = Math.min(2, window.devicePixelRatio || 1)*Q;
   CW = innerWidth; CH = innerHeight;
   cv.width = Math.round(CW*DPR); cv.height = Math.round(CH*DPR);
-  S = CW < CH ? CW/640 : Math.min(CW/900, CH/600);
+  S0 = S = CW < CH ? CW/640 : Math.min(CW/900, CH/600);
   HW = CW/2; HH = CH/2;
 }
 addEventListener('resize', resize); resize();
@@ -219,7 +219,7 @@ function spawnAll(){
 const G = {mode:'boot', frame:0, t0:0, beat:0, beatI:-1, beatHit:false, bar:-1, barHit:false,
   sec:'mosh', secObj:null, plan:[], lastPick:null,
   score:0, combo:1, comboT:0, best:0, setF:0, texts:[], parts:[], banner:null, bubble:null,
-  flash:0, shake:0, onStage:0, onBar:0, hintT:0, stats:null, newBest:false, surfHint:false, crashT:99, wod:null, surfPts:0, uiRects:[], cam:{x:W/2, y:PIT.y*K}};
+  flash:0, shake:0, onStage:0, onBar:0, hintT:0, stats:null, newBest:false, surfHint:false, crashT:99, zoom:1, wod:null, surfPts:0, uiRects:[], cam:{x:W/2, y:PIT.y*K}};
 try{ G.best = +localStorage.getItem('moshpit.best') || 0; }catch(e){}
 function resetStats(){ G.stats={leveled:0, knocked:0, air:0, surf:0, helped:0, dives:0, longSurf:0}; }
 resetStats();
@@ -1004,11 +1004,7 @@ function ctrlPlayer(c){
     c.spinAcc=Math.max(0,c.spinAcc-.6);
   }
   if(In.liftP){
-    let best=null, bd=44;
-    near(c.x,c.y,50,o=>{
-      if(o.state!=='rag'||o===c) return;
-      const p=o.pts[PELV], d=Math.hypot(p.x-c.x,p.y-c.y); if(d<bd){bd=d;best=o;}
-    });
+    const best=nearestFallen(c);
     if(best){
       best.ragT=0; startAct(c,'reach',24); G.stats.helped++;
       award(150,'PIT ETIQUETTE','#7fd8ff');
@@ -1035,14 +1031,20 @@ function judgeBeat(){
   return (clockNow()-lat-G.t0)/BEAT;
 }
 function wodStart(){
+  const p=player;
+  if(p.state==='surf'){
+    // the crowd puts you down so you can join a wall
+    endSurf(p); p.state='up'; p.z=floorZ(p.x,p.y); p.vz=0; p.vx=p.vy=0; p.grounded=true;
+  }
   G.wod={phase:'pick', side:0, f:0};
-  player.act=null; player.dvx=player.dvy=0;
+  p.act=null; p.dvx=p.dvy=0;
+  roar(.4);
 }
 function wodPick(side){
   const w=G.wod, p=player;
   w.side=side; w.phase='line';
   p.side=side; p.wy=clamp(p.y, PIT.y-PIT.r*.6, PIT.y+PIT.r*.6); p.thr=99;
-  sfxThud(.5);
+  sfxThud(.6); roar(.3);
 }
 function wodDrop(){
   const w=G.wod, p=player;
@@ -1062,6 +1064,7 @@ function wodDrop(){
   }
   Object.assign(w,{phase:'combo', notes, i:0, streak:0, hits:0, perfects:0, start, end:start+60, fb:null, fbT:0, failed:false});
   p.charged=false;
+  G.shake=Math.max(G.shake,6);
 }
 function wodWave(){
   // both walls run at each other again
@@ -1078,11 +1081,21 @@ function wodFail(why){
   const held=Math.max(0,(judgeBeat()-w.start)*BEAT);
   G.wod=null; p.thr=11.5;
   addText(p.x,p.y,p.z+110,why,'#ff6b6b',20);
+  G.banner={title:'THROWN OUT', sub:'The wall of death is over', life:150, keep:true};
+  cutWod();
   if(held>2) award(Math.round(held*30),'HELD '+held.toFixed(1)+'s','#7fd8ff');
   // tossed out the side of the wall
   const out = p.y<PIT.y ? -1 : 1;
   p.vx += -p.side*1.5; p.vy += out*4;
   knock(p, -p.side*2, out*3.5, 3);
+}
+// the wall of death collapses: the rest of the section becomes a regular mosh
+function cutWod(){
+  const so=G.secObj; if(!so || so.name!=='wodCharge') return;
+  const nb=G.bar+1; if(nb>=so.end) return;
+  const idx=G.plan.indexOf(so), oldEnd=so.end;
+  so.end=nb;
+  G.plan.splice(idx+1,0,{name:'mosh',start:nb,end:oldEnd});
 }
 function wodEnd(perfect){
   const p=player;
@@ -1092,7 +1105,16 @@ function wodEnd(perfect){
     G.banner={title:'PERFECT', sub:'Wall of death held for 20 seconds', life:150, keep:true};
     G.flash=1; roar(1);
   }
-  G.wod=null; p.thr=11.5;
+  G.wod=null; p.thr=11.5; p.stagger=0; p.vx*=.3; p.vy*=.3;
+}
+function nearestFallen(c){
+  if(!c||c.state!=='up') return null;
+  let best=null, bd=44;
+  near(c.x,c.y,50,o=>{
+    if(o.state!=='rag'||o===c) return;
+    const p=o.pts[PELV], d=Math.hypot(p.x-c.x,p.y-c.y); if(d<bd){bd=d;best=o;}
+  });
+  return best;
 }
 function wodControl(c){
   const w=G.wod;
@@ -1140,7 +1162,7 @@ function wodUpdate(){
 function onSection(name){
   const info=SEC_INFO[name];
   if(G.mode==='play'){
-    if(name==='wodSplit' && player.state!=='surf') wodStart();
+    if(name==='wodSplit') wodStart();
     else if(name==='wodCharge' && G.wod) wodDrop();
     else if(name!=='wodCharge' && G.wod) wodEnd(!G.wod.failed && G.wod.phase==='combo');
   }
@@ -1199,7 +1221,10 @@ function step(){
     if(c===player && G.mode==='play') ctrlPlayer(c);
     else aiNPC(c, surfers);
   }
-  if(G.mode==='play') wodUpdate();
+  if(G.mode==='play'){
+    if(G.wod && G.sec!=='wodSplit' && G.sec!=='wodCharge') wodEnd(false);
+    wodUpdate();
+  }
   In.jumpP=In.shoveP=In.kickP=In.liftP=false; In.dirP=null;
   // the crowd sends people up during crowd-surf sections
   if((G.sec==='surf' && G.frame%60===0) || (G.sec==='mosh' && G.frame%500===0)){
@@ -1542,6 +1567,12 @@ function drawRoom(){
     const g=ctx.createRadialGradient(0,0,0,0,0,120*S); g.addColorStop(0,'rgba(255,170,80,.13)'); g.addColorStop(1,'rgba(255,170,80,0)');
     ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,120*S,0,Math.PI*2); ctx.fill(); ctx.restore();
   }
+  if(G.mode==='play'){
+    const p=player, q=p.state==='rag'?p.pts[PELV]:p;
+    ctx.save(); ctx.translate(sx(q.x),sy(q.y,floorZ(q.x,q.y))); ctx.scale(1,K);
+    const g=ctx.createRadialGradient(0,0,0,0,0,62*S); g.addColorStop(0,'rgba(255,240,200,.3)'); g.addColorStop(1,'rgba(255,240,200,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,62*S,0,Math.PI*2); ctx.fill(); ctx.restore();
+  }
   CANS.forEach((L,i)=>{
     const [x,y]=canTarget(L,i);
     ctx.save(); ctx.translate(sx(x),sy(y,0)); ctx.scale(1,K);
@@ -1657,8 +1688,19 @@ function hornsAt(i,col){
   ctx.moveTo(PX[i]+1.5*S,PY[i]-1*S); ctx.lineTo(PX[i]+3*S,PY[i]-7*S); ctx.stroke();
 }
 
+function drawOutline(c,col,extra){
+  const P=c.pts;
+  for(let i=0;i<11;i++){ PX[i]=sx(P[i].x); PY[i]=sy(P[i].y,P[i].z); }
+  ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineCap='round'; ctx.lineJoin='round';
+  const poly3=(a,b,c2,w)=>{ ctx.lineWidth=w*S; ctx.beginPath(); ctx.moveTo(PX[a],PY[a]); ctx.lineTo(PX[b],PY[b]); ctx.lineTo(PX[c2],PY[c2]); ctx.stroke(); };
+  poly3(PELV,LKNE,LFT,6.3+extra); poly3(PELV,RKNE,RFT,6.3+extra);
+  poly3(NECK,LELB,LHND,4.6+extra); poly3(NECK,RELB,RHND,4.6+extra);
+  ctx.lineWidth=(13+extra)*S; ctx.beginPath(); ctx.moveTo(PX[NECK],PY[NECK]); ctx.lineTo(PX[PELV],PY[PELV]); ctx.stroke();
+  ctx.beginPath(); ctx.arc(PX[HEAD],PY[HEAD],(7+extra/2)*S,0,Math.PI*2); ctx.fill();
+}
 function drawChar(c){
   const P=c.pts, L=c.look;
+  if(c===player && G.mode==='play') drawOutline(c,'#ffd23f',4);
   for(let i=0;i<11;i++){ PX[i]=sx(P[i].x); PY[i]=sy(P[i].y,P[i].z); }
   const facingCam = c.state!=='rag' && Math.sin(c.fa)>.15;
   const order=[
@@ -1797,6 +1839,8 @@ function drawWorld(){
   ents.push({f:drawBar,y:BAR.y0-.5});
   ents.sort((a,b)=>a.y-b.y);
   for(const e of ents){ if(e.f) e.f(); else drawChar(e.c); }
+  // see yourself through the crowd
+  if(G.mode==='play'){ ctx.globalAlpha=.4; drawOutline(player,'#ffd23f',0); ctx.globalAlpha=1; }
   for(const q of G.parts){ ctx.fillStyle=q.col; ctx.globalAlpha=Math.min(1,q.life/20); ctx.fillRect(sx(q.x)-1.2*S,sy(q.y,q.z)-1.2*S,2.4*S,2.4*S); }
   ctx.globalAlpha=1;
   drawLights();
@@ -1804,15 +1848,32 @@ function drawWorld(){
   G.uiRects.length=0;
   if(G.mode==='play'){
     if(player.state==='surf') G.uiRects.push(balanceRect(player));
-    if(G.wod) G.uiRects.push(G.wod.phase==='combo' ? wodPanelRect() : wodPromptRect());
+    if(G.wod) G.uiRects.push(G.wod.phase==='pick' ? wodPromptRect() : wodPanelRect());
   }
   if(G.mode==='play'){
     const p=player;
     if(p.state==='surf') drawBalance(p);
     else {
       const h=p.pts[HEAD], bob=Math.sin(G.frame*.15)*3;
-      const x=sx(h.x), y=sy(h.y,h.z+22+bob);
-      ctx.fillStyle='#ffd23f'; ctx.beginPath(); ctx.moveTo(x-7*S,y-9*S); ctx.lineTo(x+7*S,y-9*S); ctx.lineTo(x,y); ctx.closePath(); ctx.fill();
+      const x=sx(h.x), y=sy(h.y,h.z+24+bob);
+      ctx.fillStyle='#ffd23f'; ctx.strokeStyle='#0b0a0f'; ctx.lineWidth=2*S;
+      ctx.beginPath(); ctx.moveTo(x-9*S,y-11*S); ctx.lineTo(x+9*S,y-11*S); ctx.lineTo(x,y); ctx.closePath(); ctx.stroke(); ctx.fill();
+      ctx.font=`800 ${Math.round(11*S)}px ${FONT_B}`; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.lineWidth=3*S; ctx.strokeText('YOU',x,y-19*S); ctx.fillText('YOU',x,y-19*S);
+      // someone down next to you? say how to help
+      const f=G.wod?null:nearestFallen(p);
+      if(f){
+        const q=f.pts[PELV], fx=sx(q.x), fy=sy(q.y,floorZ(q.x,q.y)), pu=.5+.5*Math.sin(G.frame*.25);
+        ctx.strokeStyle=`rgba(127,216,255,${.5+pu*.5})`; ctx.lineWidth=2.5*S;
+        ctx.beginPath(); ctx.ellipse(fx,fy,(22+pu*3)*S,(10+pu)*S,0,0,Math.PI*2); ctx.stroke();
+        const label=touchCapable?'HELP: HELP UP':'E: HELP UP';
+        ctx.font=`800 ${Math.round(12*S)}px ${FONT_B}`;
+        const tw=ctx.measureText(label).width;
+        if(!blocked(fx-tw/2-6*S,fy+8*S,tw+12*S,18*S)){
+          ctx.fillStyle='rgba(8,6,10,.8)'; roundRect(fx-tw/2-6*S,fy+8*S,tw+12*S,18*S,5*S); ctx.fill();
+          ctx.fillStyle='#7fd8ff'; ctx.fillText(label,fx,fy+17*S);
+        }
+      }
     }
   }
   if(G.bubble){
@@ -1937,14 +1998,26 @@ function wodPanelRect(){ const u=hudScale(), w=Math.min(600*u,CW-24), h=118*u; r
 function drawWod(){
   const w=G.wod, u=hudScale();
   ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
-  if(w.phase==='pick'||w.phase==='line'){
+  if(w.phase==='line'){
+    const [x0,y0,pw,ph]=wodPanelRect(), cx=x0+pw/2;
+    ctx.fillStyle='rgba(8,6,10,.82)'; roundRect(x0,y0,pw,ph,12*u); ctx.fill();
+    ctx.strokeStyle='rgba(255,210,63,.7)'; ctx.lineWidth=2*u; ctx.stroke();
+    const left=G.secObj.end*4-G.beat;
+    arrow(cx-(pw/2-40*u)*(w.side<0?1:-1),y0+34*u,14*u,w.side<0?'L':'R','#ffd23f');
+    ctx.font=`${Math.round(26*u)}px ${FONT_D}`; ctx.fillStyle='#ffd23f';
+    ctx.fillText(w.side<0?'YOU JOINED THE LEFT WALL':'YOU JOINED THE RIGHT WALL',cx,y0+34*u);
+    ctx.font=`800 ${Math.round(left<=4.2?34:15)*u}px ${FONT_B}`; ctx.fillStyle='#f2ece0';
+    ctx.fillText(left<=4.2 ? String(Math.max(1,Math.ceil(left))) : 'WAIT FOR THE DROP...',cx,y0+70*u);
+    ctx.font=`500 ${Math.round(13*u)}px ${FONT_B}`; ctx.fillStyle='rgba(242,236,224,.75)';
+    ctx.fillText(touchCapable?'Then flick the stick with the arrows, on the beat, to keep the wall going':'Then hit W A S D with the arrows, on the beat, to keep the wall going',cx,y0+100*u);
+  } else if(w.phase==='pick'){
     const [x0,y0,pw,ph]=wodPromptRect(), cx=x0+pw/2;
     ctx.fillStyle='rgba(8,6,10,.78)'; roundRect(x0,y0,pw,ph,14*u); ctx.fill();
     ctx.strokeStyle='rgba(212,21,47,.7)'; ctx.lineWidth=2*u; ctx.stroke();
     ctx.font=`${Math.round(54*u)}px ${FONT_D}`; ctx.shadowColor='#d4152f'; ctx.shadowBlur=18*u; ctx.fillStyle='#ff2d44';
     ctx.fillText('WALL OF DEATH',cx,y0+48*u); ctx.shadowBlur=0;
     ctx.font=`800 ${Math.round(22*u)}px ${FONT_B}`; ctx.fillStyle='#f2ece0';
-    ctx.fillText(w.phase==='pick'?'PICK A SIDE':'HOLD YOUR LINE... WAIT FOR THE DROP',cx,y0+98*u);
+    ctx.fillText('PICK A SIDE',cx,y0+98*u);
     for(const side of [-1,1]){
       const bx=cx+side*pw*.24, by=y0+160*u, bw=pw*.38, bh=64*u;
       const chosen=w.side===side, dim=w.side && !chosen;
@@ -1966,6 +2039,7 @@ function drawWod(){
     ctx.textAlign='left'; ctx.font=`${Math.round(22*u)}px ${FONT_D}`; ctx.fillStyle='#ff2d44'; ctx.fillText('HOLD THE WALL',x0+14*u,y0+20*u);
     ctx.textAlign='right'; ctx.font=`800 ${Math.round(13*u)}px ${FONT_B}`; ctx.fillStyle='#f2ece0';
     ctx.fillText(held.toFixed(1)+' / 20s   STREAK '+w.streak,x0+pw-14*u,y0+20*u);
+    if(w.notes.length && bn<w.notes[0].b-.5){ ctx.textAlign='center'; ctx.fillStyle='#ffd23f'; ctx.fillText('HIT THE ARROWS AS THEY REACH THE RING',x0+pw*.55,y0+56*u); }
     ctx.fillStyle='rgba(242,236,224,.15)'; ctx.fillRect(x0+14*u,y0+36*u,pw-28*u,5*u);
     ctx.fillStyle='#ffd23f'; ctx.fillRect(x0+14*u,y0+36*u,(pw-28*u)*frac,5*u);
     // the lane: notes slide left into the hit ring on the beat
@@ -2060,7 +2134,11 @@ function drawPaused(){
 function render(){
   ctx.setTransform(DPR,0,0,DPR,0,0);
   ctx.fillStyle='#0b0a0f'; ctx.fillRect(0,0,CW,CH);
+  // the camera pushes in on the wall of death
+  G.zoom += (((G.wod && G.mode==='play') ? (G.wod.phase==='combo'?1.28:1.12) : 1) - G.zoom)*.04;
+  S = S0*G.zoom;
   updateCamera();
+  if(touchCapable){ const lb=document.getElementById('b-lift'), t=G.mode==='play'&&nearestFallen(player)?'HELP':'LIFT'; if(lb.textContent!==t) lb.textContent=t; }
   drawWorld();
   drawAtmos();
   if(G.mode==='play'||G.mode==='paused') drawHUD();
