@@ -2,7 +2,7 @@
 
 A physics toy of a mosh pit. You're one body in a packed crowd of about 200 at a Skull Hammer gig in a small dive bar: brick walls, neon beer signs, a low stage, a sticky checkered floor and a bar at the back. Everyone is an active ragdoll, so arms and legs swing with momentum, hair whips when people headbang, and a hard enough hit knocks you over until you get back up (or someone helps you up).
 
-Open `index.html` in a modern browser. A set lasts three minutes and the band calls out pit events as it goes. Touch controls appear on phones.
+Open `index.html` in a modern browser. A set lasts three minutes and the band calls out pit events as it goes. The second event of every set is always a wall of death, about 30 seconds in. After that the events come round in shuffled cycles of all four, so every set has two or three walls of death and every other event too. Touch controls appear on phones.
 
 ## Controls
 

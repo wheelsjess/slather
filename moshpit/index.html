@@ -224,7 +224,7 @@ function spawnAll(){
 
 // ---------- game state ----------
 const G = {mode:'boot', frame:0, t0:0, beat:0, beatI:-1, beatHit:false, bar:-1, barHit:false,
-  sec:'mosh', secObj:null, plan:[], lastPick:null,
+  sec:'mosh', secObj:null, plan:[], queue:[], lastPick:null,
   score:0, combo:1, comboT:0, best:0, setF:0, texts:[], parts:[], banner:null, bubble:null,
   flash:0, shake:0, onStage:0, onBar:0, hintT:0, stats:null, newBest:false, surfHint:false, crashT:99, zoom:1, timeScale:1, surfMsg:null, caption:null, wod:null, surfPts:0, uiRects:[], cam:{x:W/2, y:PIT.y*K}};
 try{ G.best = +localStorage.getItem('moshpit.best') || 0; }catch(e){}
@@ -234,13 +234,27 @@ resetStats();
 const BPM = 172, BEAT = 60/BPM, STEP = BEAT/4, BAR_LEN = BEAT*4;
 function clockNow(){ return (AU.ctx && AU.on) ? AU.ctx.currentTime : performance.now()/1000; }
 
-function buildPlan(){ G.plan=[{name:'mosh',start:0,end:8}]; G.lastPick=null; }
+// the setlist: the second pit event is always a wall of death, then events come round in shuffled
+// cycles of all four, so every set has every event and walls of death are never far apart
+function shuffled(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function buildPlan(){
+  G.plan=[{name:'mosh',start:0,end:8}];
+  G.queue=[pick(['circle','breakdown','surf']), 'wod'];
+  G.lastPick=null;
+}
+function nextEvent(){
+  if(!G.queue.length){
+    let bag=shuffled(['circle','wod','breakdown','surf']);
+    if(bag[0]===G.lastPick) bag.push(bag.shift());   // no back-to-back repeats across cycles
+    G.queue=bag;
+  }
+  return G.lastPick=G.queue.shift();
+}
 function extendPlan(upto){
   while(G.plan[G.plan.length-1].end <= upto+4){
     const last=G.plan[G.plan.length-1], s=last.end;
     if(last.name==='mosh'){
-      const n = pick(['circle','wod','breakdown','surf'].filter(n=>n!==G.lastPick));
-      G.lastPick=n;
+      const n = nextEvent();
       if(n==='wod'){ G.plan.push({name:'wodSplit',start:s,end:s+4}); G.plan.push({name:'wodCharge',start:s+4,end:s+19}); }
       else G.plan.push({name:n,start:s,end:s+(n==='circle'?12:n==='breakdown'?8:10)});
     } else if(last.name!=='wodSplit') G.plan.push({name:'mosh',start:s,end:s+6});
