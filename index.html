@@ -2576,30 +2576,24 @@ function makeTitleArt() {
     s.font = '96px Anton, Impact, sans-serif'; s.textAlign = 'center'; s.textBaseline = 'top'; s.fillStyle = '#ffd23a'; s.strokeStyle = '#16120f'; s.lineWidth = 8; s.strokeText('SLATHER', 165, 8); s.fillText('SLATHER', 165, 8);
   }
   pixelize(slat, ['#fff6c0', '#ffe36a', '#ffc23a', '#ff9a2a', '#ff6a1f', '#e2361f', '#b8200f', '#7a1208', '#3a0806', '#16120f']);
-  // --- SUN FIGHTER, 90s arcade brush lettering: red-to-gold paint, white then ink outline, speed streaks off the back ---
-  const [fight, f] = mk(300, 80), [ink, k] = mk(300, 80), [smear, m] = mk(300, 80);
+  // --- SUN FIGHTER, slapped on with a fat brush ---
+  const [fight, f] = mk(300, 80);
   const brush = (txt, x, y, size) => {
-    const [wc, w2] = mk(300, 80);
-    w2.font = `${size}px Knewave, "Permanent Marker", Impact, sans-serif`; w2.textAlign = 'left'; w2.textBaseline = 'alphabetic';
-    w2.save(); w2.translate(x, y); w2.rotate(-0.07); w2.transform(1, 0, -0.2, 1, 0, 0);
-    const gr2 = w2.createLinearGradient(0, -size * 0.75, 0, 0); gr2.addColorStop(0, '#c41a0c'); gr2.addColorStop(0.3, '#e2361f'); gr2.addColorStop(0.55, '#ff8a1f'); gr2.addColorStop(0.8, '#ffc23a'); gr2.addColorStop(1, '#ffe36a');
-    w2.fillStyle = gr2; w2.fillText(txt, 0, 0);
-    const w = w2.measureText(txt).width; w2.restore();
-    for (let yy = Math.round(y - size * 0.4); yy < y + 6; yy++) {        // the lower half smears backwards into ragged brush hairs
-      if (yy % 3 === 2 || r() < 0.15) continue;
-      const len = 12 + Math.floor(r() * r() * 46);
-      for (let d = len; d >= 1; d--) m.drawImage(wc, 0, yy, 300, 1, -d, yy, 300, 1);
-    }
-    k.drawImage(wc, 0, 0); return w;
+    f.font = `${size}px Knewave, "Permanent Marker", Impact, sans-serif`; f.textAlign = 'left'; f.textBaseline = 'alphabetic'; f.lineJoin = 'round';
+    f.save(); f.translate(x, y); f.rotate(-0.09); f.transform(1, 0, -0.18, 1, 0, 0);
+    f.fillStyle = '#3a0806'; f.fillText(txt, 3, 4);                                                   // drop shadow
+    f.strokeStyle = '#16120f'; f.lineWidth = 7; f.strokeText(txt, 0, 0);
+    const gr2 = f.createLinearGradient(0, -size * 0.8, 0, 0); gr2.addColorStop(0, '#ffb02a'); gr2.addColorStop(0.35, '#ff5a1f'); gr2.addColorStop(0.75, '#e2361f'); gr2.addColorStop(1, '#a01208');
+    f.fillStyle = gr2; f.fillText(txt, 0, 0);
+    const w = f.measureText(txt).width; f.restore(); return w;
   };
-  const w1 = brush('SUN', 14, 50, 34); brush('FIGHTER', 14 + w1 * 0.9 + 8, 70, 48);
-  const tinted = (src, col) => { const [c, g2] = mk(300, 80); g2.drawImage(src, 0, 0); g2.globalCompositeOperation = 'source-in'; g2.fillStyle = col; g2.fillRect(0, 0, 300, 80); return c; };
-  const ring = (c, rad, n = 16) => { for (let a = 0; a < n; a++) f.drawImage(c, Math.round(Math.cos(a / n * TAU) * rad), Math.round(Math.sin(a / n * TAU) * rad)); };
-  ring(tinted(smear, '#16120f'), 1, 4); f.drawImage(smear, 0, 0);        // the hairs, each with a hairline of ink
-  f.drawImage(tinted(ink, '#3a0806'), 3, 4); ring(tinted(ink, '#16120f'), 4);   // drop shadow + ink edge
-  ring(tinted(ink, '#fffdf2'), 2.5);                                     // the fat white sticker border
-  f.drawImage(ink, 0, 0);
-  pixelize(fight, ['#fffdf2', '#ffe36a', '#ffc23a', '#ff8a1f', '#e2361f', '#c41a0c', '#a01208', '#3a0806', '#16120f']);
+  const w1 = brush('SUN', 8, 60, 34); brush('FIGHTER', 8 + w1 * 0.96 + 10, 66, 46);
+  f.globalCompositeOperation = 'source-atop';                                                       // dry-brush streaks through the paint
+  for (let i = 0; i < 26; i++) { const y = 18 + r() * 52, x = r() * 300; f.fillStyle = r() < 0.5 ? 'rgba(255,214,90,.75)' : 'rgba(120,10,4,.6)'; f.fillRect(x, y, 10 + r() * 30, 1); }
+  f.globalCompositeOperation = 'destination-out';
+  for (let i = 0; i < 14; i++) { const y = 20 + r() * 50, x = r() * 300; f.fillRect(x, y, 4 + r() * 10, 1); }
+  f.globalCompositeOperation = 'source-over';
+  pixelize(fight, ['#ffd25a', '#ffb02a', '#ff8a1f', '#ff5a1f', '#e2361f', '#a01208', '#3a0806', '#16120f']);
   const [sheen] = mk(slat.width, slat.height), [aura] = mk(280, 260);
   TITLE_ART = { sky, land, slat, fight, sheen, aura, embers: [] };
 }
