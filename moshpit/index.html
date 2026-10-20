@@ -345,6 +345,11 @@ function land(c, vz){
 // push a body out of the stage and the bar unless it's up at their height
 function blockRoot(c){
   c.pushB=null;
+  // the stage and the bar are off limits to the crowd unless they've decided to climb them:
+  // no hopping up there by accident while jumping on the beat
+  const npc = !c.isPlayer && (c.role==='stander'||c.role==='mosher'||c.role==='barfly');
+  if(npc && !(c.task&&c.task.type==='stage') && c.y<STAGE_Y+R && c.y>STAGE_Y-6 && c.z<STAGE_H+40){ c.y=STAGE_Y+R; if(c.vy<0) c.vy*=-.3; }
+  if(npc && !(c.task&&c.task.type==='bar') && c.x>BAR.x0 && c.y>BAR.y0-R && c.y<BAR.y0+6 && c.z<BAR.h+40){ c.y=BAR.y0-R; if(c.vy>0) c.vy*=-.3; }
   for(const b of BLOCKS){
     if(c.z >= b.h-6) continue;
     if(c.x<=b.x0-R||c.x>=b.x1+R||c.y<=b.y0-R||c.y>=b.y1+R) continue;
@@ -381,9 +386,11 @@ function tryClimb(c){
 function blockPoint(p){
   for(const b of BLOCKS){
     if(p.x<b.x0||p.x>b.x1||p.y<b.y0||p.y>b.y1||p.z>=b.h-2) continue;
-    let m=b.h-p.z, ax=0;
+    // only something coming down from above lands on top; anything else slides off the side
+    let m = p.pz>=b.h-3 ? b.h-p.z : 1e9, ax=0;
     if(b.x0>1 && p.x-b.x0<m){m=p.x-b.x0;ax=1;} if(b.x1<W-1 && b.x1-p.x<m){m=b.x1-p.x;ax=2;}
     if(b.y0>BACK_Y+1 && p.y-b.y0<m){m=p.y-b.y0;ax=3;} if(b.y1<D-1 && b.y1-p.y<m){m=b.y1-p.y;ax=4;}
+    if(m===1e9) ax=0;
     if(ax===0) p.z=b.h; else if(ax===1) p.x=b.x0; else if(ax===2) p.x=b.x1; else if(ax===3) p.y=b.y0; else p.y=b.y1;
   }
 }
@@ -507,6 +514,8 @@ function ragUpdate(c){
     c.state='getup'; c.getT=0; c.stagger=0;
     const h=c.pts[HEAD]; c.fa=c.faT=Math.atan2(h.y-p.y,h.x-p.x);
     c.x = clamp(c.x,16,W-16);
+    // the crowd picks themselves up off the stage edge and stands back on the floor
+    if(c.y<STAGE_Y && (c.role==='stander'||c.role==='mosher'||c.role==='barfly') && !c.isPlayer){ c.y=STAGE_Y+R+2; c.z=0; }
     blockRoot(c);
     if(c.role==='stander') c.home={x:c.x,y:c.y};
   }
@@ -913,10 +922,13 @@ function aiNPC(c, surfers){
       const p=o.pts[PELV]; if(Math.hypot(p.x-c.x,p.y-c.y)<60) c.helpTarget=o;
     });
   }
+  // ended up on stage without meaning to? step back down off the front
+  if(c.y<STAGE_Y && c.z>=STAGE_H-2 && c.role!=='barfly'){ seek(c,clamp(c.x,130,W-130),STAGE_Y+24,2.4,2); faceMove(c); return; }
   const pitish = c.role==='mosher'||c.joined;
   const sec=G.sec;
   if(!pitish){
     if(c.act==='reach') c.act=null;
+    if(c.y<STAGE_Y && c.z>=STAGE_H-2 && c.home.y<STAGE_Y+20) c.home={x:c.x, y:STAGE_Y+40};
     // shoved hard? that's where you stand now
     if(c.stagger>1.2){ c.home.x=c.x; c.home.y=c.y; }
     creep(c);
@@ -1016,7 +1028,7 @@ function aiTask(c){
         if(onStage){
           k.step='run';
           k.stack = Math.random()<.5 ? (c.x<W/2?STACKS[0]:STACKS[1]) : null;
-          k.rx = k.stack ? k.stack.cx : rand(130,W-130);
+          k.rx = k.stack ? k.stack.cx : clamp(c.x+rand(-90,90),130,W-130);
           addText(c.x,c.y,c.z+95,pick(['YEEEEW!','WATCH THIS!','HOLD MY BEER!','SEND IT!']),'#f2ece0',13);
         } else k.step='approach';
       }
@@ -1027,7 +1039,7 @@ function aiTask(c){
         if(c.z>=STACK_HI-1 && !c.climb){ k.step='dive'; k.wait=rand(15,40); c.dvx=c.dvy=0; }
       } else {
         const arrived=seek(c,k.rx,STAGE_Y-14,3.4,10); faceMove(c);
-        if(arrived){ k.step='dive'; k.wait=rand(5,25); }
+        if(arrived){ k.step='dive'; k.wait=rand(3,12); }
       }
       if(k.t>650){ k.step='dive'; k.wait=0; }
     } else if(k.step==='dive'){
@@ -1089,7 +1101,7 @@ function aiGuard(c){
   }
   if(c.actCD<=0){
     let tgt=null;
-    near(c.x,c.y,30,o=>{ if(!tgt && o.task && o.task.type==='stage' && (o.task.onT||0)>240 && o.state==='up' && o.grounded && Math.abs(o.z-c.z)<6 && o.y<STAGE_Y) tgt=o; });
+    near(c.x,c.y,30,o=>{ if(!tgt && o.task && o.task.type==='stage' && (o.task.onT||0)>150 && o.state==='up' && o.grounded && Math.abs(o.z-c.z)<6 && o.y<STAGE_Y) tgt=o; });
     if(tgt){
       startAct(c,'throw',22); c.actCD=90; tgt.task=null;
       launchDive(tgt, rand(-.4,.4), 1, 'stage');
@@ -1396,7 +1408,7 @@ function step(){
   // the crowd gets up to things: stage dives, stack dives, bar dives
   if(G.sec!=='wodSplit' && G.sec!=='wodCharge'){
     const busy=t=>chars.filter(c=>c.task&&c.task.type===t).length;
-    if(G.frame%(G.sec==='surf'?180:420)===0 && busy('stage')<2) startTask('stage');
+    if(G.frame%(G.sec==='surf'?360:600)===0 && busy('stage')<1) startTask('stage');
     if(G.frame%660===330 && busy('bar')<1) startTask('bar');
   }
   // vapour trails behind anyone flying through the air
