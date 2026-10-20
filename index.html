@@ -2576,22 +2576,62 @@ function makeTitleArt() {
     s.font = '96px Anton, Impact, sans-serif'; s.textAlign = 'center'; s.textBaseline = 'top'; s.fillStyle = '#ffd23a'; s.strokeStyle = '#16120f'; s.lineWidth = 8; s.strokeText('SLATHER', 165, 8); s.fillText('SLATHER', 165, 8);
   }
   pixelize(slat, ['#fff6c0', '#ffe36a', '#ffc23a', '#ff9a2a', '#ff6a1f', '#e2361f', '#b8200f', '#7a1208', '#3a0806', '#16120f']);
-  // --- SUN FIGHTER, slapped on with a fat brush ---
-  const [fight, f] = mk(300, 80);
-  const brush = (txt, x, y, size) => {
-    f.font = `${size}px Knewave, "Permanent Marker", Impact, sans-serif`; f.textAlign = 'left'; f.textBaseline = 'alphabetic'; f.lineJoin = 'round';
-    f.save(); f.translate(x, y); f.rotate(-0.09); f.transform(1, 0, -0.18, 1, 0, 0);
-    f.fillStyle = '#3a0806'; f.fillText(txt, 3, 4);                                                   // drop shadow
-    f.strokeStyle = '#16120f'; f.lineWidth = 7; f.strokeText(txt, 0, 0);
-    const gr2 = f.createLinearGradient(0, -size * 0.8, 0, 0); gr2.addColorStop(0, '#ffb02a'); gr2.addColorStop(0.35, '#ff5a1f'); gr2.addColorStop(0.75, '#e2361f'); gr2.addColorStop(1, '#a01208');
-    f.fillStyle = gr2; f.fillText(txt, 0, 0);
-    const w = f.measureText(txt).width; f.restore(); return w;
+  // --- SUN FIGHTER, slashed on in aggressive brush strokes ---
+  const [fight, f] = mk(320, 80);
+  // each letter is a few hand-placed brush strokes (cap height = 1): heavy angled start, a ragged edge, a tail that thins and splits into bristles
+  const GLYPHS = {
+    S: [[[0.92, 0.04], [0.22, 0.03], [0.06, 0.2], [0.18, 0.4], [0.7, 0.52], [0.84, 0.74], [0.62, 0.98], [-0.12, 0.96]]],
+    U: [[[0.06, -0.02], [0.03, 0.74], [0.26, 1.0], [0.66, 0.98], [0.86, 0.72], [0.9, -0.04]]],
+    N: [[[0.04, 1.04], [0.1, -0.02], [0.74, 1], [0.84, -0.04]]],
+    F: [[[0.12, -0.02], [0.04, 1.04]], [[-0.04, 0.06], [0.9, -0.02]], [[0.04, 0.5], [0.66, 0.44]]],
+    I: [[[0.14, -0.02], [0.06, 1.04]]],
+    G: [[[0.9, 0.1], [0.4, -0.01], [0.04, 0.3], [0.05, 0.72], [0.36, 1.0], [0.84, 0.92], [0.86, 0.56]], [[0.42, 0.58], [1.02, 0.54]]],
+    H: [[[0.12, -0.02], [0.04, 1.04]], [[0.86, -0.04], [0.78, 1.04]], [[-0.02, 0.52], [0.98, 0.44]]],
+    T: [[[-0.08, 0.06], [1.0, -0.02]], [[0.5, 0.0], [0.4, 1.08]]],
+    E: [[[0.12, -0.02], [0.04, 1.02]], [[0.0, 0.05], [0.86, -0.01]], [[0.04, 0.5], [0.66, 0.46]], [[-0.02, 0.97], [0.92, 0.93]]],
+    R: [[[0.12, -0.02], [0.04, 1.04]], [[0.04, 0.04], [0.62, 0.0], [0.82, 0.2], [0.64, 0.46], [0.08, 0.52]], [[0.36, 0.5], [0.98, 1.08]]],
   };
-  const w1 = brush('SUN', 8, 60, 34); brush('FIGHTER', 8 + w1 * 0.96 + 10, 66, 46);
+  const ADV = { S: 0.96, U: 1.04, N: 0.94, F: 0.86, I: 0.38, G: 0.94, H: 0.98, T: 0.94, E: 0.88, R: 0.98 };
+  const along = (pts, n) => { // resample a polyline into n+1 evenly spaced points with normals
+    const segs = []; let L = 0;
+    for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); segs.push(l); L += l; }
+    const out = [];
+    for (let j = 0; j <= n; j++) {
+      let d = j / n * L, i = 0; while (i < segs.length - 1 && d > segs[i]) { d -= segs[i]; i++; }
+      const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], u = Math.min(1, d / segs[i]), dx = (x1 - x0) / segs[i], dy = (y1 - y0) / segs[i];
+      out.push({ x: x0 + (x1 - x0) * u, y: y0 + (y1 - y0) * u, nx: -dy, ny: dx });
+    }
+    return out;
+  };
+  const brush = (txt, x, y, cap) => {
+    const [wc, w2] = mk(320, 80), W = 0.21, place = (gx, px, py) => [x + (gx + px - py * 0.24) * cap, y - (1 - py) * cap - (gx + px) * cap * 0.07];
+    let gx = 0;
+    const gr2 = w2.createLinearGradient(0, y - cap, 0, y); gr2.addColorStop(0, '#ffb02a'); gr2.addColorStop(0.35, '#ff5a1f'); gr2.addColorStop(0.75, '#e2361f'); gr2.addColorStop(1, '#a01208');
+    for (const ch of txt) {
+      for (const stroke of GLYPHS[ch]) {
+        const P = along(stroke, 40), wid = t => W * (t < 0.1 ? 0.75 + t * 2.5 : t < 0.55 ? 1 : 1 - Math.pow((t - 0.55) / 0.45, 1.6) * 0.9) * (1 + (r() - 0.5) * 0.18);
+        const side = s2 => P.map((q, j) => { const w = wid(j / 40) / 2 * s2; return place(gx, q.x + q.nx * w, q.y + q.ny * w); });
+        const poly = side(1).concat(side(-1).reverse());
+        w2.fillStyle = gr2; w2.beginPath(); poly.forEach(([px, py], j) => j ? w2.lineTo(px, py) : w2.moveTo(px, py)); w2.closePath(); w2.fill();
+        w2.save(); w2.globalCompositeOperation = 'destination-out'; w2.lineWidth = 1;   // the tail splits into bristles
+        for (let b = 0; b < 3; b++) { const o = (r() - 0.5) * W * 0.6, j0 = Math.floor(40 * (0.55 + r() * 0.3));
+          w2.beginPath(); for (let j = j0; j <= 40; j++) { const q = P[j], [px, py] = place(gx, q.x + q.nx * o, q.y + q.ny * o); j === j0 ? w2.moveTo(px, py) : w2.lineTo(px, py); } w2.stroke(); }
+        w2.restore();
+      }
+      gx += ADV[ch] * 0.98;
+    }
+    const tint = col => { const [c, g3] = mk(320, 80); g3.drawImage(wc, 0, 0); g3.globalCompositeOperation = 'source-in'; g3.fillStyle = col; g3.fillRect(0, 0, 320, 80); return c; };
+    f.drawImage(tint('#3a0806'), 3, 4);                                                               // drop shadow
+    const ik = tint('#16120f');
+    for (let a = 0; a < 8; a++) f.drawImage(ik, Math.round(Math.cos(a / 8 * TAU) * 3), Math.round(Math.sin(a / 8 * TAU) * 3));   // ink outline
+    f.drawImage(wc, 0, 0);
+    return gx * cap;
+  };
+  const w1 = brush('SUN', 8, 52, 29); brush('FIGHTER', 8 + w1 + 6, 70, 31);
   f.globalCompositeOperation = 'source-atop';                                                       // dry-brush streaks through the paint
-  for (let i = 0; i < 26; i++) { const y = 18 + r() * 52, x = r() * 300; f.fillStyle = r() < 0.5 ? 'rgba(255,214,90,.75)' : 'rgba(120,10,4,.6)'; f.fillRect(x, y, 10 + r() * 30, 1); }
+  for (let i = 0; i < 26; i++) { const y = 18 + r() * 52, x = r() * 320; f.fillStyle = r() < 0.5 ? 'rgba(255,214,90,.75)' : 'rgba(120,10,4,.6)'; f.fillRect(x, y, 10 + r() * 30, 1); }
   f.globalCompositeOperation = 'destination-out';
-  for (let i = 0; i < 14; i++) { const y = 20 + r() * 50, x = r() * 300; f.fillRect(x, y, 4 + r() * 10, 1); }
+  for (let i = 0; i < 14; i++) { const y = 20 + r() * 50, x = r() * 320; f.fillRect(x, y, 4 + r() * 10, 1); }
   f.globalCompositeOperation = 'source-over';
   pixelize(fight, ['#ffd25a', '#ffb02a', '#ff8a1f', '#ff5a1f', '#e2361f', '#a01208', '#3a0806', '#16120f']);
   const [sheen] = mk(slat.width, slat.height), [aura] = mk(280, 260);
