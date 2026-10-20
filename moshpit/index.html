@@ -2080,7 +2080,7 @@ function drawWorld(){
   if(G.mode==='play'){
     if(player.state==='surf') G.uiRects.push(balanceRect(player));
     if(player.dive && !player.grounded && player.state==='up'){ const x=sx(player.x), y=sy(player.y,player.z+40); G.uiRects.push([x-130*S,y-120*S,260*S,220*S]); }
-    if(G.wod) G.uiRects.push(G.wod.phase==='pick' ? wodPromptRect() : wodPanelRect());
+    if(G.wod) G.uiRects.push(G.wod.phase==='pick' ? wodPromptRect() : G.wod.phase==='line' ? wodLineRect() : wodPanelRect());
   }
   if(G.mode==='play'){
     const p=player;
@@ -2246,22 +2246,29 @@ function arrow(x,y,r,d,col){
 }
 const DIRCOL={U:'#ffd23f',L:'#ff4d5e',D:'#3fd16b',R:'#38b6ff'}, DIRKEY={U:'W',L:'A',D:'S',R:'D'};
 function wodPromptRect(){ const u=hudScale(), w=Math.min(520*u,CW-24), h=230*u; return [HW-w/2, CH*.5-h/2, w, h]; }
-function wodPanelRect(){ const u=hudScale(), w=Math.min(600*u,CW-24), h=118*u; return [HW-w/2, CH-h-(touchCapable?150:14)*u, w, h]; }
+// the combo lane: a narrow see-through strip off to the right, so the pit stays in view
+function wodLaneX(w){ const u=hudScale(); return Math.min(CW*.8, CW-w/2-(touchCapable?70:22)*u); }
+function wodPanelRect(){
+  const u=hudScale(), w=86*u, top=CH*.16, bot=touchCapable ? Math.min(CH*.84, CH-205*u) : CH*.86;
+  const cx=wodLaneX(w); return [cx-w/2, top, w, Math.max(160*u, bot-top)];
+}
+function wodLineRect(){ const u=hudScale(), w=200*u, h=122*u, cx=wodLaneX(w); return [cx-w/2, CH*.5-h/2, w, h]; }
 function drawWod(){
   const w=G.wod, u=hudScale();
   ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
   if(w.phase==='line'){
-    const [x0,y0,pw,ph]=wodPanelRect(), cx=x0+pw/2;
-    ctx.fillStyle='rgba(8,6,10,.82)'; roundRect(x0,y0,pw,ph,12*u); ctx.fill();
-    ctx.strokeStyle='rgba(255,210,63,.7)'; ctx.lineWidth=2*u; ctx.stroke();
+    // a small see-through card off to the side: which wall you're on, and the countdown to the drop
+    const [x0,y0,pw,ph]=wodLineRect(), cx=x0+pw/2;
+    ctx.fillStyle='rgba(8,6,10,.42)'; roundRect(x0,y0,pw,ph,12*u); ctx.fill();
+    ctx.strokeStyle='rgba(255,210,63,.55)'; ctx.lineWidth=2*u; ctx.stroke();
     const left=G.secObj.end*4-G.beat;
-    arrow(cx-(pw/2-40*u)*(w.side<0?1:-1),y0+34*u,14*u,w.side<0?'L':'R','#ffd23f');
-    ctx.font=`${Math.round(26*u)}px ${FONT_D}`; ctx.fillStyle='#ffd23f';
-    ctx.fillText(w.side<0?'YOU JOINED THE LEFT WALL':'YOU JOINED THE RIGHT WALL',cx,y0+34*u);
-    ctx.font=`800 ${Math.round(left<=4.2?34:15)*u}px ${FONT_B}`; ctx.fillStyle='#f2ece0';
-    ctx.fillText(left<=4.2 ? String(Math.max(1,Math.ceil(left))) : 'WAIT FOR THE DROP...',cx,y0+70*u);
-    ctx.font=`500 ${Math.round(13*u)}px ${FONT_B}`; ctx.fillStyle='rgba(242,236,224,.75)';
-    ctx.fillText(touchCapable?'Then flick the stick with the arrows, on the beat, to keep the wall going':'Then hit W A S D with the arrows, on the beat, to keep the wall going',cx,y0+100*u);
+    arrow(cx,y0+22*u,12*u,w.side<0?'L':'R','#ffd23f');
+    ctx.font=`${Math.round(20*u)}px ${FONT_D}`; ctx.fillStyle='#ffd23f';
+    ctx.fillText(w.side<0?'LEFT WALL':'RIGHT WALL',cx,y0+48*u);
+    ctx.font=`800 ${Math.round(left<=4.2?30:13)*u}px ${FONT_B}`; ctx.fillStyle='#f2ece0';
+    ctx.fillText(left<=4.2 ? String(Math.max(1,Math.ceil(left))) : 'WAIT FOR THE DROP',cx,y0+78*u);
+    ctx.font=`500 ${Math.round(11*u)}px ${FONT_B}`; ctx.fillStyle='rgba(242,236,224,.8)';
+    ctx.fillText(touchCapable?'then flick with the arrows':'then hit W A S D with the arrows',cx,y0+104*u);
   } else if(w.phase==='pick'){
     const [x0,y0,pw,ph]=wodPromptRect(), cx=x0+pw/2;
     ctx.fillStyle='rgba(8,6,10,.78)'; roundRect(x0,y0,pw,ph,14*u); ctx.fill();
@@ -2283,43 +2290,56 @@ function drawWod(){
     }
     if(w.phase==='pick' && touchCapable){ ctx.font=`500 ${Math.round(13*u)}px ${FONT_B}`; ctx.fillStyle='rgba(242,236,224,.7)'; ctx.fillText('flick the stick left or right',cx,y0+ph-14*u); }
   } else if(w.phase==='combo'){
-    const [x0,y0,pw,ph]=wodPanelRect(), bn=judgeBeat();
-    ctx.fillStyle='rgba(8,6,10,.82)'; roundRect(x0,y0,pw,ph,12*u); ctx.fill();
-    ctx.strokeStyle='rgba(212,21,47,.6)'; ctx.lineWidth=2*u; ctx.stroke();
-    // header: what you're doing and how long you've held
+    // a vertical lane: arrows fall into the ring on the beat
+    const [x0,y0,pw,ph]=wodPanelRect(), cx=x0+pw/2, bn=judgeBeat();
+    ctx.fillStyle='rgba(8,6,10,.28)'; roundRect(x0,y0,pw,ph,12*u); ctx.fill();
+    ctx.strokeStyle='rgba(212,21,47,.4)'; ctx.lineWidth=1.5*u; ctx.stroke();
     const held=clamp((bn-w.start)*BEAT,0,20.9), frac=clamp((bn-w.start)/(w.end-w.start),0,1);
-    ctx.textAlign='left'; ctx.font=`${Math.round(22*u)}px ${FONT_D}`; ctx.fillStyle='#ff2d44'; ctx.fillText('HOLD THE WALL',x0+14*u,y0+20*u);
-    ctx.textAlign='right'; ctx.font=`800 ${Math.round(13*u)}px ${FONT_B}`; ctx.fillStyle='#f2ece0';
-    ctx.fillText(held.toFixed(1)+' / 20s   STREAK '+w.streak,x0+pw-14*u,y0+20*u);
-    if(w.notes.length && bn<w.notes[0].b-.5){ ctx.textAlign='center'; ctx.fillStyle='#ffd23f'; ctx.fillText('HIT THE ARROWS AS THEY REACH THE RING',x0+pw*.55,y0+56*u); }
-    ctx.fillStyle='rgba(242,236,224,.15)'; ctx.fillRect(x0+14*u,y0+36*u,pw-28*u,5*u);
-    ctx.fillStyle='#ffd23f'; ctx.fillRect(x0+14*u,y0+36*u,(pw-28*u)*frac,5*u);
-    // the lane: notes slide left into the hit ring on the beat
-    const laneY=y0+80*u, hx=x0+60*u, ppb=58*u;
-    ctx.strokeStyle='rgba(242,236,224,.12)'; ctx.lineWidth=2*u; ctx.beginPath(); ctx.moveTo(x0+14*u,laneY); ctx.lineTo(x0+pw-14*u,laneY); ctx.stroke();
-    for(let b=Math.ceil(bn); b<bn+12; b++){ const x=hx+(b-bn)*ppb; if(x>x0+pw-16*u) break; ctx.fillStyle='rgba(242,236,224,.18)'; ctx.fillRect(x-1,laneY-14*u,2,28*u); }
+    ctx.lineWidth=4*u; ctx.strokeStyle='rgba(8,6,10,.85)';
+    ctx.font=`${Math.round(15*u)}px ${FONT_D}`; ctx.fillStyle='#ff2d44';
+    for(const [t,yy] of [['HOLD THE',16],['WALL',32]]){ ctx.strokeText(t,cx,y0+yy*u); ctx.fillText(t,cx,y0+yy*u); }
+    ctx.font=`800 ${Math.round(11*u)}px ${FONT_B}`; ctx.fillStyle='#f2ece0';
+    ctx.strokeText(held.toFixed(1)+' / 20s',cx,y0+48*u); ctx.fillText(held.toFixed(1)+' / 20s',cx,y0+48*u);
+    // progress fills up the right edge of the lane
+    const bx=x0+pw-6*u, bt=y0+58*u, bh=ph-70*u;
+    ctx.fillStyle='rgba(242,236,224,.15)'; ctx.fillRect(bx,bt,3*u,bh);
+    ctx.fillStyle='#ffd23f'; ctx.fillRect(bx,bt+bh*(1-frac),3*u,bh*frac);
+    const ringY=y0+ph-36*u, ppb=46*u, laneTop=y0+62*u;
+    for(let b=Math.ceil(bn); ; b++){ const y=ringY-(b-bn)*ppb; if(y<laneTop) break; ctx.fillStyle='rgba(242,236,224,.13)'; ctx.fillRect(cx-16*u,y,32*u,1.5); }
     const pulse=.5+.5*Math.cos((bn%1)*Math.PI*2);
-    ctx.strokeStyle=`rgba(255,210,63,${.5+pulse*.5})`; ctx.lineWidth=3*u; ctx.beginPath(); ctx.arc(hx,laneY,24*u+pulse*3*u,0,Math.PI*2); ctx.stroke();
-    ctx.textAlign='center';
+    ctx.strokeStyle=`rgba(255,210,63,${.55+pulse*.45})`; ctx.lineWidth=3*u; ctx.beginPath(); ctx.arc(cx,ringY,23*u+pulse*3*u,0,Math.PI*2); ctx.stroke();
     for(let k=w.i;k<w.notes.length;k++){
-      const n=w.notes[k], x=hx+(n.b-bn)*ppb;
-      if(x>x0+pw-24*u) break;
-      if(x<x0+10*u) continue;
-      ctx.fillStyle='rgba(8,6,10,.9)'; roundRect(x-19*u,laneY-19*u,38*u,38*u,8*u); ctx.fill();
+      const n=w.notes[k], y=ringY-(n.b-bn)*ppb;
+      if(y<laneTop) break;
+      if(y>y0+ph-6*u) continue;
+      ctx.globalAlpha=y<laneTop+30*u ? Math.max(0,(y-laneTop)/(30*u)) : 1;
+      ctx.fillStyle='rgba(8,6,10,.55)'; roundRect(cx-18*u,y-18*u,36*u,36*u,8*u); ctx.fill();
       ctx.strokeStyle=DIRCOL[n.d]; ctx.lineWidth=2.5*u; ctx.stroke();
-      arrow(x,laneY-(touchCapable?0:4*u),12*u,n.d,DIRCOL[n.d]);
-      if(!touchCapable){ ctx.font=`800 ${Math.round(10*u)}px ${FONT_B}`; ctx.fillStyle='#f2ece0'; ctx.fillText(DIRKEY[n.d],x,laneY+12*u); }
+      arrow(cx,y-(touchCapable?0:4*u),11*u,n.d,DIRCOL[n.d]);
+      if(!touchCapable){ ctx.font=`800 ${Math.round(9*u)}px ${FONT_B}`; ctx.fillStyle='#f2ece0'; ctx.fillText(DIRKEY[n.d],cx,y+11*u); }
+      ctx.globalAlpha=1;
     }
-    // the last few hits burst out of the ring
     for(let k=Math.max(0,w.i-3);k<w.i;k++){
       const n=w.notes[k], age=bn-n.b; if(age>1) continue;
       ctx.globalAlpha=1-age; ctx.strokeStyle=DIRCOL[n.d]; ctx.lineWidth=3*u;
-      ctx.beginPath(); ctx.arc(hx,laneY,(24+age*30)*u,0,Math.PI*2); ctx.stroke(); ctx.globalAlpha=1;
+      ctx.beginPath(); ctx.arc(cx,ringY,(23+age*28)*u,0,Math.PI*2); ctx.stroke(); ctx.globalAlpha=1;
     }
+    // feedback and streak sit just left of the ring
+    ctx.textAlign='right';
     if(w.fbT>0){
-      ctx.globalAlpha=Math.min(1,w.fbT/10); ctx.font=`800 ${Math.round(16*u)}px ${FONT_B}`;
-      ctx.fillStyle=w.fb==='PERFECT'?'#ffd23f':'#9effa8'; ctx.fillText(w.fb,x0+pw*.5,y0+20*u); ctx.globalAlpha=1;
+      ctx.globalAlpha=Math.min(1,w.fbT/10); ctx.font=`800 ${Math.round(15*u)}px ${FONT_B}`;
+      ctx.lineWidth=4*u; ctx.strokeStyle='rgba(8,6,10,.8)'; ctx.strokeText(w.fb,x0-8*u,ringY-8*u);
+      ctx.fillStyle=w.fb==='PERFECT'?'#ffd23f':'#9effa8'; ctx.fillText(w.fb,x0-8*u,ringY-8*u); ctx.globalAlpha=1;
     }
+    if(w.streak>1){
+      ctx.font=`800 ${Math.round(12*u)}px ${FONT_B}`; ctx.lineWidth=4*u; ctx.strokeStyle='rgba(8,6,10,.8)';
+      ctx.strokeText('STREAK '+w.streak,x0-8*u,ringY+12*u); ctx.fillStyle='#f2ece0'; ctx.fillText('STREAK '+w.streak,x0-8*u,ringY+12*u);
+    }
+    if(w.notes.length && bn<w.notes[0].b-.5){
+      ctx.font=`800 ${Math.round(12*u)}px ${FONT_B}`; ctx.lineWidth=4*u; ctx.strokeStyle='rgba(8,6,10,.8)';
+      for(const [t,dy] of [['HIT EACH ARROW',-46],['AS IT REACHES',-30],['THE RING',-14]]){ ctx.strokeText(t,x0-8*u,ringY+dy*u-30*u); ctx.fillStyle='#ffd23f'; ctx.fillText(t,x0-8*u,ringY+dy*u-30*u); }
+    }
+    ctx.textAlign='center';
   }
   ctx.restore();
 }
