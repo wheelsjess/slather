@@ -2940,7 +2940,7 @@ function drawBoard() {
   if (Math.floor(S.time * 2) % 2) txt(isTouch ? 'TAP TO CONTINUE' : 'PRESS ENTER TO CONTINUE', W / 2, 240, C.white, 8, 'center');
 }
 
-/* ================= Credits: SNES-ending style, black screen, slow white scroll, then a cast roll ================= */
+/* ================= Credits: SNES-ending style, black screen, slow white scroll ================= */
 const CREDITS_MSG = [
   ["YOU PROBABLY NORMALLY SKIP THE CREDITS SCREEN, BUT PLEASE READ THIS ONE.", '#ffe800'],
   ["AUSTRALIA IS NO.1 IN THE WORLD FOR SKIN CANCER.", C.white],
@@ -2951,19 +2951,10 @@ const CREDITS_MSG = [
   ["WE MADE IT BECAUSE WE SHOULDN'T BE LOSING ANY MORE MATES TO SKIN CANCER. AND THE ONLY THING WORSE THAN THE SUN'S RADIOACTIVE RAYS IS OUR COLLECTIVE ATTITUDE TO SKIN PROTECTION.", C.white],
   ["SO REMEMBER TO LOOK AFTER YOURSELVES WHEN YOU'RE OUT AND ABOUT AND SLATHER UP.", '#ffe800'],
 ];
-const CAST = [['bogan', 'THE BOGAN', 4], ['sun_head', 'THE SUN', 1], ['npc_eshay', 'THE ESHAY', 4], ['npc_backpacker', 'THE BRITISH BACKPACKER', 4], ['npc_italian', 'THE ITALIAN', 4],
-  ['npc_influencer', 'THE INFLUENCER', 4], ['npc_icecream', 'THE ICE CREAM MAN', 4], ['ibis', 'THE BIN CHICKEN', 2], ['crab', 'THE CRAB', 2], ['npc_oldman', 'THE OLD MAN', 4]];
 function wrapText(str, n) { const out = []; let line = ''; for (const w of str.split(' ')) { if (line && (line + ' ' + w).length > n) { out.push(line); line = w; } else line = line ? line + ' ' + w : w; } if (line) out.push(line); return out; }
 function creditsLayout() { // a list of rows, each {h, draw(y)}
   const rows = [], gap = h => rows.push({ h, draw() {} });
   for (const [para, col] of CREDITS_MSG) { for (const l of wrapText(para, 40)) rows.push({ h: 14, draw: y => txt(l, W / 2, y, col, 8, 'center') }); gap(18); }
-  gap(60); rows.push({ h: 34, draw: y => txt('CAST', W / 2, y, '#ffe800', 16, 'center') });
-  for (const [name, label, nf] of CAST) rows.push({ h: name === 'sun_head' ? 96 : 58, draw: y => {
-    const sp = SPR[name]; if (!sp) return; const big = name === 'sun_head', f = Math.floor(S.time * 6) % nf;
-    if (big) ctx.drawImage(sp.img, 0, 0, sp.fw, sp.fh, W / 2 - 150 - sp.fw * 0.3, y, sp.fw * 0.6, sp.fh * 0.6);
-    else spr(name, f, W / 2 - 150, y + 44);
-    txt(label, W / 2 - 100, y + (big ? 36 : 22), C.white, 8);
-  } });
   gap(70); rows.push({ h: 120, draw: y => { const A = TITLE_ART; if (A) ctx.drawImage(A.slat, W / 2 - A.slat.width * 0.35, y, A.slat.width * 0.7, A.slat.height * 0.7); } });
   rows.push({ h: 1, draw: y => txt('THANK YOU FOR PLAYING', W / 2, y, C.white, 8, 'center') });   // the scroll parks with this line at CRED_STOP
   return rows;

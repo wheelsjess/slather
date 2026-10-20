@@ -64,7 +64,7 @@ Both are styled after Elden Ring. If you die, a dark band fades in across the sc
 
 ### Credits
 
-Win or lose, pressing Enter (or tapping) after the end screens rolls the credits, done like a SNES ending: a black screen with white pixel text scrolling slowly upwards to the beach music. First comes a message from Slather about skin cancer in Australia, then a Super Mario World-style cast roll with each character's sprite walking beside its name. It finishes on the SLATHER logo, THANK YOU FOR PLAYING and THE END, then Enter plays again. The first time through you can hold Enter (or hold a tap) to speed it up but not skip it. After that, Enter skips straight to a new fight.
+Win or lose, pressing Enter (or tapping) after the end screens rolls the credits, done like a SNES ending: a black screen with white pixel text scrolling slowly upwards to the beach music. First comes a message from Slather about skin cancer in Australia. It finishes on the SLATHER logo, THANK YOU FOR PLAYING and THE END, then Enter plays again. The first time through you can hold Enter (or hold a tap) to speed it up but not skip it. After that, Enter skips straight to a new fight.
 ## The boss name
 
 Like a Souls boss, the Sun's name sits over its health bar in an off-white serif, left-aligned. It changes at each phase shift, fading out and back in with a golden flash:
