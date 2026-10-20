@@ -1285,9 +1285,9 @@ const ATTACKS = {
       }
       const c = a.caught, lt = a.t - a.ct;
       if (lt < 2.9) { h.tx = a.liftX; h.tfy = 196; h.tz = 84; h.rate = 4; } else { h.tz = 0; h.rate = 7; }
-      const lz = Math.max(0, h.z - 12); // dangling in front of the fist, legs kicking below it
+      const lz = Math.max(0, h.z - 17); // held inside the fist (drawn behind it), only the legs kicking out the bottom
       if (c.who === 'player' && P.held) { P.x = h.x + 2; P.y = h.fy + 1; P.liftZ = lz; }
-      if (c.who === 'npc' && S.held) { c.n.x = h.x + 2; c.n.y = h.fy + 1; c.n.liftZ = Math.max(0, h.z - 10); }
+      if (c.who === 'npc' && S.held) { c.n.x = h.x + 2; c.n.y = h.fy + 1; c.n.liftZ = lz; }
       a.once(a.ct + 0.7, 'laugh', () => { SFX.laugh(); boss.laughT = 1.4; if (c.who === 'player') sunSay("YOU'RE MINE NOW, GARY!!!"); });
       if (lt > 1.6 && lt < 2.4) { boss.face = 'rage'; boss.eyeGlow = clamp((lt - 1.6) / 0.6, 0, 1); a.once(a.ct + 1.6, 'chg', () => SFX.charge()); }
       if (lt >= 2.4 && lt < 2.9) {
@@ -1542,7 +1542,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && S.m
 
 /* ================= Intro cutscene ================= */
 const INTRO_LINES = [[3.2, 5.2, 'EEEERRRGGHHHHH....'], [5.4, 7.6, 'FUCK ME, WHAT A DAY.'], [7.8, 10.2, "AT LEAST THE SUN'S OUT THOUGH...."],
-  [20.2, 22.2, 'THIS CUNT AGAIN...'], [22.4, 24.4, 'TIME TO SLATHER UP!']];
+  [20.2, 22.2, 'THIS #$%! AGAIN...'], [22.4, 24.4, 'TIME TO SLATHER UP!']];
 const STOMPS = [14.4, 14.9, 16.4, 18.4], FAR_K = 0.32, FAR_Y = HORIZON + 6, RAY_Y = 186;
 function startIntro() {
   endLoading(); erHide(); audioOn(); reset(); S.mode = 'intro';
@@ -2352,7 +2352,8 @@ function drawWorld() {
   }
   // sorted sprites
   const list = [];
-  list.push({ y: P.y, draw: drawPlayer });
+  const inFist = who => S.held && (S.held.who === 'player' ? who === player : S.held.n === who);   // the grabbed sit behind the Sun's fist
+  list.push({ y: inFist(P) ? P.y - 2 : P.y, draw: drawPlayer });
   if (handsOut) for (const h of B.hands) list.push({ y: h.fy + 0.5, draw: () => { armBehindHead(h); drawHand(h); } });
   if (S.mode !== 'title') for (const u of UMBRELLAS) {
     const um = SPR.umbrella, top = u.y + 2 - um.fh, split = 41;   // canopy is rows 0-40 of the art, the pole below
@@ -2361,7 +2362,7 @@ function drawWorld() {
   }
   for (const x of FLAGS) list.push({ y: 168, draw: () => drawFlag(x) });
   for (const p of pickups) list.push({ y: p.y, draw: () => { if (p.life < 3 && Math.floor(p.life * 8) % 2) return; spr(p.kind, 0, p.x, p.y - p.z + (p.kind.startsWith('slather') ? Math.round(Math.sin(S.time * 4) * 1) : 0)); } });
-  for (const n of npcs) list.push({ y: n.y, draw: () => drawNPC(n) });
+  for (const n of npcs) list.push({ y: inFist(n) ? n.y - 2 : n.y, draw: () => drawNPC(n) });
   for (const v of vehicles) list.push({ y: v.y, draw: () => {
     const fade = v.state === 'burning' && v.t > 7 ? 8 - v.t : 1, f = v.state === 'drive' ? Math.floor(v.anim) % 2 : 2;
     shadow(v.x, v.y, 24, 4, 0.25 * fade); spr('jeep', f, v.x, v.y + 1, { flip: v.dir < 0, alpha: fade });
