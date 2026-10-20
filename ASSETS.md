@@ -46,7 +46,7 @@ Frame order for both sheets:
 
 ## Items, props and effects
 
-Everything below that isn't marked as done from your art has a stand-in redrawn in the same style. That covers the snacks, seagull, fireball, sandcastle, crabs, jeep, dog, ash, bucket hat, surfer and his wave, dolphins, boat, jet ski, towels, the flapping patrol flags and the puffy clouds. They all have a dark outline, three tones per colour lit from the top left, and a little dithering. The Sun's torso is redrawn the same way in your Sun's yellows, with pecs and nipples like your refs. So the whole scene holds together until real art replaces any of it.
+Everything below that isn't marked as done from your art has a stand-in redrawn in the same style. That covers the snacks, seagull, fireball, sandcastle, crabs, ice cream van, dog, ash, bucket hat, surfer and his wave, dolphins, boat, jet ski, towels, the flapping patrol flags and the puffy clouds. They all have a dark outline, three tones per colour lit from the top left, and a little dithering. The Sun's torso is redrawn the same way in your Sun's yellows, with pecs and nipples like your refs. So the whole scene holds together until real art replaces any of it.
 
 | File | Frame size | Frames | Notes |
 |---|---|---|---|
@@ -88,7 +88,7 @@ The beachgoers are seen **side-on, facing right**; the right-to-left walkers are
 | `npc_boyfriend.png` | 28 × 40 | 7 | Her boyfriend. Frames 0–3 walk, 4–5 crouched taking a photo on his phone (5 has the screen lit). |
 | `npc_lifesaverf.png` | 28 × 40 | 5 | Lifesaver with a ponytail under the cap |
 | `sandcastle.png` | 26 × 24 | 2 | Frame 0 standing, frame 1 knocked flat |
-| `jeep.png` | 54 × 30 | 3 | Lifeguard jeep facing right. Frames 0–1 are driving (wheels turning); frame 2 has an empty driver's seat, used once it's on fire. |
+| `van.png` | 64 × 40 | 3 | Retro soft-serve ice cream van facing right: cream body, pink and blue stripes, candy-striped awning, giant cone on the roof. Frames 0–1 are driving (wheels turning) with the ice cream man in the serving window; frame 2 has an empty window, used once it's on fire. |
 | `npc_backpacker.png` | 28 × 40 | 5 | Sunburnt British backpacker: pale legs and singlet tan line, red face, neck and arms, khaki shorts, socks and sandals, big blue pack |
 | `npc_oldman.png` | 28 × 40 | 5 | The Zelda-style old man in a red robe with a white beard (title screen only, drawn at 2x) |
 | `ibis.png` | 26 × 22 | 3 | Bin chicken, facing right: two walk frames, then beak-down grabbing |

@@ -545,6 +545,7 @@ const NPC_TYPES = {
     shoes: 'sneakers', shoeCol: '#e2361f', sideStripe: '#ffffff', bumbag: true, seed: 27, extra: ['danceA', 'danceB', 'danceC', 'danceD'] },
   influencer: { fem: 1, skin: SKINS.tan, hair: '#7a4a22', hairStyle: 'visor', cap1: '#ffb02a', top: '#2fb8b0', topPat: 'trop', topH: 5, bottom: '#2fb8b0', botPat: 'trop', bottomLen: 7, drawstring: 1, tote: 1, shoes: 'thongs', seed: 29, extra: ['hip', 'peace', 'flip'] },
   boyfriend: { skin: SKINS.olive, hair: '#e8c35a', hairStyle: 'mullet', bottom: '#9a5ad8', botPat: 'camo', bottomLen: 8, drawstring: 1, sunnies: 1, bumbag: true, bumbagCol: '#2fb8b0', shoes: 'sneakers', seed: 31, extra: ['photo', 'photo2'] },
+  icecream: { skin: SKINS.light, hair: '#5a3a22', hairStyle: 'cap', cap1: '#fffdf2', cap2: '#ff9fc4', mo: 1, top: '#fffdf2', sleeve: '#fffdf2', bottom: '#2f3a5a', bottomLen: 13, legs: '#2f3a5a', belly: 1, shoes: 'sneakers', shoeCol: '#ffffff', seed: 43 },
   lifesaver: { skin: SKINS.brown, hair: '#222222', hairStyle: 'cap', cap: 1, cap1: '#e2361f', cap2: '#ffd21f', top: '#ffd21f', bottom: '#e2361f', bottomLen: 5, shoes: 'bare', seed: 33 },
   oldman: { skin: '#e8b48a', hair: '#f4f4f4', hairStyle: 'bald', beard: '#f4f4f4', top: '#c4281a', sleeve: '#c4281a', sleeveLong: 1, bottom: '#c4281a', bottomLen: 13, legs: '#a01f12', shoes: 'bare', seed: 41 },
   oldie: { skin: SKINS.leather, hair: '#e8e8e8', hairStyle: 'bald', bottom: '#1b2fb0', bottomLen: 3, belly: 1, wrinkles: 1, sunnies: 1, lens: '#3a3a3a', shoes: 'thongs', seed: 35 },
@@ -652,18 +653,30 @@ function drawCrab(g, f, col, colD, colL) {
 }
 sheet('crab', 14, 10, 2, (g, f) => drawCrab(g, f, '#ef8a3a', '#b0521c', '#ffc07a'), { outline: true });
 sheet('crab_cooked', 14, 10, 1, g => drawCrab(g, 0, '#e2361f', '#8a1a10', '#ff7a5a'), { outline: true });
-sheet('jeep', 54, 30, 3, (g, f) => { // lifeguard ute facing right; frame 2 has an empty driver's seat
-  const { R, D, E } = pix(g);
-  R('#3a3f48', 14, 3, 2, 11); R('#3a3f48', 14, 3, 18, 2); R('#6a707a', 14, 3, 18, 1);           // roll bar
-  R('#e2361f', 15, 1, 7, 2); R('#2f6fd1', 22, 1, 7, 2); R('#ff7a5a', 15, 1, 3, 1); R('#7fb0ff', 22, 1, 3, 1); // light bar
-  R('#3a3f48', 36, 5, 2, 9); R('#9fd6ee', 38, 6, 2, 8); R('#e6f6ff', 38, 6, 1, 3);               // windscreen
-  if (f < 2) { R('#ffd21f', 21, 9, 8, 5); R('#e0a072', 22, 4, 5, 5); R('#b8784a', 22, 7, 1, 2); R('#e2361f', 21, 2, 7, 3); R('#ffd21f', 24, 2, 3, 2); R(C.ink, 26, 5, 1, 1); }
-  R('#ffd21f', 4, 13, 46, 9); R('#fff07a', 4, 13, 46, 1); D('#e0b400', 4, 18, 46, 2); R('#c49a00', 4, 20, 46, 2);
-  R('#e2361f', 4, 15, 46, 3); R('#ff7a5a', 4, 15, 46, 1); R('#ffffff', 26, 16, 1, 1); R('#ffffff', 28, 16, 2, 1); R('#ffffff', 31, 16, 1, 1);
-  R('#c49a00', 49, 14, 3, 7); R('#fff3b0', 50, 14, 2, 2); R('#e2361f', 3, 14, 2, 3);
-  for (const wx of [13, 41]) {
-    E('#1b1b22', wx, 24, 6, 6); E('#3a3f48', wx, 24, 4, 4); E('#b8c0c8', wx, 24, 2, 2);
-    R('#e6e8ea', wx - 1, 22 + (f === 1 ? 1 : 0), 1, 1); R('#1b1b22', wx - 6, 22, 12, 1);
+sheet('van', 64, 40, 3, (g, f) => { // retro soft-serve van facing right; frames 0-1 roll the wheels, frame 2 has an empty serving window
+  const { R, D, E } = pix(g), CR = '#fff6e0', CRD = '#e8dcc0', PK = '#ff9fc4', BL = '#8fd0f0';
+  // the giant cone on the roof
+  g.fillStyle = '#d8964a'; g.beginPath(); g.moveTo(23, 6); g.lineTo(33, 6); g.lineTo(28, 14); g.closePath(); g.fill();
+  D('#a8662a', 24, 7, 8, 4); R('#8a5020', 27, 13, 2, 2);
+  E('#fffdf2', 28, 5, 6, 2.5); E('#fffdf2', 28, 2.5, 4.5, 2); E('#fffdf2', 28.5, 0.8, 2.5, 1.3); R(CRD, 23, 6, 10, 1); R(CRD, 25, 3, 7, 1); R('#e2361f', 30, 0, 2, 1);
+  // body: the serving box and the cab
+  R(CR, 3, 15, 46, 19); R('#fffdf2', 3, 15, 46, 1); D(CRD, 3, 30, 46, 3);
+  R(CR, 49, 20, 12, 14); R('#fffdf2', 49, 20, 9, 1);
+  g.fillStyle = CR; g.beginPath(); g.moveTo(49, 20); g.lineTo(54, 20); g.lineTo(59, 25); g.lineTo(49, 25); g.fill();
+  R(BL, 51, 21, 3, 4); g.fillStyle = BL; g.beginPath(); g.moveTo(54, 21); g.lineTo(57, 25); g.lineTo(54, 25); g.fill(); R('#e6f6ff', 51, 21, 1, 2);   // windscreen
+  R(PK, 3, 26, 58, 2); R(BL, 3, 28, 58, 1); R('#3a3f48', 2, 33, 60, 2);                                                                       // pastel stripes, bumper line
+  R('#fff3b0', 60, 27, 2, 2); R('#e2361f', 2, 22, 1, 3);                                                                                        // headlight, tail light
+  // serving window with a candy-striped awning
+  R('#3a2a22', 13, 18, 24, 8); R('#5a4234', 13, 18, 24, 1);
+  if (f < 2) { R('#fffdf2', 21, 15, 6, 3); R(PK, 21, 17, 6, 1); R('#f0c09a', 22, 18, 5, 5); R(C.ink, 23, 20, 1, 1); R(C.ink, 25, 20, 1, 1); R('#3a2a22', 23, 22, 3, 1); R('#fffdf2', 20, 23, 8, 3);   // the ice cream man
+    E('#fffdf2', 33, 21, 2, 1.5); g.fillStyle = '#d8964a'; g.beginPath(); g.moveTo(31.5, 22); g.lineTo(34.5, 22); g.lineTo(33, 25); g.fill(); }   // a cone on the counter
+  R('#c8b8a0', 12, 26, 26, 1);
+  for (let i = 0; i < 7; i++) R(i % 2 ? '#fffdf2' : PK, 11 + i * 4, 15, 4, 3);
+  for (let i = 0; i < 7; i++) R(i % 2 ? '#fffdf2' : PK, 11 + i * 4 + 1, 18, 2, 1);
+  R('#e2361f', 41, 18, 5, 5); R('#fffdf2', 42, 19, 3, 3); R('#e2361f', 43, 20, 1, 1);   // a little "99" sticker-ish badge
+  for (const wx of [14, 50]) {
+    E('#1b1b22', wx, 35, 5, 5); E('#3a3f48', wx, 35, 3, 3); E('#b8c0c8', wx, 35, 1.5, 1.5);
+    R('#e6e8ea', wx - 1 + (f === 1 ? 1 : 0), 33, 1, 1); R('#1b1b22', wx - 6, 32, 12, 1);
   }
 }, { outline: true });
 sheet('dog', 18, 12, 2, (g, f) => { // tan kelpie with a white chest, facing right
@@ -767,7 +780,7 @@ function buildTints() {
   TINT.boganW = tinted('bogan', '#bfeaff'); TINT.boganC = tinted('bogan_burnt', '#1c0f08');
   TINT.handR = tinted('sun_hand', '#ff4a1a');
   for (const k in NPC_TYPES) TINT['npc_' + k] = tinted('npc_' + k, '#1c0f08');
-  TINT.jeepC = tinted('jeep', '#1c0f08'); TINT.boatC = tinted('boat', '#1c0f08');
+  TINT.vanC = tinted('van', '#1c0f08'); TINT.boatC = tinted('boat', '#1c0f08');
 }
 buildTints();
 
@@ -971,6 +984,10 @@ const LEAD_B = seq(`A5 . E5 A5 . C6 . B5 A5 . G5 . E5 . G5 A5   F5 . C5 F5 . A5 
                     G5 . D5 G5 . B5 . A5 G5 . F5 . D5 . F5 G5   G#5 . E5 G#5 . B5 . D6 E6 . D6 . B5 . G#5 .`);
 const LEAD_BEACH = seq(`E5 . . G5 . . C6 . B5 . G5 . E5 . . .   F5 . . A5 . . C6 . A5 . F5 . D5 . . .
                         D5 . . G5 . . B5 . A5 . G5 . F5 . D5 .   E5 . C5 . G4 . C5 . E5 . . . . . . .`);
+const notes = list => list.flatMap(([n, d]) => [n === '.' ? null : nm(n), ...Array(d - 1).fill(null)]);   // [note, length in steps] → a step pattern
+const GREENSLEEVES = notes([['A4', 2], ['C5', 4], ['D5', 2], ['E5', 3], ['F5', 1], ['E5', 2], ['D5', 4], ['B4', 2], ['G4', 3], ['A4', 1], ['B4', 2], ['C5', 4], ['A4', 2],
+  ['A4', 3], ['G#4', 1], ['A4', 2], ['B4', 4], ['G#4', 2], ['E4', 4], ['A4', 2], ['C5', 4], ['D5', 2], ['E5', 3], ['F5', 1], ['E5', 2], ['D5', 4], ['B4', 2],
+  ['G4', 3], ['A4', 1], ['B4', 2], ['C5', 3], ['B4', 1], ['A4', 2], ['G#4', 3], ['F#4', 1], ['G#4', 2], ['A4', 6], ['.', 4]]);   // 96 steps
 const MINOR = { roots: ['A2', 'F2', 'G2', 'E2'].map(nm), chords: [[57, 60, 64], [53, 57, 60], [55, 59, 62], [52, 56, 59]] };
 const TRACKS = {
   beach: { bpm: 104, lead: LEAD_BEACH, roots: ['C3', 'F2', 'G2', 'C3'].map(nm), bassPat: [0, null, 7, null, 12, null, 7, null], drums: 'k...h...s...h...', leadVol: 0.045 },
@@ -979,6 +996,7 @@ const TRACKS = {
   gabber: { bpm: 184, lead: seq(`A4 . A4 . . . A4 . C5 . A4 . . . E5 D5   A4 . A4 . . . A4 . G4 . A4 . . . C5 B4
                                F4 . F4 . . . F4 . A4 . F4 . . . C5 A4   E4 . E4 . . . G#4 . B4 . E5 . . . G#4 B4`), ...MINOR,
     bassPat: [null, null, 0, null], drums: 'G.h.G.h.G.h.G.hG', leadVol: 0.05, leadType: 'sawtooth', hoover: true },
+  greensleeves: { bpm: 92, lead: GREENSLEEVES, roots: ['A2', 'G2', 'A2', 'E2', 'G2', 'A2'].map(nm), bassPat: [null], drums: '................', leadVol: 0.06, leadType: 'triangle', chime: true, transpose: 0.3 },   // the ice cream van: a tinny music box, a bit sharp
   fight3: { bpm: 170, lead: LEAD_B, ...MINOR, bassPat: [0, 12, 0, 12], drums: 'khkhskhkkhkhskss', leadVol: 0.05, arp: true, transpose: 1 },
 };
 const MUS = { name: null, step: 0, next: 0, bus: null, echo: null, pulse: null };
@@ -999,8 +1017,8 @@ function mnote(m, t, dur, vol, type, echo) {
   o.connect(g).connect(MUS.bus); if (echo) g.connect(MUS.echo); o.start(t); o.stop(t + dur + 0.02);
 }
 function playStep(T, i, t, sp) {
-  const tr = T.transpose || 0, bar = Math.floor(i / 16), st = i % 16, dl = Math.max(0, t - actx.currentTime);
-  if (T.lead[i] != null) { mnote(T.lead[i] + tr, t, sp * 1.9, T.leadVol, T.leadType || 'pulse', true); if (T.hoover) mnote(T.lead[i] + tr - 12.15, t, sp * 1.9, T.leadVol * 0.8, 'sawtooth'); }
+  const tr = T.transpose || 0, bar = Math.floor(i / 16) % T.roots.length, st = i % 16, dl = Math.max(0, t - actx.currentTime);
+  if (T.lead[i] != null) { mnote(T.lead[i] + tr, t, sp * 1.9, T.leadVol, T.leadType || 'pulse', true); if (T.chime) mnote(T.lead[i] + tr + 12, t, sp * 1.2, T.leadVol * 0.35, 'sine'); if (T.hoover) mnote(T.lead[i] + tr - 12.15, t, sp * 1.9, T.leadVol * 0.8, 'sawtooth'); }
   const bp = T.bassPat[st % T.bassPat.length]; if (bp != null) mnote(T.roots[bar] + tr + bp, t, sp * 0.9, 0.11, 'triangle');
   if (T.arp) { const ch = T.chords[bar]; mnote(ch[st % 3] + tr + 12, t, sp * 0.55, 0.022, 'square'); }
   const dr = T.drums[st];
@@ -1014,12 +1032,13 @@ setInterval(() => {
   if (!actx || !MUS.name || muted || S.mode === 'paused' || document.hidden) { if (actx) MUS.next = actx.currentTime + 0.06; return; }
   musicNodes();
   const T = TRACKS[MUS.name], sp = 60 / T.bpm / 4;
-  while (MUS.next < actx.currentTime + 0.15) { playStep(T, MUS.step % 64, MUS.next, sp); MUS.next += sp; MUS.step++; }
+  while (MUS.next < actx.currentTime + 0.15) { playStep(T, MUS.step % T.lead.length, MUS.next, sp); MUS.next += sp; MUS.step++; }
 }, 25);
 function wantedMusic() {
   if (S.mode === 'title') return null;
   if (S.mode === 'loading') return 'beach';
   if (S.mode === 'intro') { const t = S.intro.t; return t < 10.2 ? 'beach' : t < 18.6 ? null : 'fight1'; }
+  if ((S.mode === 'play' || S.mode === 'paused') && boss.state !== 'dead' && !player.dead && vehicles.some(v => v.state === 'drive' && v.x > -36 && v.x < W + 36)) return 'greensleeves';   // the ice cream van's in view
   if ((S.mode === 'play' || S.mode === 'paused') && boss.state !== 'dead' && !player.dead && npcs.some(n => n.kind === 'eshay' && ALIVE[n.state])) return 'gabber';   // an eshay's about
   if (S.mode === 'play' || S.mode === 'paused') return boss.state === 'dead' || player.dead ? null : 'fight' + S.phase;
   return null;
@@ -1054,7 +1073,7 @@ function reset() {
     face: null, hurtFaceT: 0, reactFace: null, reelT: 0, angerT: 0, eyeGlow: 0, headGlow: 0, whiteHot: 0, flash: 0, beams: [], laughT: 0, sinkY: 0, headY: 42, shakeHead: false,
     hands: [-1, 1].map(s => ({ s, x: 240 + s * 118, fy: 160, z: 46, tx: 0, tfy: 0, tz: 0, rate: 5, pose: 'open', busy: false, direct: false, fire: false })) });
   Object.assign(S, { fight: 0, modeT: 0, felledT: 0, phase: 1, time: 0, shake: 0, flareCD: 0, shadeGlow: false, bg: BG[1], whiteA: 0, hurtA: 0, dmgAcc: 0, dmgT: 0, hurtAcc: 0,
-    endT: 0, hits: 0, snacks: 0, gullT: 9, hatT: 35, admireT: 0, goldA: 0, held: null, jeepT: 14, sunSay: null, sayCD: 0, killCD: 0, healPop: null, call: null, blueA: 0, banner: null, toast: null, torched: 0, npcT: 1, seaT: 2, lifeT: 4, guard: null });
+    endT: 0, hits: 0, snacks: 0, gullT: 9, hatT: 35, admireT: 0, goldA: 0, held: null, vanT: 14, finishT: -1, sunSay: null, sayCD: 0, killCD: 0, healPop: null, call: null, blueA: 0, banner: null, toast: null, torched: 0, npcT: 1, seaT: 2, lifeT: 4, guard: null });
 }
 
 /* ================= Effects ================= */
@@ -1087,7 +1106,7 @@ function fleeAll() { // everyone runs for it
 }
 function scorchNPCs(test) {
   for (const n of npcs) if (ALIVE[n.state] && test(n.x, n.y)) ignite(n);
-  for (const v of vehicles) if (v.state === 'drive' && (test(v.x, v.y) || test(v.x - 18, v.y) || test(v.x + 18, v.y))) igniteJeep(v);
+  for (const v of vehicles) if (v.state === 'drive' && (test(v.x, v.y) || test(v.x - 22, v.y) || test(v.x + 22, v.y))) igniteVan(v);
   for (const c of castles) if (!c.flat && test(c.x, c.y)) flattenCastle(c);
   for (const c of crabs) if (!c.cooked && test(c.x, c.y)) { c.cooked = 0.01; puff(c.x, c.y - 4, 4, '#dddddd', 10, 20, 0.6, -20); }
 }
@@ -1395,6 +1414,7 @@ function hurtBoss(d) {
   B.hp -= d; B.flash = 1; S.dmgAcc += d; S.dmgT = 1.6; S.hurtAcc += d;
   if (S.hurtAcc >= 75) { S.hurtAcc = 0; sunReact(HIT_LINES); }
   if (B.hp <= 0) { B.hp = 0; bossDie(); return; }
+  if (S.finishT === -1 && B.hp <= BOSS_MAX * 0.05) { S.finishT = 0; shake(6); SFX.slam(); tone(70, 28, 1.4, 0.4, 'sine'); tone(180, 168, 1.8, 0.1, 'triangle', 0.05); tone(362, 340, 1.4, 0.05, 'triangle', 0.05); }   // FINISH HIM!!! (once per fight)
   if (S.phase === 1 && B.hp <= BOSS_MAX * 0.6) phaseShift(2);
   else if (S.phase === 2 && B.hp <= BOSS_MAX * 0.25) phaseShift(3);
 }
@@ -1956,23 +1976,22 @@ function toyDraws(list) { // the frisbee joins the depth-sorted sprites, using t
     list.push({ y: gy, draw: () => { ctx.fillStyle = C.ink; ELL(ctx, x, y, 5, 2.2); ctx.fill(); ctx.fillStyle = '#ff4fa0'; ELL(ctx, x, y, 4, 1.3); ctx.fill(); } });
   }
 }
-function spawnJeep() {
+function spawnVan() { // the ice cream van trundles through, chimes blaring (see wantedMusic)
   const dir = Math.random() < 0.5 ? 1 : -1;
-  vehicles.push({ driver: pick(['lifesaver', 'lifesaverf']), x: dir > 0 ? -40 : W + 40, y: rand(FLOOR.y0 + 12, FLOOR.y1 - 4), dir, state: 'drive', t: 0, anim: 0 });
-  if (S.mode !== 'title') { tone(520, 520, 0.12, 0.06, 'square'); tone(520, 520, 0.12, 0.06, 'square', 0.18); }
+  vehicles.push({ driver: 'icecream', x: dir > 0 ? -44 : W + 44, y: rand(FLOOR.y0 + 12, FLOOR.y1 - 4), dir, state: 'drive', t: 0, anim: 0 });
 }
-function igniteJeep(v) { // the whole jeep goes up; the lifeguard crawls out on fire
+function igniteVan(v) { // the whole van goes up; the ice cream man crawls out on fire
   v.state = 'burning'; v.t = 0; shake(4); SFX.slam(); SFX.fwoosh(); flames(v.x, v.y, 50, 30, 40);
   ignite(makeNPC(v.driver, v.x - v.dir * 4, v.y + 7, v.dir, { speed: 0, lying: true, crawl: true }));
 }
 function updateVehicles(dt) {
-  S.jeepT -= dt; if (S.jeepT <= 0) { S.jeepT = rand(25, 40); if (!vehicles.length) spawnJeep(); }
+  S.vanT -= dt; if (S.vanT <= 0) { S.vanT = rand(25, 40); if (!vehicles.length) spawnVan(); }
   for (let i = vehicles.length - 1; i >= 0; i--) {
     const v = vehicles[i]; v.t += dt;
     if (v.state === 'drive') {
-      v.x += v.dir * 58 * dt; v.anim += dt * 10;
-      if (Math.random() < 0.5) puff(v.x - v.dir * 22, v.y, 1, '#e6cd90', 20, 20, 0.5);
-      if (v.x < -70 || v.x > W + 70) vehicles.splice(i, 1);
+      v.x += v.dir * 42 * dt; v.anim += dt * 10;
+      if (Math.random() < 0.5) puff(v.x - v.dir * 28, v.y, 1, '#e6cd90', 20, 20, 0.5);
+      if (v.x < -74 || v.x > W + 74) vehicles.splice(i, 1);
     } else {
       if (v.t < 5) flames(v.x, v.y - 4, 44, 24, 3);
       if (Math.random() < 0.3) puff(v.x + rand(-15, 15), v.y - 26, 1, '#5a544c', 8, 30, 1.2, -25);
@@ -2365,8 +2384,8 @@ function drawWorld() {
   for (const n of npcs) list.push({ y: inFist(n) ? n.y - 2 : n.y, draw: () => drawNPC(n) });
   for (const v of vehicles) list.push({ y: v.y, draw: () => {
     const fade = v.state === 'burning' && v.t > 7 ? 8 - v.t : 1, f = v.state === 'drive' ? Math.floor(v.anim) % 2 : 2;
-    shadow(v.x, v.y, 24, 4, 0.25 * fade); spr('jeep', f, v.x, v.y + 1, { flip: v.dir < 0, alpha: fade });
-    if (v.state === 'burning') spr(TINT.jeepC, f, v.x, v.y + 1, { flip: v.dir < 0, alpha: Math.min(0.85, v.t / 0.8) * fade });
+    shadow(v.x, v.y, 30, 4, 0.25 * fade); spr('van', f, v.x, v.y + 1, { flip: v.dir < 0, alpha: fade });
+    if (v.state === 'burning') spr(TINT.vanC, f, v.x, v.y + 1, { flip: v.dir < 0, alpha: Math.min(0.85, v.t / 0.8) * fade });
   } });
   if (S.mode !== 'title') for (const c of castles) list.push({ y: c.y, draw: () => spr('sandcastle', c.flat ? 1 : 0, c.x, c.y + 1, { alpha: c.flat && c.t > 22 ? (25 - c.t) / 3 : 1 }) });
   for (const c of crabs) list.push({ y: c.y, draw: () => {
@@ -2474,8 +2493,28 @@ function drawWild() { // Pokemon encounter: the screen strobes, then the text bo
   ctx.font = `8px ${PIX}`; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#d8d8d8'; ctx.fillText(msg.slice(0, n), bx + 15, by + 15); ctx.fillStyle = '#383848'; ctx.fillText(msg.slice(0, n), bx + 14, by + 14);
   if (n >= msg.length && Math.floor(S.time * 3) % 2) { ctx.fillStyle = '#e2361f'; ctx.beginPath(); ctx.moveTo(bx + bw - 18, by + bh - 14); ctx.lineTo(bx + bw - 10, by + bh - 14); ctx.lineTo(bx + bw - 14, by + bh - 9); ctx.fill(); }
 }
+let FINISH_ART = null;
+function finishArt() { // FINISH HIM!!! in Mortal Kombat red and gold, pixelized like the title
+  if (FINISH_ART) return FINISH_ART;
+  const c = document.createElement('canvas'); c.width = 340; c.height = 72; const g = c.getContext('2d');
+  g.font = '50px Anton, Impact, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'top'; g.lineJoin = 'miter';
+  g.fillStyle = '#2a0402'; g.fillText('FINISH HIM!!!', 174, 10); g.strokeStyle = '#2a0402'; g.lineWidth = 8; g.strokeText('FINISH HIM!!!', 174, 10);
+  g.strokeStyle = '#16120f'; g.lineWidth = 7; g.strokeText('FINISH HIM!!!', 170, 6);
+  const gr = g.createLinearGradient(0, 10, 0, 66); gr.addColorStop(0, '#fff3b0'); gr.addColorStop(0.2, '#ffc23a'); gr.addColorStop(0.46, '#ff6a1f'); gr.addColorStop(0.52, '#e2361f'); gr.addColorStop(0.8, '#a01208'); gr.addColorStop(1, '#5a0a04');
+  g.fillStyle = gr; g.fillText('FINISH HIM!!!', 170, 6);
+  pixelize(c, ['#fff3b0', '#ffc23a', '#ff6a1f', '#e2361f', '#a01208', '#5a0a04', '#2a0402', '#16120f']);
+  return (FINISH_ART = c);
+}
+function drawFinish() {
+  const t = S.finishT; if (t < 0) return;
+  if (t < 0.25) { ctx.fillStyle = `rgba(160,0,0,${(0.35 * (1 - t / 0.25)).toFixed(2)})`; ctx.fillRect(0, 0, W, H); }
+  if (t > 1.2 && t < 2.2 && Math.floor(t * 10) % 2) return;   // flashing
+  const A = finishArt(), e = clamp(t / 0.14, 0, 1), sc = 1 + (1 - e) * 1.6, a = t > 2.2 ? Math.max(0, (2.6 - t) / 0.4) : 1;
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(W / 2, 104); ctx.scale(sc, sc); ctx.drawImage(A, -A.width / 2, -A.height / 2); ctx.restore();
+}
 function drawHUD() {
   const P = player, B = boss;
+  drawFinish();
   if (S.note) { // small, out of the way: top right, under the buttons
     const a = Math.min(1, S.note.life / 0.5, (2.8 - S.note.life) / 0.25); ctx.globalAlpha = a; ctx.font = `8px ${PIX}`;
     const w = S.note.t.length * 8 + 10; ctx.fillStyle = 'rgba(10,8,6,.62)'; ctx.fillRect(W - 6 - w, 22, w, 12);
@@ -2597,7 +2636,7 @@ function makeTitleArt() {
   const [sheen] = mk(slat.width, slat.height), [aura] = mk(280, 260);
   TITLE_ART = { sky, land, slat, fight, sheen, aura, embers: [] };
 }
-if (document.fonts) Promise.all([document.fonts.load('96px Anton'), document.fonts.load('46px Knewave')]).then(() => { TITLE_ART = null; }).catch(() => {});
+if (document.fonts) Promise.all([document.fonts.load('96px Anton'), document.fonts.load('46px Knewave')]).then(() => { TITLE_ART = null; FINISH_ART = null; }).catch(() => {});
 function titleUpdate(dt) {
   const T = S.ttl; if (!T || T.gate) return; const was = T.t; T.t += dt; const t = T.t, crossed = k => was < TITLE_T[k] && t >= TITLE_T[k];
   if (crossed('slam')) { shake(7); S.whiteA = 0.6; SFX.slam(); if (TITLE_ART) for (let i = 0; i < 40; i++) TITLE_ART.embers.push({ x: rand(60, 330), y: rand(40, 140), vx: rand(-90, 90), vy: rand(-120, 0), life: rand(0.5, 1.1) }); }
@@ -2924,6 +2963,7 @@ function frame(now) {
       }
       if (S.banner && (S.banner.t -= dt) <= 0) S.banner = null;
       if (S.toast && (S.toast.life -= dt) <= 0) S.toast = null;
+      if (S.finishT >= 0 && (S.finishT += dt) > 2.6) S.finishT = -2;   // -2: shown, done for this fight
       if (S.call && (S.call.t -= dt) <= 0) S.call = null;
       S.blueA = Math.max(0, S.blueA - dt * 1.6); S.goldA = Math.max(0, S.goldA - dt * 1.2);
     } else if (S.mode === 'intro') {
@@ -2977,7 +3017,7 @@ function fit() {
 addEventListener('resize', fit); fit();
 // debugging handle for playtesting from the console
 if (isTouch) document.body.classList.add('touch');
-window.__slather = { spawnBackpacker, sendIbis, dropLoot, loot, ibises, shipDbg: () => SHIP, startLoading, NPC_TYPES, SPR, hurt, spawnItalian, makeNPC, BOARD, saveRun, startInitials, spawnEshay, spawnInfluencer, crowdAround, firePatch, spawnJeep, castles, spawnFrisbee, vehicles, crabs, groups, finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
+window.__slather = { igniteVan, spawnBackpacker, sendIbis, dropLoot, loot, ibises, shipDbg: () => SHIP, startLoading, NPC_TYPES, SPR, hurt, spawnItalian, makeNPC, BOARD, saveRun, startInitials, spawnEshay, spawnInfluencer, crowdAround, firePatch, spawnVan, castles, spawnFrisbee, vehicles, crabs, groups, finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };
 reset();
 if (document.fonts) document.fonts.load(`8px ${PIX}`).catch(() => {});
 if (document.fonts) document.fonts.load('44px Anton').catch(() => {});
