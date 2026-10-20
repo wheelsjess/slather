@@ -219,7 +219,7 @@ function spawnAll(){
 const G = {mode:'boot', frame:0, t0:0, beat:0, beatI:-1, beatHit:false, bar:-1, barHit:false,
   sec:'mosh', secObj:null, plan:[], lastPick:null,
   score:0, combo:1, comboT:0, best:0, setF:0, texts:[], parts:[], banner:null, bubble:null,
-  flash:0, shake:0, onStage:0, onBar:0, hintT:0, stats:null, newBest:false, surfHint:false, crashT:99, cam:{x:W/2, y:PIT.y*K}};
+  flash:0, shake:0, onStage:0, onBar:0, hintT:0, stats:null, newBest:false, surfHint:false, crashT:99, wod:null, surfPts:0, uiRects:[], cam:{x:W/2, y:PIT.y*K}};
 try{ G.best = +localStorage.getItem('moshpit.best') || 0; }catch(e){}
 function resetStats(){ G.stats={leveled:0, knocked:0, air:0, surf:0, helped:0, dives:0, longSurf:0}; }
 resetStats();
@@ -234,7 +234,7 @@ function extendPlan(upto){
     if(last.name==='mosh'){
       const n = pick(['circle','wod','breakdown','surf'].filter(n=>n!==G.lastPick));
       G.lastPick=n;
-      if(n==='wod'){ G.plan.push({name:'wodSplit',start:s,end:s+4}); G.plan.push({name:'wodCharge',start:s+4,end:s+10}); }
+      if(n==='wod'){ G.plan.push({name:'wodSplit',start:s,end:s+4}); G.plan.push({name:'wodCharge',start:s+4,end:s+19}); }
       else G.plan.push({name:n,start:s,end:s+(n==='circle'?12:n==='breakdown'?8:10)});
     } else if(last.name!=='wodSplit') G.plan.push({name:'mosh',start:s,end:s+6});
   }
@@ -262,6 +262,7 @@ function award(pts,label,col){
   G.score += Math.round(pts*m);
   G.combo = Math.min(8.99, G.combo + (pts>=60 ? .4 : .04));
   G.comboT = 150;
+  if(player.state==='surf'){ G.surfPts += Math.round(pts*m); return; }
   if(label) addText(player.x, player.y, player.z+95+Math.random()*10, label+'  +'+Math.round(pts*m), col||'#ffd23f', pts>=150?19:15);
 }
 
@@ -298,11 +299,11 @@ function knock(c, ix, iy, iz){
 function enterSurf(c, fromDive){
   c.state='surf'; c.vz=Math.max(c.vz,2.5); c.grounded=false; c.act=null; c.surfLost=0; c.dive=false;
   c.bal=rand(-.05,.05); c.balV=0; c.surfF=0; c.surfDir=-Math.PI/2+rand(-1.2,1.2);
+  if(c.isPlayer) G.surfPts=0;
   if(isP(c)){
     if(c.diveFrom==='stage'){ G.stats.dives++; award(400,'STAGE DIVE!','#ffd23f'); }
     else if(c.diveFrom==='bar'){ G.stats.dives++; award(300,'BAR DIVE!','#ffd23f'); }
     else award(fromDive?200:120,'CROWD SURF!','#7fd8ff');
-    if(!G.surfHint){ G.surfHint=true; addText(c.x,c.y,c.z+70, touchCapable?'STEER LEFT / RIGHT TO BALANCE':'A / D TO KEEP YOUR BALANCE','#f2ece0',14); }
     roar(.5);
   }
   c.diveFrom=null;
@@ -961,7 +962,7 @@ function aiBartender(c){
 }
 
 // ---------- the player ----------
-const In = {mx:0, my:0, run:false, spin:false, jumpP:false, shoveP:false, kickP:false, liftP:false};
+const In = {mx:0, my:0, run:false, spin:false, jumpP:false, shoveP:false, kickP:false, liftP:false, dirP:null};
 const keys = {};
 function ctrlPlayer(c){
   let mx=0,my=0;
@@ -974,6 +975,7 @@ function ctrlPlayer(c){
   const run = keys.ShiftLeft||keys.ShiftRight||touch.run||(touch.on&&Math.hypot(touch.x,touch.y)>.92);
   In.spin = !!(keys.KeyK||touch.spin);
   if(c.state!=='up'){ c.dvx=c.dvy=0; if(c.act==='spin') c.act=null; return; }
+  if(G.wod){ wodControl(c); return; }
   let spd = run ? 3.8 : 2.6;
   if(c.act==='spin') spd*=.6;
   c.dvx=mx*spd; c.dvy=my*spd;
@@ -1025,10 +1027,124 @@ function ctrlPlayer(c){
   }
 }
 
+// ---------- the wall of death: pick a side, then hold the wall with a rhythm combo ----------
+const DIRS=['U','L','D','R'];
+function judgeBeat(){
+  // judge against what you hear, not what's queued
+  const lat = (AU.ctx && AU.on) ? (AU.ctx.outputLatency||AU.ctx.baseLatency||0) : 0;
+  return (clockNow()-lat-G.t0)/BEAT;
+}
+function wodStart(){
+  G.wod={phase:'pick', side:0, f:0};
+  player.act=null; player.dvx=player.dvy=0;
+}
+function wodPick(side){
+  const w=G.wod, p=player;
+  w.side=side; w.phase='line';
+  p.side=side; p.wy=clamp(p.y, PIT.y-PIT.r*.6, PIT.y+PIT.r*.6); p.thr=99;
+  sfxThud(.5);
+}
+function wodDrop(){
+  const w=G.wod, p=player;
+  if(!w.side) wodPick(p.x<PIT.x?-1:1);
+  const start=G.secObj.start*4, notes=[];
+  let last='', run=0;
+  for(let b=start+4; b<start+60; b++){
+    const rel=b-start-4;
+    let on;
+    if(rel<16) on = rel%2===0;                                  // first four bars: every other beat
+    else if(rel<36) on = rel%2===0 || (rel%4===3 && Math.random()<.5);
+    else on = rel%2===0 || Math.random()<.7;                    // last bars: nearly every beat
+    if(!on) continue;
+    let d=pick(DIRS); if(d===last && run>=1) d=pick(DIRS.filter(x=>x!==last));
+    run = d===last ? run+1 : 0; last=d;
+    notes.push({b, d, hit:false, q:''});
+  }
+  Object.assign(w,{phase:'combo', notes, i:0, streak:0, hits:0, perfects:0, start, end:start+60, fb:null, fbT:0, failed:false});
+  p.charged=false;
+}
+function wodWave(){
+  // both walls run at each other again
+  for(const c of chars){
+    if(!(c.role==='mosher'||c.joined) || c.state!=='up') continue;
+    if(c.charged){ c.side=-c.side; c.charged=false; }
+  }
+  if(G.wod && G.wod.phase==='combo' && player.charged){ player.side=-player.side; player.charged=false; }
+  G.flash=Math.max(G.flash,.2); roar(.35);
+}
+function wodFail(why){
+  const w=G.wod, p=player;
+  w.failed=true;
+  const held=Math.max(0,(judgeBeat()-w.start)*BEAT);
+  G.wod=null; p.thr=11.5;
+  addText(p.x,p.y,p.z+110,why,'#ff6b6b',20);
+  if(held>2) award(Math.round(held*30),'HELD '+held.toFixed(1)+'s','#7fd8ff');
+  // tossed out the side of the wall
+  const out = p.y<PIT.y ? -1 : 1;
+  p.vx += -p.side*1.5; p.vy += out*4;
+  knock(p, -p.side*2, out*3.5, 3);
+}
+function wodEnd(perfect){
+  const p=player;
+  if(perfect){
+    const w=G.wod;
+    award(1500+w.perfects*40,'PERFECT WALL OF DEATH!','#ffd23f');
+    G.banner={title:'PERFECT', sub:'Wall of death held for 20 seconds', life:150, keep:true};
+    G.flash=1; roar(1);
+  }
+  G.wod=null; p.thr=11.5;
+}
+function wodControl(c){
+  const w=G.wod;
+  c.act = c.act==='shove'||c.act==='kick' ? c.act : null;
+  if(w.phase==='pick'){ c.dvx=c.dvy=0; c.faT=-Math.PI/2; return; }
+  if(w.phase==='line'){
+    seek(c, PIT.x+c.side*(PIT.r*.7), c.wy, 3.2, 8);
+    c.faT = c.side>0 ? Math.PI : 0; return;
+  }
+  // combo: run with your wall
+  if(!c.charged){
+    seek(c, PIT.x-c.side*PIT.r*1.05, c.wy, 4.4, 4);
+    if((c.x-PIT.x)*c.side < -PIT.r*.7) c.charged=true;
+  } else { c.dvx*=.85; c.dvy*=.85; }
+  c.faT = c.side>0 ? Math.PI : 0;
+}
+function wodUpdate(){
+  const w=G.wod; if(!w) return;
+  w.f++;
+  if(w.phase==='pick'){
+    let side=0;
+    if(In.dirP==='L') side=-1; else if(In.dirP==='R') side=1;
+    if(side) wodPick(side);
+    return;
+  }
+  if(w.phase!=='combo') return;
+  if(w.fbT>0) w.fbT--;
+  const bn=judgeBeat(), n=w.notes[w.i];
+  if(In.dirP && n && Math.abs(bn-n.b)<.32){
+    if(In.dirP!==n.d) return wodFail('WRONG MOVE! THROWN OUT');
+    const perfect=Math.abs(bn-n.b)<.13;
+    n.hit=true; n.q=perfect?'p':'g'; w.i++; w.streak++; w.hits++; if(perfect) w.perfects++;
+    w.fb=perfect?'PERFECT':'GOOD'; w.fbT=24;
+    award(perfect?50:30);
+    startAct(player, w.hits%2?'shove':'kick', w.hits%2?16:20);
+    sfxThud(.45);
+    if(w.hits%4===0) wodWave();
+  }
+  const n2=w.notes[w.i];
+  if(n2 && bn-n2.b>.32) return wodFail('MISSED THE BEAT! THROWN OUT');
+  if(!n2 && bn>w.end-.5) wodEnd(true);
+}
+
 // ---------- section changes ----------
 function onSection(name){
   const info=SEC_INFO[name];
-  if(name!=='mosh'||G.frame>60) G.banner={title:info.title, sub:info.sub, life:150};
+  if(G.mode==='play'){
+    if(name==='wodSplit' && player.state!=='surf') wodStart();
+    else if(name==='wodCharge' && G.wod) wodDrop();
+    else if(name!=='wodCharge' && G.wod) wodEnd(!G.wod.failed && G.wod.phase==='combo');
+  }
+  if((name!=='mosh'||G.frame>60) && !(G.wod && (name==='wodSplit'||name==='wodCharge')) && !(G.banner&&G.banner.keep)) G.banner={title:info.title, sub:info.sub, life:150};
   G.bubble={text:pick(info.lines), life:150};
   G.crashT=0;
   if(name!=='mosh'){ G.flash=1; roar(name==='wodCharge'?1:.7); }
@@ -1069,6 +1185,7 @@ function step(){
   if(so!==G.secObj){ G.secObj=so; G.sec=so.name; onSection(so.name); }
   if(G.barHit){
     if(G.sec==='breakdown'||G.sec==='wodCharge'||bar%4===0) G.crashT=0;
+    if(G.sec==='wodCharge' && !(G.wod&&G.wod.phase==='combo') && (bar-G.secObj.start)%3===2) wodWave();
     const nx=sectionAt(bar+1);
     if(nx.start===bar+1 && nx.name!=='mosh' && nx.name!=='wodCharge') G.bubble={text:pick(SEC_INFO[nx.name].lines), life:110};
   }
@@ -1082,7 +1199,8 @@ function step(){
     if(c===player && G.mode==='play') ctrlPlayer(c);
     else aiNPC(c, surfers);
   }
-  In.jumpP=In.shoveP=In.kickP=In.liftP=false;
+  if(G.mode==='play') wodUpdate();
+  In.jumpP=In.shoveP=In.kickP=In.liftP=false; In.dirP=null;
   // the crowd sends people up during crowd-surf sections
   if((G.sec==='surf' && G.frame%60===0) || (G.sec==='mosh' && G.frame%500===0)){
     const cand=chars.filter(c=>c.role==='stander'&&c.state==='up'&&c.grounded&&c.y>STAGE_Y+140&&c.z<4);
@@ -1236,6 +1354,14 @@ AU.playStep=function(s,t){
       break;
     }
     case 'wodCharge': {
+      if(bi%4===3){
+        // every fourth bar drops to a half-time chug
+        const n=BREAK[i];
+        if(n===1){ this.kick(t); this.gtr(t,-2,.13,false,1.1); }
+        if(i===8) this.snare(t,1.1);
+        if(i%2===0) this.hat(t,.6);
+        break;
+      }
       if(i%2===0){ this.kick(t); this.hat(t); } else this.snare(t,.75);
       if(i===0) this.crash(t,.7);
       this.gtr(t,RIFF_C[k],.07,false,.95);
@@ -1283,6 +1409,7 @@ const WALL_H = 200;
 function updateCamera(){
   const p=player;
   let tx=p.x, ty=p.y*K-(p.state==='surf'?40:20)-30;
+  if(G.wod && G.mode==='play'){ tx=PIT.x; ty=PIT.y*K-30; }
   const vw=CW/S, vh=CH/S;
   const minX=vw/2-40, maxX=W-vw/2+40;
   tx = minX>maxX ? W/2 : clamp(tx,minX,maxX);
@@ -1633,6 +1760,9 @@ function drawShadows(){
   }
 }
 
+function balanceRect(p){ const x=sx(p.x), y=sy(p.y,p.z+62), w=150*S, h=12*S; return [x-w/2-30*S, y-h/2-44*S, w+60*S, h+80*S]; }
+function hits(r,x,y,w,h){ return x<r[0]+r[2] && x+w>r[0] && y<r[1]+r[3] && y+h>r[1]; }
+function blocked(x,y,w,h){ for(const r of G.uiRects) if(hits(r,x,y,w,h)) return true; return false; }
 function drawBalance(p){
   const x=sx(p.x), y=sy(p.y,p.z+62), w=150*S, h=12*S;
   const secs=p.surfF/60, diff=1+p.surfF/540;
@@ -1646,7 +1776,7 @@ function drawBalance(p){
   ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.font=`800 ${Math.round(10*S)}px ${FONT_B}`; ctx.fillStyle='#f2ece0';
   ctx.fillText(touchCapable?'◀  BALANCE  ▶':'A  ◀  BALANCE  ▶  D', x, y-h/2-10*S);
-  ctx.fillStyle='#7fd8ff'; ctx.fillText(secs.toFixed(1)+'s   ×'+diff.toFixed(1)+' HARDER', x, y+h/2+10*S);
+  ctx.fillStyle='#7fd8ff'; ctx.fillText(secs.toFixed(1)+'s   +'+G.surfPts.toLocaleString()+'   ×'+diff.toFixed(1)+' HARDER', x, y+h/2+10*S);
   ctx.restore();
 }
 
@@ -1670,6 +1800,12 @@ function drawWorld(){
   for(const q of G.parts){ ctx.fillStyle=q.col; ctx.globalAlpha=Math.min(1,q.life/20); ctx.fillRect(sx(q.x)-1.2*S,sy(q.y,q.z)-1.2*S,2.4*S,2.4*S); }
   ctx.globalAlpha=1;
   drawLights();
+  // screen areas pop-up text must stay out of
+  G.uiRects.length=0;
+  if(G.mode==='play'){
+    if(player.state==='surf') G.uiRects.push(balanceRect(player));
+    if(G.wod) G.uiRects.push(G.wod.phase==='combo' ? wodPanelRect() : wodPromptRect());
+  }
   if(G.mode==='play'){
     const p=player;
     if(p.state==='surf') drawBalance(p);
@@ -1681,14 +1817,18 @@ function drawWorld(){
   }
   if(G.bubble){
     const s=BAND[1], h=s.pts[HEAD];
-    const bx = s.x>W*.6 ? sx(h.x)-30*S : sx(h.x)+30*S;
-    bubble(bx, sy(h.y,h.z+34), G.bubble.text, Math.min(1,G.bubble.life/15), s.x>W*.6);
+    const bx = s.x>W*.6 ? sx(h.x)-30*S : sx(h.x)+30*S, by=sy(h.y,h.z+34);
+    ctx.font=`800 ${Math.round(14*S)}px ${FONT_B}`;
+    const bw=ctx.measureText(G.bubble.text).width+20*S;
+    if(!blocked(s.x>W*.6?bx-bw:bx, by-26*S, bw, 36*S)) bubble(bx, by, G.bubble.text, Math.min(1,G.bubble.life/15), s.x>W*.6);
   }
   ctx.textAlign='center'; ctx.textBaseline='middle';
   for(const t of G.texts){
     const a=Math.min(1,t.life/20), sc=1+Math.max(0,(t.life-t.max+8))/8*.4;
-    ctx.globalAlpha=a; ctx.font=`800 ${Math.round(t.size*S*sc)}px ${FONT_B}`;
-    ctx.lineWidth=4*S; ctx.strokeStyle='rgba(10,8,12,.85)'; ctx.strokeText(t.t,sx(t.x),sy(t.y,t.z));
+    ctx.font=`800 ${Math.round(t.size*S*sc)}px ${FONT_B}`;
+    const tw=ctx.measureText(t.t).width, th=t.size*S*sc, tx=sx(t.x), ty=sy(t.y,t.z);
+    if(blocked(tx-tw/2, ty-th/2, tw, th)) continue;
+    ctx.globalAlpha=a; ctx.lineWidth=4*S; ctx.strokeStyle='rgba(10,8,12,.85)'; ctx.strokeText(t.t,sx(t.x),sy(t.y,t.z));
     ctx.fillStyle=t.col; ctx.fillText(t.t,sx(t.x),sy(t.y,t.z));
   }
   ctx.globalAlpha=1;
@@ -1764,7 +1904,8 @@ function drawHUD(){
   }
   if(AU.muted) txt('MUTED (M)', rx, m+(CW>=640?62:30)*u, f, '#ff4d5e','right');
   ctx.restore();
-  if(G.banner){
+  if(G.wod) drawWod();
+  if(G.banner && player.state!=='surf' && !(G.wod&&G.wod.phase!=='combo')){
     const b=G.banner, t=1-b.life/150, a=b.life<30?b.life/30:1, sc=1+Math.max(0,.25-t)*2;
     ctx.save(); ctx.globalAlpha=a; ctx.translate(HW,CH*.36); ctx.scale(sc,sc);
     ctx.font=`${Math.round(78*u)}px ${FONT_D}`; ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -1774,13 +1915,87 @@ function drawHUD(){
     ctx.font=`800 ${Math.round(16*u)}px ${FONT_B}`; ctx.fillStyle='#f2ece0'; ctx.fillText(b.sub.toUpperCase(),0,50*u);
     ctx.restore();
   }
-  if(G.hintT<60*22 && !touchCapable){
+  if(G.hintT<60*22 && !touchCapable && !G.wod && player.state!=='surf'){
     const a=G.hintT>60*19?(60*22-G.hintT)/180:1;
     ctx.save(); ctx.globalAlpha=a*.85;
     txt('WASD move · SHIFT run · SPACE jump · J shove · K spin (hold) · L kick · E lift / help up · M mute · ESC pause',
       HW, CH-m, `500 ${Math.round(13*u)}px ${FONT_B}`, '#f2ece0','center');
     ctx.restore();
   }
+}
+
+function arrow(x,y,r,d,col){
+  // a filled direction arrow
+  const a={U:-Math.PI/2,D:Math.PI/2,L:Math.PI,R:0}[d];
+  ctx.save(); ctx.translate(x,y); ctx.rotate(a); ctx.fillStyle=col;
+  ctx.beginPath(); ctx.moveTo(r,0); ctx.lineTo(-r*.2,-r*.8); ctx.lineTo(-r*.2,-r*.32); ctx.lineTo(-r*.85,-r*.32); ctx.lineTo(-r*.85,r*.32); ctx.lineTo(-r*.2,r*.32); ctx.lineTo(-r*.2,r*.8); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+const DIRCOL={U:'#ffd23f',L:'#ff4d5e',D:'#3fd16b',R:'#38b6ff'}, DIRKEY={U:'W',L:'A',D:'S',R:'D'};
+function wodPromptRect(){ const u=hudScale(), w=Math.min(520*u,CW-24), h=230*u; return [HW-w/2, CH*.5-h/2, w, h]; }
+function wodPanelRect(){ const u=hudScale(), w=Math.min(600*u,CW-24), h=118*u; return [HW-w/2, CH-h-(touchCapable?150:14)*u, w, h]; }
+function drawWod(){
+  const w=G.wod, u=hudScale();
+  ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
+  if(w.phase==='pick'||w.phase==='line'){
+    const [x0,y0,pw,ph]=wodPromptRect(), cx=x0+pw/2;
+    ctx.fillStyle='rgba(8,6,10,.78)'; roundRect(x0,y0,pw,ph,14*u); ctx.fill();
+    ctx.strokeStyle='rgba(212,21,47,.7)'; ctx.lineWidth=2*u; ctx.stroke();
+    ctx.font=`${Math.round(54*u)}px ${FONT_D}`; ctx.shadowColor='#d4152f'; ctx.shadowBlur=18*u; ctx.fillStyle='#ff2d44';
+    ctx.fillText('WALL OF DEATH',cx,y0+48*u); ctx.shadowBlur=0;
+    ctx.font=`800 ${Math.round(22*u)}px ${FONT_B}`; ctx.fillStyle='#f2ece0';
+    ctx.fillText(w.phase==='pick'?'PICK A SIDE':'HOLD YOUR LINE... WAIT FOR THE DROP',cx,y0+98*u);
+    for(const side of [-1,1]){
+      const bx=cx+side*pw*.24, by=y0+160*u, bw=pw*.38, bh=64*u;
+      const chosen=w.side===side, dim=w.side && !chosen;
+      ctx.globalAlpha=dim?.3:1;
+      ctx.fillStyle=chosen?'rgba(255,210,63,.25)':'rgba(242,236,224,.08)'; roundRect(bx-bw/2,by-bh/2,bw,bh,10*u); ctx.fill();
+      ctx.strokeStyle=chosen?'#ffd23f':'rgba(242,236,224,.35)'; ctx.lineWidth=2*u; ctx.stroke();
+      arrow(bx+side*bw*.33,by,13*u,side<0?'L':'R',chosen?'#ffd23f':'#f2ece0');
+      ctx.fillStyle='#f2ece0'; ctx.font=`800 ${Math.round(18*u)}px ${FONT_B}`;
+      ctx.fillText(side<0?(touchCapable?'LEFT':'A   LEFT'):(touchCapable?'RIGHT':'RIGHT   D'), bx-side*bw*.08, by);
+      ctx.globalAlpha=1;
+    }
+    if(w.phase==='pick' && touchCapable){ ctx.font=`500 ${Math.round(13*u)}px ${FONT_B}`; ctx.fillStyle='rgba(242,236,224,.7)'; ctx.fillText('flick the stick left or right',cx,y0+ph-14*u); }
+  } else if(w.phase==='combo'){
+    const [x0,y0,pw,ph]=wodPanelRect(), bn=judgeBeat();
+    ctx.fillStyle='rgba(8,6,10,.82)'; roundRect(x0,y0,pw,ph,12*u); ctx.fill();
+    ctx.strokeStyle='rgba(212,21,47,.6)'; ctx.lineWidth=2*u; ctx.stroke();
+    // header: what you're doing and how long you've held
+    const held=clamp((bn-w.start)*BEAT,0,20.9), frac=clamp((bn-w.start)/(w.end-w.start),0,1);
+    ctx.textAlign='left'; ctx.font=`${Math.round(22*u)}px ${FONT_D}`; ctx.fillStyle='#ff2d44'; ctx.fillText('HOLD THE WALL',x0+14*u,y0+20*u);
+    ctx.textAlign='right'; ctx.font=`800 ${Math.round(13*u)}px ${FONT_B}`; ctx.fillStyle='#f2ece0';
+    ctx.fillText(held.toFixed(1)+' / 20s   STREAK '+w.streak,x0+pw-14*u,y0+20*u);
+    ctx.fillStyle='rgba(242,236,224,.15)'; ctx.fillRect(x0+14*u,y0+36*u,pw-28*u,5*u);
+    ctx.fillStyle='#ffd23f'; ctx.fillRect(x0+14*u,y0+36*u,(pw-28*u)*frac,5*u);
+    // the lane: notes slide left into the hit ring on the beat
+    const laneY=y0+80*u, hx=x0+60*u, ppb=58*u;
+    ctx.strokeStyle='rgba(242,236,224,.12)'; ctx.lineWidth=2*u; ctx.beginPath(); ctx.moveTo(x0+14*u,laneY); ctx.lineTo(x0+pw-14*u,laneY); ctx.stroke();
+    for(let b=Math.ceil(bn); b<bn+12; b++){ const x=hx+(b-bn)*ppb; if(x>x0+pw-16*u) break; ctx.fillStyle='rgba(242,236,224,.18)'; ctx.fillRect(x-1,laneY-14*u,2,28*u); }
+    const pulse=.5+.5*Math.cos((bn%1)*Math.PI*2);
+    ctx.strokeStyle=`rgba(255,210,63,${.5+pulse*.5})`; ctx.lineWidth=3*u; ctx.beginPath(); ctx.arc(hx,laneY,24*u+pulse*3*u,0,Math.PI*2); ctx.stroke();
+    ctx.textAlign='center';
+    for(let k=w.i;k<w.notes.length;k++){
+      const n=w.notes[k], x=hx+(n.b-bn)*ppb;
+      if(x>x0+pw-24*u) break;
+      if(x<x0+10*u) continue;
+      ctx.fillStyle='rgba(8,6,10,.9)'; roundRect(x-19*u,laneY-19*u,38*u,38*u,8*u); ctx.fill();
+      ctx.strokeStyle=DIRCOL[n.d]; ctx.lineWidth=2.5*u; ctx.stroke();
+      arrow(x,laneY-(touchCapable?0:4*u),12*u,n.d,DIRCOL[n.d]);
+      if(!touchCapable){ ctx.font=`800 ${Math.round(10*u)}px ${FONT_B}`; ctx.fillStyle='#f2ece0'; ctx.fillText(DIRKEY[n.d],x,laneY+12*u); }
+    }
+    // the last few hits burst out of the ring
+    for(let k=Math.max(0,w.i-3);k<w.i;k++){
+      const n=w.notes[k], age=bn-n.b; if(age>1) continue;
+      ctx.globalAlpha=1-age; ctx.strokeStyle=DIRCOL[n.d]; ctx.lineWidth=3*u;
+      ctx.beginPath(); ctx.arc(hx,laneY,(24+age*30)*u,0,Math.PI*2); ctx.stroke(); ctx.globalAlpha=1;
+    }
+    if(w.fbT>0){
+      ctx.globalAlpha=Math.min(1,w.fbT/10); ctx.font=`800 ${Math.round(16*u)}px ${FONT_B}`;
+      ctx.fillStyle=w.fb==='PERFECT'?'#ffd23f':'#9effa8'; ctx.fillText(w.fb,x0+pw*.5,y0+20*u); ctx.globalAlpha=1;
+    }
+  }
+  ctx.restore();
 }
 
 function veil(a){ ctx.fillStyle=`rgba(8,6,10,${a})`; ctx.fillRect(0,0,CW,CH); }
@@ -1858,7 +2073,7 @@ function render(){
 //  INPUT
 // ============================================================
 const touchCapable = matchMedia('(pointer: coarse)').matches || ('ontouchstart' in window && navigator.maxTouchPoints>0);
-const touch = {on:false, x:0, y:0, id:null, ox:0, oy:0, run:false, spin:false};
+const touch = {on:false, x:0, y:0, id:null, ox:0, oy:0, run:false, spin:false, armed:true};
 function press(name){
   if(name==='jump') In.jumpP=true; else if(name==='shove') In.shoveP=true; else if(name==='kick') In.kickP=true; else if(name==='lift') In.liftP=true;
 }
@@ -1876,6 +2091,8 @@ addEventListener('keydown', e=>{
   if(e.code==='Escape'||e.code==='KeyP'){ G.mode = G.mode==='paused'?'play':'paused'; return; }
   if(G.mode==='paused') return;
   keys[e.code]=true;
+  const dir={KeyW:'U',ArrowUp:'U',KeyA:'L',ArrowLeft:'L',KeyS:'D',ArrowDown:'D',KeyD:'R',ArrowRight:'R'}[e.code];
+  if(dir) In.dirP=dir;
   if(e.code==='Space') press('jump');
   if(e.code==='KeyJ') press('shove');
   if(e.code==='KeyL') press('kick');
@@ -1899,6 +2116,10 @@ zone.addEventListener('pointermove', e=>{
   if(d>max){ dx*=max/d; dy*=max/d; }
   touch.x=dx/max; touch.y=dy/max;
   knob.style.transform=`translate(${dx}px,${dy}px)`;
+  // a flick of the stick counts as a direction press (picking a side, wall-of-death combos)
+  const m=Math.hypot(touch.x,touch.y);
+  if(m>.75 && touch.armed){ touch.armed=false; In.dirP = Math.abs(touch.x)>Math.abs(touch.y) ? (touch.x<0?'L':'R') : (touch.y<0?'U':'D'); }
+  else if(m<.35) touch.armed=true;
 });
 const endStick=e=>{ if(e.pointerId!==touch.id) return; touch.on=false; touch.id=null; touch.x=touch.y=0; stickEl.hidden=true; };
 zone.addEventListener('pointerup', endStick); zone.addEventListener('pointercancel', endStick);
