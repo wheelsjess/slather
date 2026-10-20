@@ -55,7 +55,7 @@ When the game is played from its claude.ai page, the board is shared. Everyone w
 - **Bin chickens:** leave a pickup on the sand for more than about 5 seconds and an ibis strolls in, grabs it and makes off. "BIN CHICKEN STOLE THE POTATO CAKE" shows up small in the top right.
 - **The British backpacker:** milk-pale except for a lobster face, neck and arms, with a singlet tan line, socks and sandals and a huge pack with a Union Jack on it. He wanders through saying "BIT HOT HERE, INNIT?" and if he's torched: "IT'S NOT COMING HOME!"
 
-- **FINISH HIM!!!** The first time the Sun drops to 5% health, a Mortal Kombat-style FINISH HIM!!! slams onto the screen in red and gold with a red flash and a gong, flashes, then fades. You keep fighting until he's dead.
+- **FINISH HIM!!!** The first time the Sun drops to 5% health, a FINISH HIM !! in the style of the original arcade Mortal Kombat (flat blood-red spiky lettering, Eater font) slams onto the screen with a red flash and a gong, flashes, then fades. You keep fighting until he's dead.
 
 ## Death and victory
 

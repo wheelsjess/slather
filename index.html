@@ -6,7 +6,7 @@
 <title>Slather Ring</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Cinzel:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Knewave&family=Permanent+Marker&family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Cinzel:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Eater&family=Knewave&family=Permanent+Marker&family=Press+Start+2P&display=swap">
 <style>
 /* Layout: one 480x270 pixel canvas scaled up and centred; touch controls float over the letterbox. Single deliberate look. */
 :root{
@@ -2494,15 +2494,15 @@ function drawWild() { // Pokemon encounter: the screen strobes, then the text bo
   if (n >= msg.length && Math.floor(S.time * 3) % 2) { ctx.fillStyle = '#e2361f'; ctx.beginPath(); ctx.moveTo(bx + bw - 18, by + bh - 14); ctx.lineTo(bx + bw - 10, by + bh - 14); ctx.lineTo(bx + bw - 14, by + bh - 9); ctx.fill(); }
 }
 let FINISH_ART = null;
-function finishArt() { // FINISH HIM!!! in Mortal Kombat red and gold, pixelized like the title
+function finishArt() { // FINISH HIM !! the arcade-original way: flat blood red, tall spiky brush letters, just a dark shadow behind
   if (FINISH_ART) return FINISH_ART;
-  const c = document.createElement('canvas'); c.width = 340; c.height = 72; const g = c.getContext('2d');
-  g.font = '50px Anton, Impact, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'top'; g.lineJoin = 'miter';
-  g.fillStyle = '#2a0402'; g.fillText('FINISH HIM!!!', 174, 10); g.strokeStyle = '#2a0402'; g.lineWidth = 8; g.strokeText('FINISH HIM!!!', 174, 10);
-  g.strokeStyle = '#16120f'; g.lineWidth = 7; g.strokeText('FINISH HIM!!!', 170, 6);
-  const gr = g.createLinearGradient(0, 10, 0, 66); gr.addColorStop(0, '#fff3b0'); gr.addColorStop(0.2, '#ffc23a'); gr.addColorStop(0.46, '#ff6a1f'); gr.addColorStop(0.52, '#e2361f'); gr.addColorStop(0.8, '#a01208'); gr.addColorStop(1, '#5a0a04');
-  g.fillStyle = gr; g.fillText('FINISH HIM!!!', 170, 6);
-  pixelize(c, ['#fff3b0', '#ffc23a', '#ff6a1f', '#e2361f', '#a01208', '#5a0a04', '#2a0402', '#16120f']);
+  const t = 'FINISH  HIM !!', c = document.createElement('canvas'); c.width = 360; c.height = 80; const g = c.getContext('2d');
+  g.font = '34px Eater, Anton, Impact, serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.save(); g.translate(180, 40); g.scale(1, 1.3);
+  g.fillStyle = '#2a0402'; for (const [dx, dy] of [[2, 2], [3, 3], [2, 3], [3, 2]]) g.fillText(t, dx, dy);   // shadow, so it still reads over the bright Sun
+  g.fillStyle = '#d4140c'; g.fillText(t, 0, 0);
+  g.restore();
+  pixelize(c, ['#d4140c', '#2a0402']);
   return (FINISH_ART = c);
 }
 function drawFinish() {
@@ -2636,7 +2636,7 @@ function makeTitleArt() {
   const [sheen] = mk(slat.width, slat.height), [aura] = mk(280, 260);
   TITLE_ART = { sky, land, slat, fight, sheen, aura, embers: [] };
 }
-if (document.fonts) Promise.all([document.fonts.load('96px Anton'), document.fonts.load('46px Knewave')]).then(() => { TITLE_ART = null; FINISH_ART = null; }).catch(() => {});
+if (document.fonts) Promise.all([document.fonts.load('96px Anton'), document.fonts.load('46px Knewave'), document.fonts.load('34px Eater')]).then(() => { TITLE_ART = null; FINISH_ART = null; }).catch(() => {});
 function titleUpdate(dt) {
   const T = S.ttl; if (!T || T.gate) return; const was = T.t; T.t += dt; const t = T.t, crossed = k => was < TITLE_T[k] && t >= TITLE_T[k];
   if (crossed('slam')) { shake(7); S.whiteA = 0.6; SFX.slam(); if (TITLE_ART) for (let i = 0; i < 40; i++) TITLE_ART.embers.push({ x: rand(60, 330), y: rand(40, 140), vx: rand(-90, 90), vy: rand(-120, 0), life: rand(0.5, 1.1) }); }
