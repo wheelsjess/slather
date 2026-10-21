@@ -62,6 +62,12 @@ When the game is played from its claude.ai page, the board is shared. Everyone w
 Both are styled after Elden Ring. If you die, a dark band fades in across the screen with **YOU GOT BURNT** in big blood-red Roman capitals, slowly growing, then a parting line and "press Enter to try again". If you kill the Sun, **GREAT ENEMY SLATHERED** appears in gold as it sinks, with a fading ghost of the words swelling behind it and a low chord. Then the stats, the initials and the leaderboard follow.
 
 
+### Prize claim
+
+After a win and the initials entry, a form asks "DO YOU LIVE IN AUSTRALIA?". **No** explains the giveaway is for Australian residents only and moves on to the leaderboard. **Yes** asks for an email so Slather can contact the 50 fastest times when the competition closes. There's a required box (lives in Australia, 18 or over, agrees to the competition terms) and a separate optional box for Slather news and offers, kept separate for the Spam Act. Skip is always available.
+
+The entry (initials, time, timestamp, email, consent flags) is POSTed as JSON to `CLAIM_ENDPOINT` near `startClaim()` in `index.html`; `CLAIM_TERMS` is the link to the terms. Both are empty in this build, so entries go nowhere and the success screen says "PREVIEW BUILD: NOTHING WAS SENT". Emails are never written to the game's shared leaderboard storage.
+
 ### Credits
 
 Win or lose, pressing Enter (or tapping) after the end screens rolls the credits, done like a SNES ending: a black screen with white pixel text scrolling slowly upwards to the beach music. First comes a message from Slather about skin cancer in Australia. It finishes on the SLATHER logo, THANK YOU FOR PLAYING and THE END, then Enter plays again. The first time through you can hold Enter (or hold a tap) to speed it up but not skip it. After that, Enter skips straight to a new fight.

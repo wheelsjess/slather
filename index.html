@@ -59,6 +59,20 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(-
 #loadScreen .go.on{animation:lsGo 1.6s ease-in-out infinite}
 @keyframes lsGo{0%,100%{opacity:.35}50%{opacity:1}}
 /* Elden Ring-style banners: a dark band across the middle and big Roman capitals. --u is one game pixel. */
+#claim{position:absolute;z-index:3;display:flex;align-items:center;justify-content:center;background:rgba(10,8,6,.88);color:#fffdf2;font-family:var(--pix);--u:2px;-webkit-font-smoothing:none;text-shadow:calc(var(--u)*.5) calc(var(--u)*.5) 0 #16120f}
+#claim[hidden]{display:none}
+#claim .box{width:86%;max-width:calc(var(--u)*400);text-align:center;font-size:calc(var(--u)*7);line-height:1.7}
+#claim h3{margin:0 0 calc(var(--u)*6);font-weight:400;font-size:calc(var(--u)*10);color:#ffe800;line-height:1.4}
+#claim p{margin:0 0 calc(var(--u)*7)}
+#claim .dim{color:#bba98a;font-size:calc(var(--u)*5.5)}
+#claim button{font-family:var(--pix);font-size:calc(var(--u)*8);padding:calc(var(--u)*4) calc(var(--u)*9);margin:calc(var(--u)*2) calc(var(--u)*4);color:#16120f;background:#ffe800;border:calc(var(--u)*1.5) solid #16120f;box-shadow:calc(var(--u)*1.5) calc(var(--u)*1.5) 0 #16120f;cursor:pointer;text-shadow:none}
+#claim button.alt{background:#fffdf2}
+#claim button:focus-visible{outline:calc(var(--u)*1.5) solid #ff5a1f;outline-offset:calc(var(--u)*1.5)}
+#claim input[type=email]{width:100%;box-sizing:border-box;font-family:var(--pix);font-size:max(16px,calc(var(--u)*7));padding:calc(var(--u)*4);border:calc(var(--u)*1.5) solid #16120f;background:#fffdf2;color:#16120f;margin-bottom:calc(var(--u)*5)}
+#claim label{display:flex;gap:calc(var(--u)*4);align-items:flex-start;text-align:left;font-size:calc(var(--u)*5.5);line-height:1.6;margin:0 0 calc(var(--u)*4);cursor:pointer}
+#claim label input{flex:none;width:calc(var(--u)*7);height:calc(var(--u)*7);margin:0;accent-color:#ffe800}
+#claim a{color:#ffe800}
+#claim .err{color:#ff5a1f;min-height:1.6em;font-size:calc(var(--u)*5.5)}
 #erBanner{position:absolute;z-index:1;pointer-events:none;display:flex;align-items:center;justify-content:center;--u:2px}
 #erBanner .band{position:absolute;left:0;right:0;top:52%;height:40%;transform:translateY(-50%);opacity:0;
   background:linear-gradient(to bottom,rgba(0,0,0,0),rgba(0,0,0,.78) 26%,rgba(0,0,0,.78) 74%,rgba(0,0,0,0))}
@@ -97,6 +111,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(-
     <div class="go" id="lsGo">PRESS ENTER TO SLATHER UP</div>
     <div class="bar"><i id="lsBar"></i></div>
   </div>
+  <div id="claim" hidden role="dialog" aria-modal="true" aria-label="Free Slather giveaway"><div class="box"></div></div>
   <div id="erBanner" hidden aria-live="assertive"><div class="band"></div><div class="ghost"></div><div class="words"></div><div class="sub"></div></div>
   <div id="bossName" hidden></div>
   <p id="rotate">TURN YOUR PHONE SIDEWAYS<br>FOR A BIGGER BEACH</p>
@@ -1494,6 +1509,7 @@ function bossDie() { clearAttack(); boss.state = 'dead'; S.endT = 4.8; S.felledT
 /* ================= Input ================= */
 const KEYMAP = { KeyW: 'u', ArrowUp: 'u', KeyS: 'd', ArrowDown: 'd', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
 addEventListener('keydown', e => {
+  if (S.mode === 'claim') return;   // the claim form has real inputs: let typing through
   if (KEYMAP[e.code]) { input.keys[KEYMAP[e.code]] = true; e.preventDefault(); }
   if (e.code === 'Space') e.preventDefault();
   if (S.mode === 'initials') { initialsKey(e); return; }
@@ -2884,13 +2900,49 @@ async function saveRun(run) {
     BOARD.saving = false;
   } else BOARD.list = localRuns();
 }
+/* ================= Prize claim: Aussie winners leave an email so we can send the 50 fastest a free tube ================= */
+const CLAIM_ENDPOINT = '';   // set to the competition backend (e.g. '/api/sun-fighter/entry'); left empty, entries go nowhere (preview build)
+const CLAIM_TERMS = '#';     // link to the competition terms and conditions
+function startClaim() {
+  S.mode = 'claim'; S.modeT = 0; $('#claim').hidden = false;
+  claimStep('aus');
+}
+function endClaim() { $('#claim').hidden = true; S.mode = 'board'; S.modeT = 0; SFX.win(); }
+function claimStep(step, msg = '') {
+  const box = $('#claim .box'), t = fmtT(S.fight);
+  if (step === 'aus') box.innerHTML = `<h3>YOU SLATHERED THE SUN!</h3><p>${S.lastIni} &nbsp; ${t}</p><p>THE 50 FASTEST TIMES WIN A FREE TUBE OF SLATHER SPF 50+.</p><p>DO YOU LIVE IN AUSTRALIA?</p>
+    <button data-go="yes">YES</button><button class="alt" data-go="no">NO</button>`;
+  if (step === 'no') box.innerHTML = `<h3>NO WORRIES!</h3><p>THE FREE SLATHER GIVEAWAY IS OPEN TO AUSTRALIAN RESIDENTS ONLY, BUT YOUR TIME STILL GOES ON THE LEADERBOARD.</p><button data-go="done">CONTINUE</button>`;
+  if (step === 'email') box.innerHTML = `<h3>CLAIM YOUR SPOT</h3><p>ENTER YOUR EMAIL SO WE CAN CONTACT YOU IF YOUR TIME MAKES THE TOP 50.</p>
+    <form novalidate><input type="email" name="email" autocomplete="email" placeholder="YOU@EXAMPLE.COM" required>
+    <label><input type="checkbox" name="terms"><span>I LIVE IN AUSTRALIA, I'M 18 OR OVER, AND I AGREE TO THE <a href="${CLAIM_TERMS}" target="_blank" rel="noopener">COMPETITION TERMS</a>.</span></label>
+    <label><input type="checkbox" name="news"><span>SEND ME SLATHER NEWS AND OFFERS TOO (OPTIONAL).</span></label>
+    <div class="err">${msg}</div><button type="submit">SUBMIT</button><button type="button" class="alt" data-go="done">SKIP</button></form>`;
+  if (step === 'sent') box.innerHTML = `<h3>YOU'RE IN!</h3><p>IF YOUR TIME IS IN THE TOP 50 WHEN THE COMPETITION CLOSES, WE'LL EMAIL YOU ABOUT YOUR FREE SLATHER.</p>${CLAIM_ENDPOINT ? '' : '<p class="dim">(PREVIEW BUILD: NOTHING WAS SENT)</p>'}<button data-go="done">CONTINUE</button>`;
+  const f = box.querySelector('form');
+  if (f) { f.onsubmit = e => { e.preventDefault(); claimSubmit(f); }; setTimeout(() => f.email.focus(), 30); }
+  else { const b = box.querySelector('button'); if (b) setTimeout(() => b.focus(), 30); }
+  box.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { SFX.ding(); const g = b.dataset.go; if (g === 'yes') claimStep('email'); else if (g === 'no') claimStep('no'); else endClaim(); });
+}
+async function claimSubmit(f) {
+  const email = f.email.value.trim(), err = f.querySelector('.err');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { err.textContent = 'THAT EMAIL DOESN\'T LOOK RIGHT.'; return; }
+  if (!f.terms.checked) { err.textContent = 'PLEASE TICK THE TERMS BOX TO ENTER.'; return; }
+  const entry = { initials: S.lastIni, time: Math.round(S.fight * 100) / 100, at: BOARD.lastAt, email, australia: true, terms: true, marketing: f.news.checked };
+  if (CLAIM_ENDPOINT) {
+    err.textContent = 'SENDING...'; f.querySelector('button[type=submit]').disabled = true;
+    try { const r = await fetch(CLAIM_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry) }); if (!r.ok) throw new Error(r.status); }
+    catch (_) { err.textContent = 'COULDN\'T SEND THAT. CHECK YOUR CONNECTION AND TRY AGAIN.'; f.querySelector('button[type=submit]').disabled = false; return; }
+  }
+  SFX.win(); claimStep('sent');
+}
 function startInitials() { S.mode = 'initials'; S.modeT = 0; S.ini = { l: (S.lastIni || 'AAA').split('').map(c => LETTERS.indexOf(c)), c: 0 }; SFX.ding(); }
 function spinLetter(i, d) { const L = S.ini.l; L[i] = (L[i] + d + LETTERS.length) % LETTERS.length; S.ini.c = i; SFX.ding(); }
 function submitInitials() {
   const i = S.ini.l.map(n => LETTERS[n]).join('');
   S.lastIni = i; BOARD.lastAt = Date.now();
   saveRun({ i, t: Math.round(S.fight * 100) / 100, at: BOARD.lastAt });
-  S.mode = 'board'; S.modeT = 0; SFX.win();
+  startClaim();
 }
 function initialsKey(e) {
   const k = e.code, I = S.ini; e.preventDefault();
@@ -3058,7 +3110,7 @@ function fit() {
   cv.style.width = Math.floor(W * s) + 'px'; cv.style.height = Math.floor(H * s) + 'px';
   const L = $('#loadScreen'), w = Math.floor(W * s), h = Math.floor(H * s);   // the loading overlay sits exactly over the canvas
   const bn = $('#bossName'), u = w / W; Object.assign(bn.style, { left: Math.round((sw - w) / 2 + 90 * u) + 'px', top: Math.round((sh - h) / 2 + 247 * u) + 'px', fontSize: (11 * u) + 'px' });
-  for (const el of [L, $('#erBanner')]) { Object.assign(el.style, { left: Math.round((sw - w) / 2) + 'px', top: Math.round((sh - h) / 2) + 'px', width: w + 'px', height: h + 'px' }); el.style.setProperty('--u', (w / W) + 'px'); }
+  for (const el of [L, $('#erBanner'), $('#claim')]) { Object.assign(el.style, { left: Math.round((sw - w) / 2) + 'px', top: Math.round((sh - h) / 2) + 'px', width: w + 'px', height: h + 'px' }); el.style.setProperty('--u', (w / W) + 'px'); }
 }
 addEventListener('resize', fit); fit();
 // debugging handle for playtesting from the console
