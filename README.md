@@ -66,7 +66,7 @@ Both are styled after Elden Ring. If you die, a dark band fades in across the sc
 
 After a win and the initials entry, a form asks "DO YOU LIVE IN AUSTRALIA?". **No** explains the giveaway is for Australian residents only and moves on to the leaderboard. **Yes** asks for an email so Slather can contact the 50 fastest times when the competition closes. There's a required box (lives in Australia, 18 or over, agrees to the competition terms) and a separate optional box for Slather news and offers, kept separate for the Spam Act. Skip is always available.
 
-The entry (initials, time, timestamp, email, consent flags) is POSTed as JSON to `CLAIM_ENDPOINT` near `startClaim()` in `index.html`; `CLAIM_TERMS` is the link to the terms. Both are empty in this build, so entries go nowhere and the success screen says "PREVIEW BUILD: NOTHING WAS SENT". Emails are never written to the game's shared leaderboard storage.
+On the live site (Netlify, see [DEPLOY.md](DEPLOY.md)) wins are verified by the server, the leaderboard is shared by every player, and entries go to `/api/claim` tied to the verified run. Anywhere else, such as the Claude preview, times stay on the player's device and the success screen says "PREVIEW BUILD: NOTHING WAS SENT". `CLAIM_TERMS` near `startClaim()` in `index.html` is the link to the terms. Emails are never exposed by the leaderboard.
 
 ### Credits
 

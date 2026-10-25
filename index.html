@@ -1569,7 +1569,7 @@ function erBanner(kind, words, sub) { // Elden Ring-style: 'died' for YOU GOT BU
   B.querySelector('.sub').innerHTML = sub || ''; B.hidden = false;
 }
 function erHide() { const B = $('#erBanner'); B.hidden = true; B.className = ''; }
-function start() { erHide(); audioOn(); reset(); player.introFrame = null; S.mode = 'play'; $('#touch').hidden = !isTouch; banner('THE SUN', 'SCORCHER OF BACKS', 2.4); }
+function start() { erHide(); audioOn(); reset(); player.introFrame = null; S.mode = 'play'; beginRun(); $('#touch').hidden = !isTouch; banner('THE SUN', 'SCORCHER OF BACKS', 2.4); }
 function togglePause() {
   if (S.mode === 'play') { S.mode = 'paused'; input.keys = {};  $('#touch').hidden = true; }
   else if (S.mode === 'paused') { S.mode = 'play'; $('#touch').hidden = !isTouch; }
@@ -1704,7 +1704,7 @@ function finishIntro() {
   hazards.length = 0; freeHands();
   Object.assign(boss, { sinkY: 0, beams: [], eyeGlow: 0, face: null, cooldown: 1.6 });
   Object.assign(player, { x: 240, y: 226, shout: null, introFrame: null, eyesT: 0 });
-  S.intro = null; S.mode = 'play'; S.npcT = 4; S.shake = 0; S.seaT = 3;
+  S.intro = null; S.mode = 'play'; S.npcT = 4; S.shake = 0; S.seaT = 3; beginRun();
   $('#touch').hidden = !isTouch; banner('THE SUN', 'SCORCHER OF BACKS', 2.4);
 }
 function drawIntroOverlay() {
@@ -2864,6 +2864,8 @@ function drawEnd(title, col, lines) {
 // and everyone reads the whole collection. Anywhere else (or if the viewer can't write) it falls back to this browser only.
 const fmtT = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}.${String(Math.floor((t % 1) * 100)).padStart(2, '0')}`;
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+// on the real site (Netlify) the leaderboard and prize entries go to /api; anywhere else (e.g. the Claude preview) they stay local
+const API = /(^|\.)slather\.com\.au$|\.netlify\.app$|^localhost$|^127\.0\.0\.1$/.test(location.hostname) ? '/api' : '';
 const BOARD = { list: [], shared: false, mine: [], db: null, uid: null, saving: false, lastAt: 0 };
 const cleanRun = r => r && typeof r.t === 'number' && r.t > 5 && r.t < 36000 && typeof r.i === 'string'
   ? { i: (r.i.toUpperCase().replace(/[^A-Z]/g, '') + 'AAA').slice(0, 3), t: r.t, at: typeof r.at === 'number' ? r.at : 0 } : null;
@@ -2871,9 +2873,17 @@ const sortRuns = a => a.filter(Boolean).sort((x, y) => x.t - y.t);
 function localRuns() { try { return sortRuns((JSON.parse(localStorage.getItem('slather-board') || '[]')).map(cleanRun)); } catch (_) { return []; } }
 function useLocal() { BOARD.shared = false; BOARD.db = null; BOARD.list = localRuns(); }
 useLocal();
+async function loadSharedBoard() {
+  try { const r = await fetch(API + '/leaderboard', { cache: 'no-store' }); if (!r.ok) return; const j = await r.json(); BOARD.list = sortRuns((j.runs || []).map(cleanRun)); BOARD.shared = true; } catch (_) {}
+}
+function beginRun() { // ask the server to stamp the start of this fight; the win is checked against it
+  S.run = { token: null, claim: null };
+  if (API) fetch(API + '/run/start', { method: 'POST' }).then(r => r.ok ? r.json() : null).then(j => { if (j && S.run) S.run.token = j.token; }).catch(() => {});
+}
+if (API) loadSharedBoard();
 (async () => {
   try {
-    if (!window.claude || !claude.use) return;
+    if (API || !window.claude || !claude.use) return;
     const [db, user] = await Promise.all([claude.use('db'), claude.use('user')]);
     const uid = user ? await user.id() : null;
     if (!db || !uid) return;
@@ -2891,6 +2901,13 @@ useLocal();
 })();
 async function saveRun(run) {
   try { const l = localRuns(); l.push(run); localStorage.setItem('slather-board', JSON.stringify(sortRuns(l).slice(0, 20))); } catch (_) {}
+  if (API) {
+    BOARD.list = sortRuns([...BOARD.list, run]); BOARD.shared = true;   // show it straight away
+    const tok = S.run && S.run.token;
+    S.run.finishing = !tok ? Promise.resolve(null) : fetch(API + '/run/finish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tok, initials: run.i, time: run.t }) })
+      .then(r => r.ok ? r.json() : null).then(j => { if (j && S.run) S.run.claim = j.claim; loadSharedBoard(); return j; }).catch(() => null);
+    return;
+  }
   if (BOARD.db) {
     const runs = sortRuns([...BOARD.mine, run]).slice(0, 10);
     BOARD.list = sortRuns([...BOARD.list, run]);   // show it straight away; the snapshot confirms it
@@ -2901,7 +2918,7 @@ async function saveRun(run) {
   } else BOARD.list = localRuns();
 }
 /* ================= Prize claim: Aussie winners leave an email so we can send the 50 fastest a free tube ================= */
-const CLAIM_ENDPOINT = '';   // set to the competition backend (e.g. '/api/sun-fighter/entry'); left empty, entries go nowhere (preview build)
+const CLAIM_ENDPOINT = API ? API + '/claim' : '';   // empty off the real site: entries go nowhere (preview build)
 const CLAIM_TERMS = '#';     // link to the competition terms and conditions
 function startClaim() {
   S.mode = 'claim'; S.modeT = 0; $('#claim').hidden = false;
@@ -2928,9 +2945,12 @@ async function claimSubmit(f) {
   const email = f.email.value.trim(), err = f.querySelector('.err');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { err.textContent = 'THAT EMAIL DOESN\'T LOOK RIGHT.'; return; }
   if (!f.terms.checked) { err.textContent = 'PLEASE TICK THE TERMS BOX TO ENTER.'; return; }
-  const entry = { initials: S.lastIni, time: Math.round(S.fight * 100) / 100, at: BOARD.lastAt, email, australia: true, terms: true, marketing: f.news.checked };
+  const entry = { email, australia: true, terms: true, marketing: f.news.checked };
   if (CLAIM_ENDPOINT) {
     err.textContent = 'SENDING...'; f.querySelector('button[type=submit]').disabled = true;
+    const done = S.run && S.run.finishing ? await S.run.finishing : null;   // the server's receipt for this run
+    if (!done || !done.claim) { err.textContent = 'SORRY, WE COULDN\'T VERIFY THIS RUN, SO IT CAN\'T BE ENTERED.'; return; }
+    entry.claim = done.claim;
     try { const r = await fetch(CLAIM_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry) }); if (!r.ok) throw new Error(r.status); }
     catch (_) { err.textContent = 'COULDN\'T SEND THAT. CHECK YOUR CONNECTION AND TRY AGAIN.'; f.querySelector('button[type=submit]').disabled = false; return; }
   }

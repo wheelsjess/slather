@@ -1,0 +1,9 @@
+{
+  "name": "slather-sun-fighter",
+  "private": true,
+  "type": "module",
+  "description": "SLATHER Sun Fighter: the game page plus its Netlify Functions backend",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
