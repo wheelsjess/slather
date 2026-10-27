@@ -2923,7 +2923,7 @@ async function saveRun(run) {
 }
 /* ================= Prize claim: Aussie winners leave an email so we can send the 50 fastest a free tube ================= */
 const CLAIM_ENDPOINT = API ? API + '/claim' : '';   // empty off the real site: entries go nowhere (preview build)
-const CLAIM_TERMS = '#';     // link to the competition terms and conditions
+const CLAIM_TERMS = 'https://sunfighter.slather.com.au/terms';   // the competition terms and conditions (terms.html)
 function startClaim() {
   S.mode = 'claim'; S.modeT = 0; $('#claim').hidden = false;
   claimStep('aus');

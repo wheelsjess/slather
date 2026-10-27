@@ -16,7 +16,7 @@ The game is one static page (`index.html`). The shared leaderboard and the prize
 
    Redeploy after adding them (**Deploys → Trigger deploy**).
 4. **Add the domain.** Under **Domain management → Add a domain**, enter `sunfighter.slather.com.au`. Netlify shows a CNAME record. Add it wherever slather.com.au's DNS is managed (often the registrar, or Shopify if the domain was bought through Shopify). It doesn't touch the Shopify store. Netlify then issues the HTTPS certificate on its own.
-5. **Link the competition terms.** Set `CLAIM_TERMS` in `index.html` (near `startClaim()`) to the terms page URL, for example a Shopify page at `slather.com.au/pages/sun-fighter-terms`.
+5. **Competition terms** live in `terms.html`, published at `/terms` (the claim form links there via `CLAIM_TERMS` in `index.html`). Replace the block between `TERMS START` and `TERMS END` with the final terms.
 6. **Link to it from the store**, for example with a homepage banner or a menu item pointing at `https://sunfighter.slather.com.au`.
 
 ## How it works
