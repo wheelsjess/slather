@@ -61,14 +61,18 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(-
 /* Elden Ring-style banners: a dark band across the middle and big Roman capitals. --u is one game pixel. */
 #claim{position:absolute;z-index:3;display:flex;align-items:center;justify-content:center;background:rgba(10,8,6,.88);color:#fffdf2;font-family:var(--pix);--u:2px;-webkit-font-smoothing:none;text-shadow:calc(var(--u)*.5) calc(var(--u)*.5) 0 #16120f}
 #claim[hidden]{display:none}
-#claim .box{width:86%;max-width:calc(var(--u)*400);text-align:center;font-size:calc(var(--u)*7);line-height:1.7}
+#claim .box{width:86%;max-width:calc(var(--u)*400);max-height:94%;overflow-y:auto;text-align:center;font-size:calc(var(--u)*7);line-height:1.7}
 #claim h3{margin:0 0 calc(var(--u)*6);font-weight:400;font-size:calc(var(--u)*10);color:#ffe800;line-height:1.4}
 #claim p{margin:0 0 calc(var(--u)*7)}
 #claim .dim{color:#bba98a;font-size:calc(var(--u)*5.5)}
 #claim button{font-family:var(--pix);font-size:calc(var(--u)*8);padding:calc(var(--u)*4) calc(var(--u)*9);margin:calc(var(--u)*2) calc(var(--u)*4);color:#16120f;background:#ffe800;border:calc(var(--u)*1.5) solid #16120f;box-shadow:calc(var(--u)*1.5) calc(var(--u)*1.5) 0 #16120f;cursor:pointer;text-shadow:none}
 #claim button.alt{background:#fffdf2}
 #claim button:focus-visible{outline:calc(var(--u)*1.5) solid #ff5a1f;outline-offset:calc(var(--u)*1.5)}
-#claim input[type=email]{width:100%;box-sizing:border-box;font-family:var(--pix);font-size:max(16px,calc(var(--u)*7));padding:calc(var(--u)*4);border:calc(var(--u)*1.5) solid #16120f;background:#fffdf2;color:#16120f;margin-bottom:calc(var(--u)*5)}
+#claim input:not([type=checkbox]),#claim select{width:100%;box-sizing:border-box;font-family:var(--pix);font-size:max(16px,calc(var(--u)*7));padding:calc(var(--u)*4);border:calc(var(--u)*1.5) solid #16120f;background:#fffdf2;color:#16120f;margin-bottom:calc(var(--u)*3)}
+#claim .row{display:flex;gap:calc(var(--u)*4)}
+#claim .row>*{flex:1 1 0;min-width:0}
+#claim .row>[name=suburb]{flex:2 1 0}
+#claim select{appearance:none;border-radius:0}
 #claim label{display:flex;gap:calc(var(--u)*4);align-items:flex-start;text-align:left;font-size:calc(var(--u)*5.5);line-height:1.6;margin:0 0 calc(var(--u)*4);cursor:pointer}
 #claim label input{flex:none;width:calc(var(--u)*7);height:calc(var(--u)*7);margin:0;accent-color:#ffe800}
 #claim a{color:#ffe800}
@@ -2930,8 +2934,14 @@ function claimStep(step, msg = '') {
   if (step === 'aus') box.innerHTML = `<h3>YOU SLATHERED THE SUN!</h3><p>${S.lastIni} &nbsp; ${t}</p><p>THE 50 FASTEST TIMES WIN A FREE TUBE OF SLATHER SPF 50+.</p><p>DO YOU LIVE IN AUSTRALIA?</p>
     <button data-go="yes">YES</button><button class="alt" data-go="no">NO</button>`;
   if (step === 'no') box.innerHTML = `<h3>NO WORRIES!</h3><p>THE FREE SLATHER GIVEAWAY IS OPEN TO AUSTRALIAN RESIDENTS ONLY, BUT YOUR TIME STILL GOES ON THE LEADERBOARD.</p><button data-go="done">CONTINUE</button>`;
-  if (step === 'email') box.innerHTML = `<h3>CLAIM YOUR SPOT</h3><p>ENTER YOUR EMAIL SO WE CAN CONTACT YOU IF YOUR TIME MAKES THE TOP 50.</p>
-    <form novalidate><input type="email" name="email" autocomplete="email" placeholder="YOU@EXAMPLE.COM" required>
+  if (step === 'email') box.innerHTML = `<h3>CLAIM YOUR SPOT</h3><p>IF YOUR TIME MAKES THE TOP 50, WE'LL EMAIL YOU AND POST YOUR SLATHER HERE.</p>
+    <form novalidate><input type="email" name="email" autocomplete="email" placeholder="EMAIL" required>
+    <input name="name" autocomplete="name" placeholder="FULL NAME" required>
+    <input name="address1" autocomplete="address-line1" placeholder="STREET ADDRESS" required>
+    <input name="address2" autocomplete="address-line2" placeholder="UNIT, LEVEL ETC. (OPTIONAL)">
+    <div class="row"><input name="suburb" autocomplete="address-level2" placeholder="SUBURB" required>
+    <select name="state" autocomplete="address-level1" required><option value="">STATE</option>${['ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA'].map(x => `<option>${x}</option>`).join('')}</select>
+    <input name="postcode" autocomplete="postal-code" inputmode="numeric" maxlength="4" placeholder="POSTCODE" required></div>
     <label><input type="checkbox" name="terms"><span>I LIVE IN AUSTRALIA, I'M 18 OR OVER, AND I AGREE TO THE <a href="${CLAIM_TERMS}" target="_blank" rel="noopener">COMPETITION TERMS</a>.</span></label>
     <label><input type="checkbox" name="news"><span>SEND ME SLATHER NEWS AND OFFERS TOO (OPTIONAL).</span></label>
     <div class="err">${msg}</div><button type="submit">SUBMIT</button><button type="button" class="alt" data-go="done">SKIP</button></form>`;
@@ -2944,8 +2954,13 @@ function claimStep(step, msg = '') {
 async function claimSubmit(f) {
   const email = f.email.value.trim(), err = f.querySelector('.err');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { err.textContent = 'THAT EMAIL DOESN\'T LOOK RIGHT.'; return; }
+  const v = k => f[k].value.trim();
+  if (v('name').length < 2) { err.textContent = 'PLEASE ENTER YOUR NAME.'; return; }
+  if (v('address1').length < 4 || v('suburb').length < 2) { err.textContent = 'PLEASE ENTER YOUR STREET ADDRESS AND SUBURB.'; return; }
+  if (!v('state')) { err.textContent = 'PLEASE PICK YOUR STATE.'; return; }
+  if (!/^\d{4}$/.test(v('postcode'))) { err.textContent = 'POSTCODES ARE 4 DIGITS.'; return; }
   if (!f.terms.checked) { err.textContent = 'PLEASE TICK THE TERMS BOX TO ENTER.'; return; }
-  const entry = { email, australia: true, terms: true, marketing: f.news.checked };
+  const entry = { email, name: v('name'), address1: v('address1'), address2: v('address2'), suburb: v('suburb'), state: v('state'), postcode: v('postcode'), australia: true, terms: true, marketing: f.news.checked };
   if (CLAIM_ENDPOINT) {
     err.textContent = 'SENDING...'; f.querySelector('button[type=submit]').disabled = true;
     const done = S.run && S.run.finishing ? await S.run.finishing : null;   // the server's receipt for this run
