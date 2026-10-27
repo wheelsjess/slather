@@ -27,13 +27,17 @@ The game is one static page (`index.html`). The shared leaderboard and the prize
 | `POST /api/run/finish` | Called on a win with the token, initials and time. Rejects tampered or reused tokens, times under `MIN_RUN_SECONDS`, and any time longer than has really passed since the token was issued. Saves the run and returns a claim token for that exact run. |
 | `GET /api/leaderboard` | The 50 fastest verified times (initials and time only). |
 | `POST /api/claim` | A prize entry. Needs the claim token, an email, a full name and Australian postal address, the terms tick and the Australia answer. Keeps one entry per email (their best time, latest address) and records the marketing opt-in separately. |
-| `GET /api/admin/entries.csv` | Every entry, fastest first. Needs `ADMIN_KEY`. |
+| `GET /api/admin/entries.csv` / `.json` | Every entry, fastest first (the `.json` feeds the `/admin` page). Needs `ADMIN_KEY`. Cells starting with `=`, `+`, `-` or `@` get an apostrophe so spreadsheets don't run them as formulas. |
 
 All endpoints are rate-limited per IP. The leaderboard never exposes emails.
 
 When the page isn't on slather.com.au, a `*.netlify.app` address or localhost (for example in the Claude preview), the game falls back to the old behaviour: times stay on the player's device and prize entries aren't sent anywhere.
 
-## Downloading entries
+## Viewing and downloading entries
+
+Open **https://sunfighter.slather.com.au/admin** and enter the `ADMIN_KEY`. It shows every entry fastest first (a red line marks the top 50), with a **Download CSV** button. The key is remembered only until the browser tab is closed. Search engines are told not to index the page.
+
+From a terminal instead:
 
 ```sh
 curl -H "Authorization: Bearer YOUR_ADMIN_KEY" https://sunfighter.slather.com.au/api/admin/entries.csv -o entries.csv

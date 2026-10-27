@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Sun Fighter Entries</title>
+<style>
+  :root { --bg: #f6f3ec; --card: #fff; --ink: #1d1a16; --dim: #6b645a; --line: #e2ddd2; --accent: #e2361f; --yes: #2d7a3e; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #151311; --card: #1f1c19; --ink: #f1ece3; --dim: #a39a8c; --line: #34302b; --accent: #ff6a4a; --yes: #6ccf83; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, Segoe UI, sans-serif; }
+  main { max-width: 1400px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--dim); margin: 0 0 20px; }
+  form, .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+  input { font: inherit; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); min-width: 0; flex: 1 1 280px; max-width: 420px; }
+  button { font: inherit; font-weight: 600; padding: 9px 14px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer; }
+  button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  .msg { color: var(--accent); min-height: 1.4em; margin: 0 0 12px; }
+  .stats { color: var(--dim); }
+  .wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: top; }
+  th { position: sticky; top: 0; background: var(--card); font-weight: 600; color: var(--dim); }
+  td.num { font-variant-numeric: tabular-nums; }
+  tr.cut td { border-bottom: 2px solid var(--accent); }
+  .yes { color: var(--yes); font-weight: 600; }
+  .addr { white-space: normal; min-width: 220px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Sun Fighter prize entries</h1>
+  <p class="sub">Fastest verified times first. The red line marks the top 50.</p>
+
+  <form id="login">
+    <input id="key" type="password" placeholder="Admin key" autocomplete="current-password" required>
+    <button type="submit">Show entries</button>
+  </form>
+  <p class="msg" id="msg" role="status"></p>
+
+  <section id="out" hidden>
+    <div class="bar">
+      <button id="csv">Download CSV</button>
+      <button class="ghost" id="refresh">Refresh</button>
+      <button class="ghost" id="logout">Sign out</button>
+      <span class="stats" id="stats"></span>
+    </div>
+    <div class="wrap"><table>
+      <thead><tr><th>#</th><th>Time</th><th>Initials</th><th>Name</th><th>Email</th><th>Postal address</th><th>Marketing</th><th>Country</th><th>Entered</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+  </section>
+</main>
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  let key = '';
+  try { key = sessionStorage.getItem('sf-admin') || ''; } catch (_) {}   // remembered for this tab only
+  const fmt = t => { const m = Math.floor(t / 60), s = (t - m * 60).toFixed(2).padStart(5, '0'); return `${m}:${s}`; };
+  const cell = (text, cls) => { const td = document.createElement('td'); td.textContent = text ?? ''; if (cls) td.className = cls; return td; };
+
+  async function load() {
+    $('#msg').textContent = 'Loading…';
+    let r;
+    try { r = await fetch('/api/admin/entries.json', { headers: { Authorization: 'Bearer ' + key }, cache: 'no-store' }); }
+    catch (_) { $('#msg').textContent = 'Couldn’t reach the server.'; return; }
+    if (r.status === 401) { $('#msg').textContent = 'That admin key isn’t right.'; signOut(false); return; }
+    if (!r.ok) { $('#msg').textContent = 'Something went wrong (' + r.status + ').'; return; }
+    const { entries } = await r.json();
+    try { sessionStorage.setItem('sf-admin', key); } catch (_) {}
+    $('#login').hidden = true; $('#out').hidden = false; $('#msg').textContent = '';
+    const body = $('#rows'); body.textContent = '';
+    entries.forEach((e, i) => {
+      const tr = document.createElement('tr'); if (i === 49) tr.className = 'cut';
+      const addr = [e.address2, e.address1].filter(Boolean).join(', ') + (e.suburb ? `, ${e.suburb} ${e.state} ${e.postcode}` : '');
+      tr.append(cell(i + 1, 'num'), cell(fmt(e.time), 'num'), cell(e.initials), cell(e.name), cell(e.email), cell(addr, 'addr'),
+        cell(e.marketing ? 'Yes' : 'No', e.marketing ? 'yes' : ''), cell(e.country), cell(new Date(e.enteredAt).toLocaleString('en-AU')));
+      body.append(tr);
+    });
+    if (!entries.length) { const tr = document.createElement('tr'); const td = cell('No entries yet.'); td.colSpan = 9; tr.append(td); body.append(tr); }
+    $('#stats').textContent = `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} · ${entries.filter(e => e.marketing).length} opted in to marketing`;
+  }
+  async function download() {
+    const r = await fetch('/api/admin/entries.csv', { headers: { Authorization: 'Bearer ' + key }, cache: 'no-store' });
+    if (!r.ok) { $('#msg').textContent = 'Download failed (' + r.status + ').'; return; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob()); a.download = 'sun-fighter-entries.csv'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+  function signOut(clearMsg = true) {
+    key = ''; try { sessionStorage.removeItem('sf-admin'); } catch (_) {}
+    $('#out').hidden = true; $('#login').hidden = false; $('#key').value = ''; if (clearMsg) $('#msg').textContent = '';
+  }
+  $('#login').addEventListener('submit', e => { e.preventDefault(); key = $('#key').value.trim(); if (key) load(); });
+  $('#csv').addEventListener('click', download);
+  $('#refresh').addEventListener('click', load);
+  $('#logout').addEventListener('click', () => signOut());
+  if (key) load();
+})();
+</script>
+</body>
+</html>
