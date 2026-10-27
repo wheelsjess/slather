@@ -1,4 +1,4 @@
-# Slather Ring
+# Slather Sun Fighter
 
 A 16-bit-style boss fight in the browser. A bogan with a Slather bottle takes on The Sun, which looms out of the sea from the waist up and attacks with its giant hands.
 

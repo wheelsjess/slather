@@ -1,4 +1,4 @@
-# Art spec for Slather Ring
+# Art spec for Slather Sun Fighter
 
 The game runs at **480 × 270 pixels** and is scaled up to fit the screen with crisp, unsmoothed pixels. Draw everything at that native size: one pixel in your file is one game pixel.
 
