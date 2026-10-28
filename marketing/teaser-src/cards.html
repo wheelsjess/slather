@@ -1,0 +1,12 @@
+<!doctype html><html><head>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+<style>
+html,body{margin:0;width:1920px;height:1080px;background:transparent;overflow:hidden}
+#c{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.t{font-family:'Press Start 2P',monospace;color:#ffe800;text-align:center;line-height:1.6;max-width:1700px;
+   text-shadow:8px 8px 0 #7a3a00, 0 0 40px rgba(255,170,0,.25)}
+.low{position:absolute;left:640px;right:0;bottom:90px;display:block;text-shadow:6px 6px 0 #16120f, 0 0 0 #16120f, -3px -3px 0 #16120f, 3px -3px 0 #16120f, -3px 3px 0 #16120f}
+</style></head><body><div id="c"></div>
+<script>
+function render(spec) { const c = document.getElementById('c'); c.innerHTML = `<div class="t ${spec.cls || ''}" style="font-size:${spec.size}px">${spec.html}</div>`; }
+</script></body></html>

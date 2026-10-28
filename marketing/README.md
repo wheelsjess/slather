@@ -1,5 +1,11 @@
 # Marketing
 
+## `sun-fighter-teaser.mp4`
+
+A 48-second 16:9 teaser (1920×1080, 30 fps). Full-frame gameplay, some in slow motion, cuts against black cards in the game's yellow pixel font: IN A WORLD... / WHERE THE SUN... / IS NOT YOUR FRIEND... / ONE MAN / ONE TUBE OF SLATHER SPF 50+ / IS READY TO FIGHT BACK / THIS SUMMER... It ends on the title screen with COMING THIS SUMMER. The footage is recorded at exactly 4× the game's resolution, so the pixels stay crisp.
+
+The scripts are in `teaser-src/` and work the same way as the trailer's (below). `make_teaser.py` holds the edit list (`SEG`): each shot's source clip, start time, speed (under 1 is slow motion) and framing.
+
 ## `sun-fighter-trailer.mp4`
 
 A 35-second vertical (1080×1920, 30 fps) parody movie trailer for Reels, TikTok and Shorts. It's real gameplay with trailer captions and a synthesised score: BRAAAM hits, a riser, a chiptune take on the fight theme, a gong for FINISH HIM, and an end card with the URL and prize.

@@ -1,0 +1,10 @@
+{
+ "world":   {"size": 72, "html": "IN A WORLD..."},
+ "sun":     {"size": 72, "html": "WHERE THE SUN..."},
+ "friend":  {"size": 72, "html": "IS NOT YOUR FRIEND..."},
+ "man":     {"size": 80, "html": "ONE MAN"},
+ "tube":    {"size": 64, "html": "ONE TUBE OF<br>SLATHER SPF 50+"},
+ "ready":   {"size": 64, "html": "IS READY TO<br>FIGHT BACK"},
+ "summer":  {"size": 72, "html": "THIS SUMMER..."},
+ "coming":  {"size": 52, "cls": "low", "html": "COMING THIS SUMMER"}
+}
