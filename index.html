@@ -3151,8 +3151,10 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 /* ================= Arcade cabinet bezel ================= */
-// Everything outside the 480x270 screen is drawn as an arcade cabinet, in game pixels, then scaled up exactly like the game.
+// On iPhone, everything outside the 480x270 screen is drawn as an arcade cabinet, in game pixels, then scaled up exactly like the game.
 function drawBezel(sw, sh, s) {
+  // only on iPhones: Safari there can't go full screen, so the spare width becomes a cabinet. Android, iPad and desktop go full screen instead.
+  if (!/iPhone|iPod/.test(navigator.userAgent)) { $('#bezel').hidden = true; return; }
   const bz = $('#bezel'), BW = W + 2 * Math.ceil((sw / s - W) / 2) + 2, BH = H + 2 * Math.ceil((sh / s - H) / 2) + 2;
   bz.width = BW; bz.height = BH;
   Object.assign(bz.style, { width: BW * s + 'px', height: BH * s + 'px', left: (sw / 2 - BW * s / 2) + 'px', top: (sh / 2 - BH * s / 2) + 'px' });

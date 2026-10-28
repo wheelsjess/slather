@@ -74,7 +74,7 @@ The game is 16:9 and most phones are wider. On phones:
 
 - the first tap goes properly full screen and locks to landscape where the browser allows it (Android, iPad), and a FULL SCREEN button stays available;
 - iPhone Safari has no full-screen option for websites, so the start screen tells iPhone players to use **Share → Add to Home Screen**; the game then opens full screen like an app (`manifest.webmanifest`, Apple web-app meta tags, the Sun-face icon in `assets/icon-*.png`);
-- any space the 16:9 picture doesn't cover becomes an arcade cabinet (`drawBezel()`, drawn in game pixels at the game's scale):
+- on iPhone only (where full screen isn't possible), the space the 16:9 picture doesn't cover becomes an arcade cabinet (`drawBezel()`, drawn in game pixels at the game's scale):
   - a bevelled screen surround with Slather-yellow trim, over dark sunburst side art;
   - a left panel with SLATHER down the side and a speaker grille;
   - a right panel with INSERT COIN, an SPF 50+ sticker and a lit "$2 PLAY" coin door (kept clear of the touch buttons);
