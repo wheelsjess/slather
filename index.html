@@ -44,6 +44,17 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(-
 #tShoot{width:96px;height:96px;font-size:11px;right:calc(env(safe-area-inset-right,0px) + 20px);bottom:calc(env(safe-area-inset-bottom,0px) + 28px);background:rgba(255,232,0,.92)}
 #rotate{display:none;position:absolute;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 56px);text-align:center;font-family:var(--pix);font-size:11px;line-height:1.6;color:var(--sun)}
 @media (orientation:portrait){body.touch #rotate{display:block}}
+/* iPhone Safari: no Fullscreen API, but it tucks its bars away when the page scrolls. So on iPhone the page is made a little taller than the
+   screen and a one-time overlay asks for a swipe up; the game itself is position:fixed and doesn't move. */
+html.iosSwipe,html.iosSwipe body{overflow-x:hidden;overflow-y:auto;height:auto}
+html.iosSwipe body{min-height:calc(100vh + 240px)}
+#swipe{position:fixed;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  background:rgba(10,8,6,.82);font-family:var(--pix);color:var(--sun);text-align:center;touch-action:pan-y;text-shadow:3px 3px 0 #000}
+#swipe .arrow{font-size:34px;line-height:1;animation:swipeUp 1.1s ease-in-out infinite}
+#swipe .big{font-size:16px;line-height:1.6}
+#swipe .small{font-size:9px;color:#bba98a}
+#swipe button{font-family:var(--pix);font-size:9px;color:var(--paper);background:transparent;border:2px solid #6b5a45;padding:8px 10px;margin-top:6px}
+@keyframes swipeUp{0%{transform:translateY(18px);opacity:0}30%{opacity:1}100%{transform:translateY(-22px);opacity:0}}
 /* Loading screen, Skyrim-style: real text over the canvas so the serif stays crisp. --u is one game pixel. */
 #loadScreen{position:absolute;z-index:1;pointer-events:none;overflow:hidden;color:#fffdf2;font-family:var(--pix);font-weight:400;-webkit-font-smoothing:none;font-smooth:never;--u:2px;text-shadow:var(--u) var(--u) 0 #16120f}
 #loadScreen .art{position:absolute;left:3%;bottom:0;height:100%;transform-origin:45% 85%;animation:lsZoom 16s ease-out forwards}
@@ -128,6 +139,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(-
   <div id="claim" hidden role="dialog" aria-modal="true" aria-label="Free Slather giveaway"><div class="box"></div></div>
   <div id="erBanner" hidden aria-live="assertive"><div class="band"></div><div class="ghost"></div><div class="words"></div><div class="sub"></div></div>
   <div id="bossName" hidden></div>
+  <div id="swipe" hidden><div class="arrow">&#9650;</div><div class="big">SWIPE UP FOR<br>FULL SCREEN</div><div class="small">(ONE QUICK SWIPE ANYWHERE)</div><button id="swipeSkip" type="button">PLAY ANYWAY</button></div>
   <p id="rotate">TURN YOUR PHONE SIDEWAYS<br>FOR A BIGGER BEACH</p>
   <div id="touch" hidden>
     <div id="stickZone"><div id="stickBase"><div id="stickKnob"></div></div></div>
@@ -2789,7 +2801,6 @@ function drawTitleGate() { // browsers won't play sound until someone presses so
   txt('SLATHER ENTERTAINMENT SYSTEM', W / 2, 96, '#bba98a', 8, 'center');
   if (Math.floor(S.time * 2) % 2) outlined(isTouch ? 'TAP TO BEGIN' : 'PRESS ANY KEY', W / 2, 128, '#ffe800', 16);
   txt('SOUND ON FOR MAXIMUM DRAMA', W / 2, 168, '#6b5a45', 8, 'center');
-  if (IOS_TIP) { txt('FOR FULL SCREEN ON IPHONE:', W / 2, 212, '#bba98a', 8, 'center'); txt('SHARE > ADD TO HOME SCREEN', W / 2, 226, '#ffe800', 8, 'center'); }
 }
 function openTitle() { if (S.ttl && S.ttl.gate) { audioOn(); S.ttl.gate = false; S.ttl.t = 0; } }
 function drawTitle() { // the lettering, sparks, and the coin prompt over the scene
@@ -3238,7 +3249,17 @@ addEventListener('resize', fit); fit();
 const fsEl = document.documentElement, fsReq = fsEl.requestFullscreen || fsEl.webkitRequestFullscreen;
 const isFull = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
 const standalone = matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true;
-const IOS_TIP = isTouch && !fsReq && /iPhone|iPod/.test(navigator.userAgent) && !standalone;
+const IPHONE = /iPhone|iPod/.test(navigator.userAgent) && !standalone;
+let swipeSkipped = false;
+function barsHidden() { return innerHeight >= Math.min(screen.width, screen.height) - 10; }   // in landscape the short side of the screen is all ours
+function syncSwipe() {   // iPhone: ask for one swipe up while Safari's bars are showing in landscape; vanish once they've tucked away
+  if (!IPHONE) return;
+  document.documentElement.classList.add('iosSwipe');
+  $('#swipe').hidden = swipeSkipped || innerWidth < innerHeight || barsHidden();
+}
+$('#swipeSkip').addEventListener('click', e => { e.stopPropagation(); swipeSkipped = true; syncSwipe(); });
+for (const ev of ['resize', 'scroll', 'orientationchange']) addEventListener(ev, () => { syncSwipe(); fit(); }, { passive: true });
+syncSwipe();
 function goFull() {
   if (!fsReq || isFull() || standalone) return;
   try { const p = fsReq.call(fsEl, { navigationUI: 'hide' }); if (p && p.then) p.then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (_) {} }).catch(() => {}); } catch (_) {}
