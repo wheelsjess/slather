@@ -1,5 +1,16 @@
 # Marketing
 
+## `sun-fighter-trailer-v5-vertical.mp4` (9:16, current)
+
+A revision of v4 (below), 41 seconds plus a ring-out:
+
+- THIS SUMMER... → his silhouette against the rising Sun.
+- ONE MAN → he turns into the light, his mullet streaming in the wind (`wind_hero()` in `scenes.py`).
+- ONE TUBE OF SLATHER SPF 50+ → the tube in his hand, with a light sweep and a glint.
+- ONE FIGHT TO THE DEATH → the rapid-fire montage, which fades to black. The music drops into silence, then the title slams in.
+
+The source is `trailer-v4-src/make_trailer_v5.py`.
+
 ## `sun-fighter-trailer-v4-vertical.mp4` (9:16, scripted)
 
 A 43-second vertical trailer (1080×1920), plus a ring-out, cut to this script:
