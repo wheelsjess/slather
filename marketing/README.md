@@ -1,6 +1,10 @@
 # Marketing
 
-## `sun-fighter-trailer-v5-vertical.mp4` (9:16, current)
+## `sun-fighter-trailer-v6-vertical.mp4` (9:16, current)
+
+The same as v5 (below), but the silhouette, the mullet reveal and the tube shot are one bar (1.5 s) each, so the hero section moves quickly. It runs 37 seconds; the source is `trailer-v4-src/make_trailer_v6.py`.
+
+## `sun-fighter-trailer-v5-vertical.mp4`
 
 A revision of v4 (below), 41 seconds plus a ring-out:
 
