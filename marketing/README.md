@@ -1,5 +1,20 @@
 # Marketing
 
+## `sun-fighter-trailer-v4-vertical.mp4` (9:16, scripted)
+
+A 43-second vertical trailer (1080×1920), plus a ring-out, cut to this script:
+
+1. IN A WORLD... → the empty beach, waves lapping.
+2. WHERE THE SUN... → the Sun rises out of the water.
+3. IS NOT YOUR FRIEND... → his face, eyes heating up red, then firing.
+4. THIS SUMMER... → the hero from behind, silhouetted against the Sun. The camera tilts up, he snaps round into the light and flicks his mullet.
+5. ONE MAN → a lock'n'load parody: flip the cap, squirt, rack, spin, holster, eye glint.
+6. ONE TUBE OF SLATHER SPF 50+ → rapid-fire gameplay montage.
+7. ARE READY TO FIGHT BACK → everything stops dead, then fades out.
+8. The title slams in, word by word.
+
+The new scenes are built from the game's hero art in `trailer-v4-src/scenes.py` (cut-outs made by `art.py`). The new gameplay clips are recorded by `rec_clips.js`, and the edit and score are in `make_trailer_v4.py`. `sun-fighter-trailer-v4-vertical-preview.mp4` is a small copy.
+
 ## `sun-fighter-teaser-v3-vertical.mp4` (9:16)
 
 The v3 teaser re-cut for Reels, TikTok and Shorts at 1080×1920, with the same edit and score. Every shot is a tight vertical window onto the game (135×240 game pixels at exactly 8×). Text that's too wide for a vertical frame is rebuilt at full size:
