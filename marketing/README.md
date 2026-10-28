@@ -1,5 +1,15 @@
 # Marketing
 
+## `sun-fighter-teaser-v3-vertical.mp4` (9:16)
+
+The v3 teaser re-cut for Reels, TikTok and Shorts at 1080×1920, with the same edit and score. Every shot is a tight vertical window onto the game (135×240 game pixels at exactly 8×). Text that's too wide for a vertical frame is rebuilt at full size:
+
+- the Pokémon "A wild ESHAY appeared!" box, typed out;
+- FINISH HIM !! in Metal Mania;
+- the end title, built from the game's own SLATHER and SUN FIGHTER art (exported by `teaser-src/logo_export.js`), slammed over the Sun.
+
+`sun-fighter-teaser-v3-vertical-preview.mp4` is a small 720×1280 copy. The source is `teaser-src/make_teaser_v3_vertical.py`.
+
 ## `sun-fighter-teaser-v3.mp4` (current)
 
 33 seconds of picture plus a 2-second ring-out, 16:9 at 1920×1080. It opens wide (the Sun rising, then the whole battlefield) and then cuts to close-ups of the best moments:
