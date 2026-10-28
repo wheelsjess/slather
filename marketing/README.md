@@ -1,5 +1,28 @@
 # Marketing
 
+## `sun-fighter-teaser-v3.mp4` (current)
+
+33 seconds of picture plus a 2-second ring-out, 16:9 at 1920×1080. It opens wide (the Sun rising, then the whole battlefield) and then cuts to close-ups of the best moments:
+
+- the Sun's fist with the bogan's legs kicking ("YOU'RE MINE NOW, GARY");
+- a beachgoer going up in flames, then a skeleton;
+- the Sun cackling "ANOTHER SACRIFICE TO THE SUN GOD!";
+- "A wild ESHAY appeared!" and his gabber dance;
+- the ice cream van exploding;
+- "MY EYES!!! THEY STING!!!"
+
+Close-ups on moving characters follow them using a position log recorded with the footage (`teaser-src/rec_tracked.js`).
+
+The score climbs in five stages to a crescendo:
+
+1. a heartbeat and a sparse clank;
+2. the full DUN-DUN rhythm, brass and strings;
+3. a key change up, taiko drums and a bigger choir for the hero;
+4. another key up, frantic strings, and a snare roll and riser into dead silence;
+5. the finale, a key higher again, with full choir, brass and drums and a final boom.
+
+`sun-fighter-teaser-v3-preview.mp4` is a small 720p copy. The source is `teaser-src/make_teaser_v3.py`.
+
 ## `sun-fighter-teaser-30.mp4` (current)
 
 A 30-second 16:9 teaser (1920×1080), plus a 2-second ring-out on black. It uses the same cards and footage as the longer teaser below, cut tighter and with every cut on the beat. The score is an original, deliberately over-the-top action-movie piece:
