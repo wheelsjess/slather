@@ -1,6 +1,10 @@
 # Marketing
 
-## `sun-fighter-trailer-v6-vertical.mp4` (9:16, current)
+## `sun-fighter-trailer-v7-vertical.mp4` (9:16, current)
+
+The same as v6 (below), with the THIS SUMMER..., ONE MAN and ONE TUBE cards cut to half a bar (0.75 s) that punch in and out, so the hero section alternates fast. It runs 34.5 seconds; the source is `trailer-v4-src/make_trailer_v7.py`.
+
+## `sun-fighter-trailer-v6-vertical.mp4`
 
 The same as v5 (below), but the silhouette, the mullet reveal and the tube shot are one bar (1.5 s) each, so the hero section moves quickly. It runs 37 seconds; the source is `trailer-v4-src/make_trailer_v6.py`.
 
