@@ -1,0 +1,196 @@
+{
+ "world": [
+  {
+   "at": "mid",
+   "cls": "cin",
+   "size": 96,
+   "html": "IN A WORLD..."
+  }
+ ],
+ "sun": [
+  {
+   "at": "top",
+   "cls": "cin",
+   "size": 110,
+   "html": "WHERE<br>THE SUN..."
+  }
+ ],
+ "enough": [
+  {
+   "at": "top",
+   "cls": "ant",
+   "size": 190,
+   "html": "HAS HAD<br><span class='r'>ENOUGH.</span>"
+  }
+ ],
+ "bogan": [
+  {
+   "at": "top",
+   "cls": "ant y",
+   "size": 210,
+   "html": "ONE<br>BOGAN."
+  }
+ ],
+ "tube": [
+  {
+   "at": "top",
+   "cls": "ant y",
+   "size": 210,
+   "html": "ONE<br>TUBE."
+  }
+ ],
+ "summer": [
+  {
+   "at": "mid",
+   "cls": "cin",
+   "size": 96,
+   "html": "THIS SUMMER"
+  },
+  {
+   "at": "mid",
+   "cls": "cin d",
+   "size": 44,
+   "y": 1040,
+   "html": "THE BEACH IS A BATTLEFIELD"
+  }
+ ],
+ "m_lasers": [
+  {
+   "at": "bot",
+   "cls": "pix y",
+   "size": 60,
+   "html": "EYE LASERS."
+  }
+ ],
+ "m_rays": [
+  {
+   "at": "bot",
+   "cls": "pix y",
+   "size": 60,
+   "html": "SUN RAYS."
+  }
+ ],
+ "m_dome": [
+  {
+   "at": "bot",
+   "cls": "pix y",
+   "size": 60,
+   "html": "HEAT DOMES."
+  }
+ ],
+ "m_hug": [
+  {
+   "at": "bot",
+   "cls": "pix y",
+   "size": 60,
+   "html": "UNWANTED<br>HUGS."
+  }
+ ],
+ "m_eshay": [
+  {
+   "at": "bot",
+   "cls": "pix y",
+   "size": 60,
+   "html": "ESHAYS."
+  }
+ ],
+ "m_van": [
+  {
+   "at": "bot",
+   "cls": "pix y",
+   "size": 60,
+   "html": "ICE CREAM<br>VAN VIOLENCE."
+  }
+ ],
+ "m_top": [
+  {
+   "at": "top",
+   "cls": "ant",
+   "size": 150,
+   "html": "THE SUN<br><span class='o'>FIGHTS BACK.</span>"
+  }
+ ],
+ "quote1": [
+  {
+   "at": "mid",
+   "cls": "cin y",
+   "size": 90,
+   "y": 700,
+   "html": "\u2605\u2605\u2605\u2605\u2605"
+  },
+  {
+   "at": "mid",
+   "cls": "cin",
+   "size": 72,
+   "y": 850,
+   "html": "\u201cBIT HOT HERE,<br>INNIT?\u201d"
+  },
+  {
+   "at": "mid",
+   "cls": "cin d",
+   "size": 40,
+   "y": 1110,
+   "html": "A BRITISH BACKPACKER"
+  }
+ ],
+ "quote2": [
+  {
+   "at": "mid",
+   "cls": "cin y",
+   "size": 90,
+   "y": 700,
+   "html": "\u2605\u2605\u2605\u2605\u2605"
+  },
+  {
+   "at": "mid",
+   "cls": "cin",
+   "size": 72,
+   "y": 850,
+   "html": "\u201cFAIR DINKUM.\u201d"
+  },
+  {
+   "at": "mid",
+   "cls": "cin d",
+   "size": 40,
+   "y": 1010,
+   "html": "SOME BLOKE AT BONDI"
+  }
+ ],
+ "win": [
+  {
+   "at": "top",
+   "cls": "ant y",
+   "size": 170,
+   "html": "SLATHER<br>UP."
+  }
+ ],
+ "end": [
+  {
+   "at": "top",
+   "cls": "ant",
+   "size": 150,
+   "html": "PLAY FREE<br><span class='y'>NOW</span>"
+  },
+  {
+   "at": "mid",
+   "cls": "pix",
+   "size": 36,
+   "y": 1420,
+   "html": "TOP 50 TIMES WIN A<br>FREE TUBE OF SLATHER"
+  },
+  {
+   "at": "mid",
+   "cls": "ant y",
+   "size": 92,
+   "y": 1580,
+   "html": "SUNFIGHTER.SLATHER.COM.AU"
+  },
+  {
+   "at": "mid",
+   "cls": "pix d",
+   "size": 20,
+   "y": 1760,
+   "html": "AUSTRALIAN RESIDENTS 18+. T&amp;CS APPLY."
+  }
+ ]
+}

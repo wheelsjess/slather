@@ -1,0 +1,23 @@
+<!doctype html><html><head>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Cinzel:wght@500;700&family=Press+Start+2P&display=swap">
+<style>
+html,body{margin:0;width:1080px;height:1920px;background:transparent;overflow:hidden}
+#c{position:absolute;inset:0}
+.blk{position:absolute;left:60px;right:60px;text-align:center;color:#fff}
+.cin{font-family:Cinzel,serif;font-weight:500;letter-spacing:.12em;text-shadow:0 0 30px rgba(0,0,0,.9),0 4px 0 #000}
+.ant{font-family:Anton,Impact,sans-serif;letter-spacing:.01em;line-height:.95;text-shadow:0 8px 0 #16120f, 0 0 40px rgba(0,0,0,.6);-webkit-text-stroke:6px #16120f;paint-order:stroke fill}
+.pix{font-family:'Press Start 2P',monospace;line-height:1.5;text-shadow:6px 6px 0 #16120f;-webkit-text-stroke:2px #16120f;paint-order:stroke fill}
+.y{color:#ffe800}.o{color:#ff8a1f}.r{color:#e2361f}.d{color:#bba98a}
+</style></head><body><div id="c"></div>
+<script>
+// layout regions on the 1080x1920 canvas: the game band sits at y 555..1366
+const R = { top: [90, 530], bot: [1390, 1830], mid: [0, 1920] };
+function render(spec) {
+  const c = document.getElementById('c'); c.innerHTML = '';
+  for (const b of spec.blocks) {
+    const [y0, y1] = R[b.at]; const d = document.createElement('div'); d.className = 'blk ' + (b.cls || '');
+    d.innerHTML = b.html; d.style.fontSize = b.size + 'px'; if (b.lh) d.style.lineHeight = b.lh;
+    c.appendChild(d); const h = d.offsetHeight; d.style.top = (b.y != null ? b.y : (y0 + (y1 - y0 - h) / 2)) + 'px';
+  }
+}
+</script></body></html>
