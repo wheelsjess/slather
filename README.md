@@ -70,7 +70,7 @@ On the live site (Netlify, see [DEPLOY.md](DEPLOY.md)) wins are verified by the 
 
 ### Phones
 
-The game is 16:9 and scales to the biggest size that fits the window, with black at the sides on wider screens. Turning a phone sideways gets the biggest picture (portrait shows a "turn your phone sideways" note). Where the browser allows it (Android, iPad), the first tap goes properly full screen and locks to landscape, and a FULL SCREEN button stays available. iPhone Safari doesn't let websites go full screen, so there the game fills as much of the window as Safari leaves.
+On phones held sideways (wider than 16:9), the game fills the full height and the canvas grows wider by up to 90 game pixels on each side (`EXT`, set in `fit()`). The fight, HUD and all game logic stay in the middle 480×270; the sky, sea and sand carry on into the extra width (`extendBeach()` mirrors the background's edges before any characters are drawn), and beachgoers and the ice cream van appear there as they walk or drive in. So even with Safari's tab bar showing on iPhone, there are no black bars during play. The title, loading and credits screens keep their 16:9 framing with black at the sides. Portrait shows a "turn your phone sideways" note. Where the browser allows it (Android, iPad), the first tap also goes properly full screen.
 
 ### Credits
 
