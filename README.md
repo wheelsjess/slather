@@ -68,6 +68,14 @@ After a win and the initials entry, a form asks "DO YOU LIVE IN AUSTRALIA?". **N
 
 On the live site (Netlify, see [DEPLOY.md](DEPLOY.md)) wins are verified by the server, the leaderboard is shared by every player, and entries go to `/api/claim` tied to the verified run. Anywhere else, such as the Claude preview, times stay on the player's device and the success screen says "PREVIEW BUILD: NOTHING WAS SENT". `CLAIM_TERMS` near `startClaim()` in `index.html` is the link to the terms. Emails are never exposed by the leaderboard.
 
+### Phones
+
+The game is 16:9 and most phones are wider. On phones:
+
+- the first tap goes properly full screen and locks to landscape where the browser allows it (Android, iPad), and a FULL SCREEN button stays available;
+- iPhone Safari has no full-screen option for websites, so the start screen tells iPhone players to use **Share → Add to Home Screen**; the game then opens full screen like an app (`manifest.webmanifest`, Apple web-app meta tags, the Sun-face icon in `assets/icon-*.png`);
+- any space the 16:9 picture doesn't cover glows with a blurred copy of the game (the `#amb` canvas), so there are no black bars.
+
 ### Credits
 
 Win or lose, pressing Enter (or tapping) after the end screens rolls the credits, done like a SNES ending: a black screen with white pixel text scrolling slowly upwards to the beach music. First comes a message from Slather about skin cancer in Australia. It finishes on the SLATHER logo, THANK YOU FOR PLAYING and THE END, then Enter plays again. The first time through you can hold Enter (or hold a tap) to speed it up but not skip it. After that, Enter skips straight to a new fight.

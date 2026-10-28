@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Slather Sun Fighter</title>
+<meta name="theme-color" content="#16120f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sun Fighter">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Cinzel:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Metal+Mania&family=Knewave&family=Permanent+Marker&family=Press+Start+2P&display=swap">
@@ -21,7 +28,9 @@
 html,body{height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(--paper);
   -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 #app{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;touch-action:none}
-#game{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
+#game{display:block;position:relative;z-index:1;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
+/* ambient fill: a blurred copy of the game glows into whatever space the 16:9 screen leaves, so phones feel edge to edge */
+#amb{position:absolute;left:-6%;top:-6%;width:112%;height:112%;filter:blur(22px) brightness(.5) saturate(1.25);pointer-events:none}
 .ui{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:calc(env(safe-area-inset-right,0px) + 12px);display:flex;gap:8px;z-index:3}
 .ui button{font-family:var(--pix);font-size:9px;line-height:1;color:var(--paper);background:var(--veil);border:2px solid var(--paper);padding:6px 8px;cursor:pointer}
 .ui button:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
@@ -105,8 +114,9 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(-
 </head>
 <body>
 <div id="app">
+  <canvas id="amb" width="48" height="27" aria-hidden="true"></canvas>
   <canvas id="game" width="480" height="270" aria-label="Slather Sun Fighter game screen"></canvas>
-  <div class="ui"><button id="muteBtn" type="button">SOUND ON</button><button id="pauseBtn" type="button">PAUSE</button></div>
+  <div class="ui"><button id="fullBtn" type="button" hidden>FULL SCREEN</button><button id="muteBtn" type="button">SOUND ON</button><button id="pauseBtn" type="button">PAUSE</button></div>
   <div id="loadScreen" hidden aria-live="polite">
     <div class="art"><img id="lsImg" alt="The bogan, battle-ready with two tubes of Slather"></div>
     <div class="fog"></div><div class="fog b"></div>
@@ -2778,6 +2788,7 @@ function drawTitleGate() { // browsers won't play sound until someone presses so
   txt('SLATHER ENTERTAINMENT SYSTEM', W / 2, 96, '#bba98a', 8, 'center');
   if (Math.floor(S.time * 2) % 2) outlined(isTouch ? 'TAP TO BEGIN' : 'PRESS ANY KEY', W / 2, 128, '#ffe800', 16);
   txt('SOUND ON FOR MAXIMUM DRAMA', W / 2, 168, '#6b5a45', 8, 'center');
+  if (IOS_TIP) { txt('FOR FULL SCREEN ON IPHONE:', W / 2, 212, '#bba98a', 8, 'center'); txt('SHARE > ADD TO HOME SCREEN', W / 2, 226, '#ffe800', 8, 'center'); }
 }
 function openTitle() { if (S.ttl && S.ttl.gate) { audioOn(); S.ttl.gate = false; S.ttl.t = 0; } }
 function drawTitle() { // the lettering, sparks, and the coin prompt over the scene
@@ -3136,6 +3147,7 @@ function frame(now) {
     if (S.mode === 'board') drawBoard();
     if (S.mode === 'paused') drawEnd('PAUSED', '#f0c95a', [isTouch ? 'TAP TO RESUME' : 'PRESS ESC TO RESUME']);
   }
+  if ((ambN++ & 3) === 0) amb.drawImage(cv, 0, 0, 48, 27);   // refresh the ambient glow every few frames
   requestAnimationFrame(frame);
 }
 function fit() {
@@ -3148,6 +3160,22 @@ function fit() {
   for (const el of [L, $('#erBanner'), $('#claim')]) { Object.assign(el.style, { left: Math.round((sw - w) / 2) + 'px', top: Math.round((sh - h) / 2) + 'px', width: w + 'px', height: h + 'px' }); el.style.setProperty('--u', (w / W) + 'px'); }
 }
 addEventListener('resize', fit); fit();
+/* ---- full screen on phones: the Fullscreen API where it exists (Android, iPad); iPhone Safari has none, so it gets an Add to Home Screen tip ---- */
+const fsEl = document.documentElement, fsReq = fsEl.requestFullscreen || fsEl.webkitRequestFullscreen;
+const isFull = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+const standalone = matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true;
+const IOS_TIP = isTouch && !fsReq && /iPhone|iPod/.test(navigator.userAgent) && !standalone;
+function goFull() {
+  if (!fsReq || isFull() || standalone) return;
+  try { const p = fsReq.call(fsEl, { navigationUI: 'hide' }); if (p && p.then) p.then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (_) {} }).catch(() => {}); } catch (_) {}
+}
+function syncFullBtn() { const b = $('#fullBtn'); b.hidden = !fsReq || standalone || isFull(); }
+$('#fullBtn').addEventListener('click', e => { e.stopPropagation(); goFull(); });
+for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, () => { syncFullBtn(); setTimeout(fit, 60); });
+if (isTouch) addEventListener('pointerdown', goFull, { once: true, capture: true });   // the first tap on a phone goes full screen
+syncFullBtn();
+if (window.visualViewport) visualViewport.addEventListener('resize', fit);
+const amb = $('#amb').getContext('2d'); let ambN = 0;
 // debugging handle for playtesting from the console
 if (isTouch) document.body.classList.add('touch');
 window.__slather = { startCredits, igniteVan, spawnBackpacker, sendIbis, dropLoot, loot, ibises, shipDbg: () => SHIP, startLoading, NPC_TYPES, SPR, hurt, spawnItalian, makeNPC, BOARD, saveRun, startInitials, spawnEshay, spawnInfluencer, crowdAround, firePatch, spawnVan, castles, spawnFrisbee, vehicles, crabs, groups, finishIntro, MUS, ignite, sunReact, S, boss, player, hurtBoss, phaseShift, ATTACKS, pickups, gulls, npcs, sea, spawnGuard, spawnNPC };

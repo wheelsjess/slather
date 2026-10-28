@@ -1,6 +1,6 @@
 # Netlify: the game is a single static page; the leaderboard and prize entries are Netlify Functions + Netlify Blobs.
 [build]
-  command = "mkdir -p dist/admin dist/terms && cp index.html dist/index.html && cp admin.html dist/admin/index.html && cp terms.html dist/terms/index.html"
+  command = "mkdir -p dist/admin dist/terms && cp index.html dist/index.html && cp admin.html dist/admin/index.html && cp terms.html dist/terms/index.html && cp manifest.webmanifest dist/ && cp assets/icon-192.png assets/icon-512.png dist/ && cp assets/icon-180.png dist/apple-touch-icon.png"
   publish = "dist"
 
 [functions]
