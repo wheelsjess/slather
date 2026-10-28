@@ -19,6 +19,10 @@ The game is one static page (`index.html`). The shared leaderboard and the prize
 5. **Competition terms** live in `terms.html`, published at `/terms` (the claim form links there via `CLAIM_TERMS` in `index.html`). Replace the block between `TERMS START` and `TERMS END` with the final terms.
 6. **Link to it from the store**, for example with a homepage banner or a menu item pointing at `https://sunfighter.slather.com.au`.
 
+## Deploy credits
+
+Every production deploy uses Netlify credits. `netlify.toml` has an `ignore` rule, so a push only builds when it changes something the live site uses: the pages, the functions, the config or the app icons. Pushes that only touch `marketing/`, the docs or other files are skipped. Batch game changes where you can.
+
 ## How it works
 
 | Endpoint | What it does |

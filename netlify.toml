@@ -2,6 +2,9 @@
 [build]
   command = "mkdir -p dist/admin dist/terms && cp index.html dist/index.html && cp admin.html dist/admin/index.html && cp terms.html dist/terms/index.html && cp manifest.webmanifest dist/ && cp assets/icon-192.png assets/icon-512.png dist/ && cp assets/icon-180.png dist/apple-touch-icon.png"
   publish = "dist"
+  # Only build when something the live site uses has changed. Commits that only touch marketing videos, docs or scripts
+  # are skipped (exit 0 = skip), so they don't use up deploy credits.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- index.html admin.html terms.html manifest.webmanifest netlify.toml package.json package-lock.json netlify/ assets/icon-180.png assets/icon-192.png assets/icon-512.png"
 
 [functions]
   directory = "netlify/functions"
