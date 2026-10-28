@@ -1,5 +1,15 @@
 # Marketing
 
+## `sun-fighter-teaser-30.mp4` (current)
+
+A 30-second 16:9 teaser (1920×1080), plus a 2-second ring-out on black. It uses the same cards and footage as the longer teaser below, cut tighter and with every cut on the beat. The score is an original, deliberately over-the-top action-movie piece:
+
+- an industrial DUN… DUN… DUN… DUN-DUN rhythm in 13/16, with metal clanks over deep drums and big reverb;
+- brass stabs, a swelling choir, BRAAAMs on every card and a driving low-string ostinato;
+- a silent bar before THIS SUMMER..., then a full finale on the title.
+
+`sun-fighter-teaser-30-preview.mp4` is a small 720p copy for previewing. The source is `teaser-src/make_teaser_30.py`.
+
 ## `sun-fighter-teaser.mp4`
 
 A 48-second 16:9 teaser (1920×1080, 30 fps). Full-frame gameplay, some in slow motion, cuts against black cards in the game's yellow pixel font: IN A WORLD... / WHERE THE SUN... / IS NOT YOUR FRIEND... / ONE MAN / ONE TUBE OF SLATHER SPF 50+ / IS READY TO FIGHT BACK / THIS SUMMER... It ends on the title screen with COMING THIS SUMMER. The footage is recorded at exactly 4× the game's resolution, so the pixels stay crisp.
