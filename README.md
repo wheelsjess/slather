@@ -70,16 +70,7 @@ On the live site (Netlify, see [DEPLOY.md](DEPLOY.md)) wins are verified by the 
 
 ### Phones
 
-The game is 16:9 and most phones are wider. On phones:
-
-- the first tap goes properly full screen and locks to landscape where the browser allows it (Android, iPad), and a FULL SCREEN button stays available;
-- iPhone Safari has no full-screen option for websites, but it tucks its toolbar away when the page scrolls. On iPhone the page is made a little taller than the screen (the game is `position: fixed`). A one-time **SWIPE UP FOR FULL SCREEN** overlay (`#swipe`, `syncSwipe()`) shows while the bars are visible in landscape, and disappears once the window reaches the screen's full height. **PLAY ANYWAY** dismisses it.
-- The game also works as a home-screen app (`manifest.webmanifest`, Apple web-app meta tags, the Sun-face icon in `assets/icon-*.png`), though nothing prompts for that;
-- on iPhone only (where full screen isn't possible), the space the 16:9 picture doesn't cover becomes an arcade cabinet (`drawBezel()`, drawn in game pixels at the game's scale):
-  - a bevelled screen surround with Slather-yellow trim, over dark sunburst side art;
-  - a left panel with SLATHER down the side and a speaker grille;
-  - a right panel with INSERT COIN, an SPF 50+ sticker and a lit "$2 PLAY" coin door (kept clear of the touch buttons);
-  - on tall screens, a lit marquee with the logo above the screen and a control panel below.
+The game is 16:9 and scales to the biggest size that fits the window, with black at the sides on wider screens. Turning a phone sideways gets the biggest picture (portrait shows a "turn your phone sideways" note). Where the browser allows it (Android, iPad), the first tap goes properly full screen and locks to landscape, and a FULL SCREEN button stays available. iPhone Safari doesn't let websites go full screen, so there the game fills as much of the window as Safari leaves.
 
 ### Credits
 
