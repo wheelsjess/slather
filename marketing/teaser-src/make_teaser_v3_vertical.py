@@ -26,10 +26,7 @@ SEG = [
     dict(kind='clip', dur=BAR, src=('grab', 4.1), speed=0.7, vc=(240, 120), flash=True),                # the fist, legs dangling
     dict(kind='clip', dur=BAR / 2, src=('fire', 4.75), follow='boardies', cy=125, flash=True),          # "MY TAN!" and up he goes
     dict(kind='clip', dur=BAR / 2, src=('fire', 5.6), follow='boardies', cy=125),                       # ...skeleton
-    dict(kind='clip', dur=BAR, src=('fire', 5.2), vc=(335, 120), flash=True),                            # the Sun gloating
-    dict(kind='clip', dur=BAR, src=('eshay', 2.4), vc=(300, 150), box=True, flash=True),               # A wild ESHAY appeared!
-    dict(kind='clip', dur=BAR / 2, src=('eshay', 6.0), vc=(325, 125), flash=True),                      # gabber dancing
-    dict(kind='clip', dur=BAR / 2, src=('van', 4.15), vc=(175, 125), flash=True),                       # the ice cream van goes up
+    dict(kind='clip', dur=BAR, src=('eshay', 6.0), follow='eshay', cy=135, box=True, flash=True),                # gabber dancing as A wild ESHAY appeared! types out
     dict(kind='card', dur=BAR, card='man'),
     dict(kind='clip', dur=BAR, src=('title', 5.5), speed=0.5, vc=(80, 150)),                            # the bird, under the giant SLATHER
     dict(kind='card', dur=BAR, card='tube'),
@@ -38,7 +35,7 @@ SEG = [
     dict(kind='clip', dur=BAR, src=('attack', 4.6), vc=(255, 120), flash=True),                          # "MY EYES!!!"
     dict(kind='clip', dur=BAR, src=('attack', 5.75), vc=(240, 120), over='finish', flash=True),          # FINISH HIM over the furious, caked Sun
     dict(kind='card', dur=BAR, card='summer', silent=True),
-    dict(kind='logo', dur=2 * BAR, src=('title', 2.5), phase=1),
+    dict(kind='logo', dur=2 * BAR, src=('title', 3.05), phase=1),        # held just before the game's own logo slam, so ours is the only one
     dict(kind='logo', dur=2 * BAR, src=('title', 3.1), phase=2, over='coming', fadeout=0.7),
 ]
 t = 0.0
@@ -92,7 +89,7 @@ def render(T):
     name, start = seg['src']; at = start + u * seg.get('speed', 1); fr = footage(name, at)
     if seg['kind'] == 'logo':   # the finale, rebuilt for a tall screen from the game's own title art
         p1 = seg['phase'] == 1; push = 1.0 if p1 else 1 + 0.05 * u / seg['dur']
-        out = window(footage(name, start + u * (0.35 if p1 else 0)), 400, 135, push)
+        out = window(footage(name, start), 400, 135, push)
         e = min(1, u / 0.22) if p1 else 1; sc = 1 + (1 - e) ** 2 * 2.4
         logo = SLAT3 if sc == 1 else SLAT3.resize((int(SLAT3.width * sc), int(SLAT3.height * sc)), Image.NEAREST)
         out = overlay(out, logo, 0.4 + 0.6 * e, (W - logo.width) // 2, 300 + (SLAT3.height - logo.height) // 2)
@@ -108,8 +105,8 @@ def render(T):
     else: cx, cy = seg['vc']
     out = window(fr, cx, cy)
     if seg.get('box'):          # type the Pokemon box out once the encounter flash has cleared
-        n = int(min(22, max(0, (u - 0.35) / 0.035)))
-        if u > 0.3: out = overlay(out, card(f'box_{n:02d}'))
+        n = int(min(22, max(0, (u - 0.2) / 0.03)))
+        if u > 0.15: out = overlay(out, card(f'box_{n:02d}'))
     if seg.get('over'): out = overlay(out, card(seg['over']))
     if seg.get('flash') and u < 0.12: out = Image.blend(out, WHITE, 0.8 * (1 - u / 0.12))
     if seg.get('fadein') and u < seg['fadein']: out = Image.blend(BLACK, out, u / seg['fadein'])
