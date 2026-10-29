@@ -1,6 +1,10 @@
 # Marketing
 
-## `sun-fighter-trailer-v7-vertical.mp4` (9:16, current)
+## `sun-fighter-trailer-v8-vertical.mp4` (9:16, current)
+
+The hero section is now THIS SUMMER... → the hero with his mullet in the wind, ONE MAN → the Slather in his hand with a SHING, and IS READY TO FIGHT BACK → the gameplay montage. It runs 32 seconds; the source is `trailer-v4-src/make_trailer_v8.py`.
+
+## `sun-fighter-trailer-v7-vertical.mp4`
 
 The same as v6 (below), with the THIS SUMMER..., ONE MAN and ONE TUBE cards cut to half a bar (0.75 s) that punch in and out, so the hero section alternates fast. It runs 34.5 seconds; the source is `trailer-v4-src/make_trailer_v7.py`.
 

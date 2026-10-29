@@ -4,7 +4,7 @@ const T = (html, size) => `<div class="t" style="font-size:${size}px">${html}</d
 const CARDS = {
   world: T('IN A WORLD...', 64), sun: T('WHERE<br>THE SUN...', 72), friend: T('IS NOT<br>YOUR FRIEND...', 64), summer: T('THIS<br>SUMMER...', 80),
   man: T('ONE MAN', 84), tube: T('ONE TUBE OF<br>SLATHER<br>SPF 50+', 68), ready: T('ARE READY TO<br>FIGHT BACK', 64),
-  fight: T('ONE FIGHT<br>TO THE DEATH', 60), w_coming: T('COMING', 120), w_this: T('THIS', 120), w_summer: T('SUMMER', 120),
+  fight: T('ONE FIGHT<br>TO THE DEATH', 60), isready: T('IS READY TO<br>FIGHT BACK', 64), w_coming: T('COMING', 120), w_this: T('THIS', 120), w_summer: T('SUMMER', 120),
 };
 const BOX = 'A wild ESHAY<br>appeared!';
 (async () => {
