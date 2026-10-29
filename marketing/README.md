@@ -1,6 +1,10 @@
 # Marketing
 
-## `sun-fighter-trailer-v8-vertical.mp4` (9:16, current)
+## `sun-fighter-trailer-v9-vertical.mp4` (9:16, current)
+
+The same as v8 (below), but the "A wild ESHAY appeared!" box now sits at the bottom of the frame, with the eshay dancing in full view above it. The source is `trailer-v4-src/make_trailer_v9.py`.
+
+## `sun-fighter-trailer-v8-vertical.mp4`
 
 The hero section is now THIS SUMMER... → the hero with his mullet in the wind, ONE MAN → the Slather in his hand with a SHING, and IS READY TO FIGHT BACK → the gameplay montage. It runs 32 seconds; the source is `trailer-v4-src/make_trailer_v8.py`.
 
