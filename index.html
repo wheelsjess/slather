@@ -27,7 +27,10 @@
 [hidden]{display:none!important}
 html,body{height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(--paper);
   -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+/* no double-tap or pinch zoom anywhere: iPhone Safari ignores user-scalable=no, but it does honour touch-action */
+html,body,*{touch-action:manipulation}
 #app{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;touch-action:none}
+#app *:not(#claim):not(#claim *){touch-action:none}
 #game{display:block;position:relative;z-index:1;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
 .ui{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:calc(env(safe-area-inset-right,0px) + 12px);display:flex;gap:8px;z-index:3}
 .ui button{font-family:var(--pix);font-size:9px;line-height:1;color:var(--paper);background:var(--veil);border:2px solid var(--paper);padding:6px 8px;cursor:pointer}
@@ -3155,6 +3158,22 @@ function fit() {
   for (const el of [L, $('#erBanner'), $('#claim')]) { Object.assign(el.style, { left: Math.round((sw - w) / 2) + 'px', top: Math.round((sh - h) / 2) + 'px', width: w + 'px', height: h + 'px' }); el.style.setProperty('--u', (w / W) + 'px'); }
 }
 addEventListener('resize', fit); fit();
+/* iPhone: a quick second tap anywhere outside the prize form would zoom the page mid-fight, so swallow it;
+   block pinch gestures; and if Safari zooms anyway, snap the viewport back to 1x */
+{
+  let lastTap = 0;
+  document.addEventListener('touchend', e => {
+    const now = e.timeStamp, inForm = e.target.closest && e.target.closest('#claim');
+    if (!inForm && now - lastTap < 350) e.preventDefault();
+    lastTap = now;
+  }, { passive: false });
+  for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
+  document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
+  const vp = document.querySelector('meta[name=viewport]'), base = vp.content;
+  if (window.visualViewport) visualViewport.addEventListener('resize', () => {
+    if (visualViewport.scale > 1.01 && !document.activeElement.closest('#claim')) { vp.content = base + ', minimum-scale=1'; setTimeout(() => { vp.content = base; }, 300); }
+  });
+}
 /* ---- full screen on phones: the Fullscreen API where it exists (Android, iPad). iPhone Safari has none: there the game just scales to the biggest 16:9 that fits. ---- */
 const fsEl = document.documentElement, fsReq = fsEl.requestFullscreen || fsEl.webkitRequestFullscreen;
 const isFull = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
