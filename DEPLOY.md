@@ -39,7 +39,7 @@ When the page isn't on slather.com.au, a `*.netlify.app` address or localhost (f
 
 ## Viewing and downloading entries
 
-Open **https://sunfighter.slather.com.au/admin** and enter the `ADMIN_KEY`. It shows every entry fastest first (a red line marks the top 50), with a **Download CSV** button. The key is remembered only until the browser tab is closed. Search engines are told not to index the page.
+Open **https://sunfighter.slather.com.au/admin** and enter the `ADMIN_KEY`. It shows every entry fastest first (a red line marks the top 20), with a **Download CSV** button. The key is remembered only until the browser tab is closed. Search engines are told not to index the page.
 
 From a terminal instead:
 
@@ -53,6 +53,6 @@ The CSV has rank, time, initials, email, name, postal address (street, unit, sub
 
 The server checks make cheating harder, but a determined player can still submit a believable fake time. Before sending prizes:
 
-- review the top 50 for duplicate people (same IP or similar emails) and non-Australian countries;
+- review the top 20 for duplicate people (same IP or similar emails) and non-Australian countries;
 - treat times far ahead of the pack with suspicion;
 - reserve the right to verify winners in the terms.

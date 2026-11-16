@@ -33,7 +33,7 @@
 <body>
 <main>
   <h1>Sun Fighter prize entries</h1>
-  <p class="sub">Fastest verified times first. The red line marks the top 50.</p>
+  <p class="sub">Fastest verified times first. The red line marks the top 20.</p>
 
   <form id="login">
     <input id="key" type="password" placeholder="Admin key" autocomplete="current-password" required>
@@ -74,7 +74,7 @@
     $('#login').hidden = true; $('#out').hidden = false; $('#msg').textContent = '';
     const body = $('#rows'); body.textContent = '';
     entries.forEach((e, i) => {
-      const tr = document.createElement('tr'); if (i === 49) tr.className = 'cut';
+      const tr = document.createElement('tr'); if (i === 19) tr.className = 'cut';
       const addr = [e.address2, e.address1].filter(Boolean).join(', ') + (e.suburb ? `, ${e.suburb} ${e.state} ${e.postcode}` : '');
       tr.append(cell(i + 1, 'num'), cell(fmt(e.time), 'num'), cell(e.initials), cell(e.name), cell(e.email), cell(addr, 'addr'),
         cell(e.marketing ? 'Yes' : 'No', e.marketing ? 'yes' : ''), cell(e.country), cell(new Date(e.enteredAt).toLocaleString('en-AU')));

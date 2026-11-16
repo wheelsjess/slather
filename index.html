@@ -2931,7 +2931,7 @@ async function saveRun(run) {
     BOARD.saving = false;
   } else BOARD.list = localRuns();
 }
-/* ================= Prize claim: Aussie winners leave an email so we can send the 50 fastest a free tube ================= */
+/* ================= Prize claim: Aussie winners leave an email so we can send the 20 fastest a summer's worth ================= */
 const CLAIM_ENDPOINT = API ? API + '/claim' : '';   // empty off the real site: entries go nowhere (preview build)
 const CLAIM_TERMS = 'https://sunfighter.slather.com.au/terms';   // the competition terms and conditions (terms.html)
 function startClaim() {
@@ -2941,10 +2941,10 @@ function startClaim() {
 function endClaim() { $('#claim').hidden = true; S.mode = 'board'; S.modeT = 0; SFX.win(); }
 function claimStep(step, msg = '') {
   const box = $('#claim .box'), t = fmtT(S.fight);
-  if (step === 'aus') box.innerHTML = `<h3>YOU SLATHERED THE SUN!</h3><p>${S.lastIni} &nbsp; ${t}</p><p>THE 50 FASTEST TIMES WIN A FREE TUBE OF SLATHER SPF 50+.</p><p>DO YOU LIVE IN AUSTRALIA?</p>
+  if (step === 'aus') box.innerHTML = `<h3>YOU SLATHERED THE SUN!</h3><p>${S.lastIni} &nbsp; ${t}</p><p>THE 20 FASTEST TIMES WIN A SUMMER'S WORTH OF SLATHER SPF 50+!</p><p>DO YOU LIVE IN AUSTRALIA?</p>
     <button data-go="yes">YES</button><button class="alt" data-go="no">NO</button>`;
   if (step === 'no') box.innerHTML = `<h3>NO WORRIES!</h3><p>THE FREE SLATHER GIVEAWAY IS OPEN TO AUSTRALIAN RESIDENTS ONLY, BUT YOUR TIME STILL GOES ON THE LEADERBOARD.</p><button data-go="done">CONTINUE</button>`;
-  if (step === 'email') box.innerHTML = `<h3>CLAIM YOUR SPOT</h3><p>IF YOUR TIME MAKES THE TOP 50, WE'LL EMAIL YOU AND POST YOUR SLATHER HERE.</p>
+  if (step === 'email') box.innerHTML = `<h3>CLAIM YOUR SPOT</h3><p>IF YOUR TIME MAKES THE TOP 20, WE'LL EMAIL YOU AND POST YOUR SLATHER HERE.</p>
     <form novalidate><input type="email" name="email" autocomplete="email" placeholder="EMAIL" required>
     <input name="name" autocomplete="name" placeholder="FULL NAME" required>
     <input name="address1" autocomplete="address-line1" placeholder="STREET ADDRESS" required>
@@ -2955,7 +2955,7 @@ function claimStep(step, msg = '') {
     <label><input type="checkbox" name="terms"><span>I LIVE IN AUSTRALIA, I'M 18 OR OVER, AND I AGREE TO THE <a href="${CLAIM_TERMS}" target="_blank" rel="noopener">COMPETITION TERMS</a>.</span></label>
     <label><input type="checkbox" name="news"><span>SEND ME SLATHER NEWS AND OFFERS TOO (OPTIONAL).</span></label>
     <div class="err">${msg}</div><button type="submit">SUBMIT</button><button type="button" class="alt" data-go="done">SKIP</button></form>`;
-  if (step === 'sent') box.innerHTML = `<h3>YOU'RE IN!</h3><p>IF YOUR TIME IS IN THE TOP 50 WHEN THE COMPETITION CLOSES, WE'LL EMAIL YOU ABOUT YOUR FREE SLATHER.</p>${CLAIM_ENDPOINT ? '' : '<p class="dim">(PREVIEW BUILD: NOTHING WAS SENT)</p>'}<button data-go="done">CONTINUE</button>`;
+  if (step === 'sent') box.innerHTML = `<h3>YOU'RE IN!</h3><p>IF YOUR TIME IS IN THE TOP 20 WHEN THE COMPETITION CLOSES, WE'LL EMAIL YOU ABOUT YOUR FREE SLATHER.</p>${CLAIM_ENDPOINT ? '' : '<p class="dim">(PREVIEW BUILD: NOTHING WAS SENT)</p>'}<button data-go="done">CONTINUE</button>`;
   const f = box.querySelector('form');
   if (f) { f.onsubmit = e => { e.preventDefault(); claimSubmit(f); }; setTimeout(() => f.email.focus(), 30); }
   else { const b = box.querySelector('button'); if (b) setTimeout(() => b.focus(), 30); }
