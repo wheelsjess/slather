@@ -12,6 +12,7 @@ The game is one static page (`index.html`). The shared leaderboard and the prize
    |---|---|
    | `RUN_SECRET` | Signs the run tokens that stop fake times. Any long random string (at least 16 characters); keep it private. |
    | `ADMIN_KEY` | Password for downloading the prize entries. Another long random string. |
+   | `COMP_OPEN` / `COMP_CLOSE` | Optional. The Competition Period as ISO dates. Default `2026-11-30T00:00:00+11:00` to `2026-12-20T23:59:59+11:00` (terms clause 2.1). Prize entries are refused outside it, and the game shows an "opens on" or "closed on" message instead of the form. To test the prize flow before launch, set `COMP_OPEN` to a past date, then delete it (and clear the test entries) before go-live. |
    | `MIN_RUN_SECONDS` | Optional. The fastest time the server accepts (default 20). Set it just under the best time a good player can really manage. |
 
    Redeploy after adding them (**Deploys → Trigger deploy**).
@@ -29,7 +30,7 @@ Every production deploy uses Netlify credits. `netlify.toml` has an `ignore` rul
 |---|---|
 | `POST /api/run/start` | Called when a fight begins. Returns a token signed with the server's clock. |
 | `POST /api/run/finish` | Called on a win with the token, initials and time. Rejects tampered or reused tokens, times under `MIN_RUN_SECONDS`, and any time longer than has really passed since the token was issued. Saves the run and returns a claim token for that exact run. |
-| `GET /api/leaderboard` | The 50 fastest verified times (initials and time only). |
+| `GET /api/leaderboard` | The 50 fastest verified times, one line per player (their best), initials and time only, plus the Competition Period dates. |
 | `POST /api/claim` | A prize entry. Needs the claim token, an email, a full name and Australian postal address, the terms tick and the Australia answer. Keeps one entry per email (their best time, latest address) and records the marketing opt-in separately. |
 | `GET /api/admin/entries.csv` / `.json` | Every entry, fastest first (the `.json` feeds the `/admin` page). Needs `ADMIN_KEY`. Cells starting with `=`, `+`, `-` or `@` get an apostrophe so spreadsheets don't run them as formulas. |
 

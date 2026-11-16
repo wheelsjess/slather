@@ -1,4 +1,5 @@
-// POST /api/run/finish { token, initials, time }: records a win on the shared leaderboard after sanity checks.
+// POST /api/run/finish { token, initials, time, player }: records a win after sanity checks. The leaderboard keeps one line per
+// player (the device's player id): only their fastest time, as the terms (clause 4.3) require.
 import { json, store, readToken, makeToken, cleanInitials, runKey, allRuns, MIN_RUN, MAX_AGE } from '../lib/common.mjs';
 
 export default async req => {
@@ -12,9 +13,13 @@ export default async req => {
   const s = store();
   if (await s.get('used/' + tok.id)) return json({ error: 'run already recorded' }, 409);
   await s.set('used/' + tok.id, '1');
-  const i = cleanInitials(body.initials);
-  await s.setJSON(runKey(t, i, tok.id), { i, t, at: now });
-  const runs = await allRuns(s), rank = runs.findIndex(r => r.id === tok.id) + 1;
+  const i = cleanInitials(body.initials), pid = /^[a-z0-9-]{8,40}$/.test(body.player || '') ? body.player : tok.id;
+  const prev = await s.get('best/' + pid, { type: 'json' });
+  if (!prev || t < prev.t) {                                   // a new personal best replaces their old line
+    if (prev) await s.delete(prev.key);
+    const key = runKey(t, i, pid); await s.setJSON(key, { i, t, at: now }); await s.setJSON('best/' + pid, { key, t });
+  }
+  const runs = await allRuns(s), best = Math.min(t, prev ? prev.t : Infinity), rank = runs.findIndex(r => r.id === pid && r.t === best) + 1;
   // the claim token proves this exact verified run, so the prize form can't be fed a made-up time
   return json({ runId: tok.id, rank, claim: makeToken({ run: tok.id, t, i, at: now }) });
 };

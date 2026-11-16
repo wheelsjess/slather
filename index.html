@@ -2887,8 +2887,13 @@ const sortRuns = a => a.filter(Boolean).sort((x, y) => x.t - y.t);
 function localRuns() { try { return sortRuns((JSON.parse(localStorage.getItem('slather-board') || '[]')).map(cleanRun)); } catch (_) { return []; } }
 function useLocal() { BOARD.shared = false; BOARD.db = null; BOARD.list = localRuns(); }
 useLocal();
+// the Competition Period (terms clause 2.1); the server's /api/leaderboard reply overrides it
+const COMP = { open: Date.parse('2026-11-30T00:00:00+11:00'), close: Date.parse('2026-12-20T23:59:59+11:00') };
+// one id per device, so the leaderboard keeps one line per player (terms clause 4.3)
+const PLAYER_ID = (() => { try { let id = localStorage.getItem('slather-player'); if (!id) { id = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)); localStorage.setItem('slather-player', id); } return id; } catch (_) { return ''; } })();
 async function loadSharedBoard() {
-  try { const r = await fetch(API + '/leaderboard', { cache: 'no-store' }); if (!r.ok) return; const j = await r.json(); BOARD.list = sortRuns((j.runs || []).map(cleanRun)); BOARD.shared = true; } catch (_) {}
+  try { const r = await fetch(API + '/leaderboard', { cache: 'no-store' }); if (!r.ok) return; const j = await r.json(); BOARD.list = sortRuns((j.runs || []).map(cleanRun)); BOARD.shared = true;
+    if (j.comp && j.comp.open && j.comp.close) Object.assign(COMP, j.comp); } catch (_) {}
 }
 function beginRun() { // ask the server to stamp the start of this fight; the win is checked against it
   S.run = { token: null, claim: null };
@@ -2918,7 +2923,7 @@ async function saveRun(run) {
   if (API) {
     BOARD.list = sortRuns([...BOARD.list, run]); BOARD.shared = true;   // show it straight away
     const tok = S.run && S.run.token;
-    S.run.finishing = !tok ? Promise.resolve(null) : fetch(API + '/run/finish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tok, initials: run.i, time: run.t }) })
+    S.run.finishing = !tok ? Promise.resolve(null) : fetch(API + '/run/finish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tok, initials: run.i, time: run.t, player: PLAYER_ID }) })
       .then(r => r.ok ? r.json() : null).then(j => { if (j && S.run) S.run.claim = j.claim; loadSharedBoard(); return j; }).catch(() => null);
     return;
   }
@@ -2941,6 +2946,9 @@ function startClaim() {
 function endClaim() { $('#claim').hidden = true; S.mode = 'board'; S.modeT = 0; SFX.win(); }
 function claimStep(step, msg = '') {
   const box = $('#claim .box'), t = fmtT(S.fight);
+  const now = Date.now(), d = ms => new Date(ms).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Australia/Melbourne' }).toUpperCase();
+  if (step === 'aus' && API && now < COMP.open) { step = 'closed'; box.innerHTML = `<h3>YOU SLATHERED THE SUN!</h3><p>${S.lastIni} &nbsp; ${t}</p><p>THE COMPETITION OPENS ${d(COMP.open)}. COME BACK THEN TO FIGHT FOR A SUMMER'S WORTH OF SLATHER SPF 50+!</p><button data-go="done">CONTINUE</button>`; }
+  if (step === 'aus' && API && now > COMP.close) { step = 'closed'; box.innerHTML = `<h3>YOU SLATHERED THE SUN!</h3><p>${S.lastIni} &nbsp; ${t}</p><p>THE COMPETITION CLOSED ON ${d(COMP.close)}. THANKS FOR PLAYING, AND KEEP SLATHERING UP!</p><button data-go="done">CONTINUE</button>`; }
   if (step === 'aus') box.innerHTML = `<h3>YOU SLATHERED THE SUN!</h3><p>${S.lastIni} &nbsp; ${t}</p><p>THE 20 FASTEST TIMES WIN A SUMMER'S WORTH OF SLATHER SPF 50+!</p><p>DO YOU LIVE IN AUSTRALIA?</p>
     <button data-go="yes">YES</button><button class="alt" data-go="no">NO</button>`;
   if (step === 'no') box.innerHTML = `<h3>NO WORRIES!</h3><p>THE FREE SLATHER GIVEAWAY IS OPEN TO AUSTRALIAN RESIDENTS ONLY, BUT YOUR TIME STILL GOES ON THE LEADERBOARD.</p><button data-go="done">CONTINUE</button>`;
@@ -2967,6 +2975,7 @@ async function claimSubmit(f) {
   const v = k => f[k].value.trim();
   if (v('name').length < 2) { err.textContent = 'PLEASE ENTER YOUR NAME.'; return; }
   if (v('address1').length < 4 || v('suburb').length < 2) { err.textContent = 'PLEASE ENTER YOUR STREET ADDRESS AND SUBURB.'; return; }
+  if (/\b(?:p\.?\s*o\.?|g\.?\s*p\.?\s*o\.?|post\s*office)\s*box\b|\b(?:locked|private)\s*bag\b|\bparcel\s*(?:locker|collect)\b/i.test(v('address1') + ' ' + v('address2'))) { err.textContent = 'SORRY, WE CAN\'T POST TO PO BOXES. PLEASE USE A STREET ADDRESS.'; return; }
   if (!v('state')) { err.textContent = 'PLEASE PICK YOUR STATE.'; return; }
   if (!/^\d{4}$/.test(v('postcode'))) { err.textContent = 'POSTCODES ARE 4 DIGITS.'; return; }
   if (!f.terms.checked) { err.textContent = 'PLEASE TICK THE TERMS BOX TO ENTER.'; return; }
@@ -2976,7 +2985,7 @@ async function claimSubmit(f) {
     const done = S.run && S.run.finishing ? await S.run.finishing : null;   // the server's receipt for this run
     if (!done || !done.claim) { err.textContent = 'SORRY, WE COULDN\'T VERIFY THIS RUN, SO IT CAN\'T BE ENTERED.'; return; }
     entry.claim = done.claim;
-    try { const r = await fetch(CLAIM_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry) }); if (!r.ok) throw new Error(r.status); }
+    try { const r = await fetch(CLAIM_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry) }); if (r.status === 403) { err.textContent = 'SORRY, THE COMPETITION ISN\'T OPEN RIGHT NOW.'; return; } if (!r.ok) throw new Error(r.status); }
     catch (_) { err.textContent = 'COULDN\'T SEND THAT. CHECK YOUR CONNECTION AND TRY AGAIN.'; f.querySelector('button[type=submit]').disabled = false; return; }
   }
   SFX.win(); claimStep('sent');

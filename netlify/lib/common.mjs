@@ -9,6 +9,11 @@ export const json = (body, status = 200, headers = {}) =>
 
 export const MIN_RUN = Number(process.env.MIN_RUN_SECONDS || 20);   // nobody kills the Sun faster than this
 export const MAX_AGE = 2 * 60 * 60 * 1000;                          // a run token is good for two hours
+// the Competition Period (terms clause 2.1), in AEDT; COMP_OPEN / COMP_CLOSE env vars override it, e.g. to test before launch
+export const COMP = { open: Date.parse(process.env.COMP_OPEN || '2026-11-30T00:00:00+11:00'), close: Date.parse(process.env.COMP_CLOSE || '2026-12-20T23:59:59+11:00') };
+export const inComp = ms => ms >= COMP.open && ms <= COMP.close;
+// no PO boxes, locked bags or parcel lockers (terms clause 8.3)
+export const PO_BOX = /\b(?:p\.?\s*o\.?|g\.?\s*p\.?\s*o\.?|post\s*office)\s*box\b|\b(?:locked|private)\s*bag\b|\bparcel\s*(?:locker|collect)\b/i;
 
 function secret() {
   const s = process.env.RUN_SECRET;
