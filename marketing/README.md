@@ -1,6 +1,10 @@
 # Marketing
 
-## `sun-fighter-trailer-v10-vertical.mp4` (9:16, current)
+## `sun-fighter-trailer-v11-vertical.mp4` (9:16, alt)
+
+An alternative to v10 with the hero section reordered: THIS SUMMER... → the hero, then GET READY TO FIGHT BACK → the Slather tube with the SHING, then straight into the gameplay montage. The shots are spliced from v10; the score is regenerated for the new timing by `trailer-v4-src/make_trailer_v11_score.py`. It runs 31.5 seconds plus the ring-out.
+
+## `sun-fighter-trailer-v10-vertical.mp4` (9:16)
 
 The same as v9 (below), with the same picture and audio, except the end frame: SLATHER, SUN FIGHTER and COMING THIS SUMMER slam in over plain black instead of the Sun and the beach. `trailer-v4-src/make_trailer_v10_endframe.py` renders the new end frame and splices it into v9.
 

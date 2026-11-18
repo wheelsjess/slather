@@ -1,14 +1,14 @@
-const { chromium } = require('/tmp/claude-0/-home-user-slather/21d9a6bc-cd97-5e18-a54d-642d51bfb159/scratchpad/t/node_modules/playwright');
+const { chromium } = require('/tmp/claude-0/-home-user-slather/21d9a6bc-cd97-5e18-a54d-642d51bfb159/scratchpad/pw/node_modules/playwright');
 const D = __dirname;
 const T = (html, size) => `<div class="t" style="font-size:${size}px">${html}</div>`;
 const CARDS = {
   world: T('IN A WORLD...', 64), sun: T('WHERE<br>THE SUN...', 72), friend: T('IS NOT<br>YOUR FRIEND...', 64), summer: T('THIS<br>SUMMER...', 80),
   man: T('ONE MAN', 84), tube: T('ONE TUBE OF<br>SLATHER<br>SPF 50+', 68), ready: T('ARE READY TO<br>FIGHT BACK', 64),
-  fight: T('ONE FIGHT<br>TO THE DEATH', 60), isready: T('IS READY TO<br>FIGHT BACK', 64), w_coming: T('COMING', 120), w_this: T('THIS', 120), w_summer: T('SUMMER', 120),
+  getready: T('GET READY TO<br>FIGHT BACK', 64), fight: T('ONE FIGHT<br>TO THE DEATH', 60), isready: T('IS READY TO<br>FIGHT BACK', 64), w_coming: T('COMING', 120), w_this: T('THIS', 120), w_summer: T('SUMMER', 120),
 };
 const BOX = 'A wild ESHAY<br>appeared!';
 (async () => {
-  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1243/chrome-linux64/chrome' });
   const page = await (await b.newContext({ viewport: { width: 1080, height: 1920 } })).newPage();
   await page.goto('file://' + D + '/cards.html');
   await page.evaluate(() => Promise.all([document.fonts.load('64px "Press Start 2P"'), document.fonts.load('200px "Metal Mania"')]));
