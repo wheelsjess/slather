@@ -1,6 +1,10 @@
 # Marketing
 
-## `sun-fighter-trailer-v9-vertical.mp4` (9:16, current)
+## `sun-fighter-trailer-v10-vertical.mp4` (9:16, current)
+
+The same as v9 (below), with the same picture and audio, except the end frame: SLATHER, SUN FIGHTER and COMING THIS SUMMER slam in over plain black instead of the Sun and the beach. `trailer-v4-src/make_trailer_v10_endframe.py` renders the new end frame and splices it into v9.
+
+## `sun-fighter-trailer-v9-vertical.mp4`
 
 The same as v8 (below), but the "A wild ESHAY appeared!" box now sits at the bottom of the frame, with the eshay dancing in full view above it. The source is `trailer-v4-src/make_trailer_v9.py`.
 
