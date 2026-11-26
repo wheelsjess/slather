@@ -2,7 +2,7 @@
 
 ## `press-stills/` (and `press-stills.zip`)
 
-17 in-game screenshots for press, at 1920×1080, of the funniest moments, with captions in `press-stills/CAPTIONS.md` and an overview in `_contact-sheet.jpg`.
+19 in-game screenshots for press, at 1920×1080, of the funniest moments, with captions in `press-stills/CAPTIONS.md` and an overview in `_contact-sheet.jpg`.
 
 ## `sun-fighter-trailer-v11-vertical.mp4` (9:16, alt)
 
