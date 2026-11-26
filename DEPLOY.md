@@ -50,6 +50,10 @@ curl -H "Authorization: Bearer YOUR_ADMIN_KEY" https://sunfighter.slather.com.au
 
 The CSV has rank, time, initials, email, name, postal address (street, unit, suburb, state, postcode), marketing opt-in, country (from the visitor's IP), IP and timestamps. Only add people who ticked the marketing box to the mailing list.
 
+## Clearing test data before launch
+
+On **/admin**, **Clear all test data** deletes every leaderboard time and prize entry (`POST /api/admin/reset`). The server only allows it before the Competition Period opens. If `COMP_OPEN` is set to a past date for testing, delete it and redeploy first, or the button is refused.
+
 ## Before picking winners
 
 The server checks make cheating harder, but a determined player can still submit a believable fake time. Before sending prizes:

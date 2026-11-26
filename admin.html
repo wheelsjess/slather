@@ -46,6 +46,7 @@
       <button id="csv">Download CSV</button>
       <button class="ghost" id="refresh">Refresh</button>
       <button class="ghost" id="logout">Sign out</button>
+      <button class="ghost" id="reset">Clear all test data</button>
       <span class="stats" id="stats"></span>
     </div>
     <div class="wrap"><table>
@@ -97,6 +98,14 @@
   $('#csv').addEventListener('click', download);
   $('#refresh').addEventListener('click', load);
   $('#logout').addEventListener('click', () => signOut());
+  $('#reset').addEventListener('click', async () => {   // pre-launch only: the server refuses once the competition opens
+    if (!confirm('Delete EVERY leaderboard time and prize entry? This cannot be undone. (Only works before the competition opens.)')) return;
+    $('#msg').textContent = 'Clearing…';
+    let r; try { r = await fetch('/api/admin/reset', { method: 'POST', headers: { Authorization: 'Bearer ' + key } }); } catch (_) { $('#msg').textContent = 'Couldn’t reach the server.'; return; }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { $('#msg').textContent = j.error ? 'Not cleared: ' + j.error + '.' : 'Not cleared (' + r.status + ').'; return; }
+    await load(); $('#msg').textContent = 'Cleared ' + j.removed + ' records. The leaderboard and entries are empty.';
+  });
   if (key) load();
 })();
 </script>
