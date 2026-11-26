@@ -1,5 +1,9 @@
 # Marketing
 
+## `press-stills/` (and `press-stills.zip`)
+
+17 in-game screenshots for press, at 1920×1080, of the funniest moments, with captions in `press-stills/CAPTIONS.md` and an overview in `_contact-sheet.jpg`.
+
 ## `sun-fighter-trailer-v11-vertical.mp4` (9:16, alt)
 
 An alternative to v10 with the hero section reordered: THIS SUMMER... → the hero, then GET READY TO FIGHT BACK → the Slather tube with the SHING, then straight into the gameplay montage. The shots are spliced from v10; the score is regenerated for the new timing by `trailer-v4-src/make_trailer_v11_score.py`. It runs 31.5 seconds plus the ring-out.
